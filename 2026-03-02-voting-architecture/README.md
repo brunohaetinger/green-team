@@ -109,6 +109,23 @@ CONS (+)
 PS: Be careful to not confuse problem with explanation. 
 <BR/>Recommended reading: http://diego-pacheco.blogspot.com/2023/07/tradeoffs.html
 
+### 5.1 Backend
+
+## Go (Golang)
+
+**Pros**: Fast execution and compilation, simple and efficient concurrency through goroutines and channels, mature ecosystem with extensive libraries, easy deployment via compiled binaries, excellent tooling and IDE support.
+**Cons**: Garbage collector can introduce occasional microsecond-level pauses under heavy load.
+
+## Rust
+
+**Pros**: Maximum performance with zero-cost abstractions, memory safety without garbage collection, deterministic performance for ultra-low-latency requirements, strong type system catches errors at compile time, no runtime overhead.
+**Cons**: Longer compile times compared to Go. Smaller ecosystem compared to established languages.
+
+## Java / Kotlin
+
+**Pros:** Mature ecosystem, gret integration for Kafka Streams (unmatched for stateful stream processing), robust JVM with advanced JIT compilation, Spring framework for quick development.
+**Cons**: GC tuning complexity at scale, higher memory footprint, slower startup times, unpredictable latency spikes during GC pauses, which is unacceptable for real-time voting where every millisecond matters.
+
 ### 🌏 6. For each key major component
 
 What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
@@ -144,6 +161,9 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
 
 - Backend:
+
+**Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
+
 - Frontend: 
 
 
