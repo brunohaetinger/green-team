@@ -29,29 +29,25 @@ We have to design an architecture for a realtime voting system that will handle 
 
 ### 2. 🎯 Goals
 
-List in form of bullets what goals do have. Here it's great to have 5-10 lines.
-Example:
 ```
-1. Solution needs to be fast! Performance for all operations bellow ~1 ms.
-2. Security is non-negociable! Security at-rest, transite, threat analysis and review for by at least 3 different people.
-3. Composable solution. Users should be able to mix and match components instead of building all for scratch. ie: map component can be reused on counters component.
-4. Work offline: Re-consiliation, CRDTs are a must.
-5. Cloud-Native: All backend must be 100% cloud native, using open-source and should and should be cloud-agnostic, avoid propretaty apis.
+1. Realtime results - It has to provide realtime results so users can follow it after voting
+2. Unique votes - Each user will vote only once
+2. Security is a must - we must implement ways of preventing bots, DDoS attacks and secure the web layer
+3. Encryption - Encryption at rest and transit
+5. Scalability - It has to scale as traffic grows
+6. Fraud prevention - There has to be fraud prevention in place preventing bots or internal actors from adding artifitial votes.
+7. Auditable - There has to be accessible ways of third-party companies audit the voting results when asked
 ```
-Recommended Learning: http://diego-pacheco.blogspot.com/2020/05/education-vs-learning.html
 
 ### 3. 🎯 Non-Goals
 
-List in form of bullets what non-goals do have. Here it's great to have 5-10 lines.
-Example:
 ```
-1. Be perfect: There will be mistakes, we dont want have automatic-rollback for everything.
-2. DynamoDB: Dynamo is expensive, we want be away from the DB.
-3. Serverless: Serverless has high latency, we do not want to use it.
-4. Mobile-native: We want have one single codebase, therefore we will not have 2 mobile code bases(ios and android) thefore be native is not a goal.
-5. ...
+1. Serverless: it has high latency, cold startup and resources and execution time are limited.
+2. MongoDB - WHY ?
+3. On-Premisse and other clouds than AWS: AWS is the chosen cloud as it's more reliable and scalable
+4. OpenShift - OpenShift is a proprietary solution, prefer K8s or other opensource microservice solution.
+5. Mainframe or Monolith solutions - The system will need to automatically scale, quickly and on-demand.
 ```
-Recommended Reading: http://diego-pacheco.blogspot.com/2021/01/requirements-are-dangerous.html
 
 ### 📐 3. Principles
 
