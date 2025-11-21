@@ -23,15 +23,9 @@ Restrictions:
 ### 1. 🎯 Problem Statement and Context
 
 What is the problem? What is the context of the problem?
-Example:
 ```
-The problem is to sell shoes online, the main issue with buying shoes online is 
-how we will make our users buy shoes if they cannot make them fit? We would need
-to have a huge selectio and find ways to people find they perpect show at the 
-same time market teams would need to change campains all the time, we need to
-have way to make things fast and dynamic.
+We have to design an architecture for a realtime voting system that will handle millions of users and high peaks of requests per second. We must ensure a smooth experience to the user when voting, each vote is unique and the user can check realtime results. It has to be reliable, scalable, secure, recoverable and auditable.
 ```
-Recomended Reading: http://diego-pacheco.blogspot.com/2021/10/breaking-problems-down.html
 
 ### 2. 🎯 Goals
 
