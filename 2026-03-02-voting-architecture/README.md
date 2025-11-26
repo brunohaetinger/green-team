@@ -115,19 +115,48 @@ Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-d
 
 ### 🖹 7. Migrations
 
-IF Migrations are required describe the migrations strategy with proper diagrams, text and tradeoffs.
+No migration required in this project
+
 
 ### 🖹 8. Testing strategy
 
 Explain the techniques, principles, types of tests and will be performaned, and spesific details how to mock data, stress test it, spesific chaos goals and assumptions.
 
+- What kind of tests are we going to implement ?
+- What tests we should have more in our project ?
+- When tests are going to run?
+- Which tools are we going to use ?
+- What are we going to test ? Any KPIs to be defined ?
+- Which are the most important features ?
+
+
 ### 🖹 9. Observability strategy
 
 Explain the techniques, principles,types of observability that will be used, key metrics, what would be logged and how to design proper dashboards and alerts.
 
+#### 9.1 Metrics collection and Dashboards
+
+- What metrics to collect ?
+- What dashboards to use? which metrics to display ?
+
+#### 9.2 Logging
+
+- What is important to log ?
+- How to make it easy to keep track of logs ?
+
+#### 9.3 Alerting and Incident Response
+
+- What will trigger alerts ? What are the boundaries to evaluate ?
+
+#### 9.4 Distributed Tracing
+
 ### 🖹 10. Data Store Designs
 
 For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3, Neo4J etc...) describe the schemas, what would be stored there and why, main queries, expectations on performance. Diagrams are welcome but you really need some dictionaries.
+
+- Queries examples, per service?
+- Partitioning ?
+- Caching ?
 
 ### 🖹 11. Technology Stack
 
@@ -135,6 +164,8 @@ Describe your stack, what databases would be used, what servers, what kind of co
 
 - Backend:
 - Frontend: 
+- Infrastructure:
+- Data:
 
 
 ### 🖹 12. References
