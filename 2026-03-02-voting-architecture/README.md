@@ -85,6 +85,8 @@ Here there will be a bunch of diagrams, to understand the solution.
 ```
 Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.html
 
+#### Cache layer diagram
+
 ### 🧭 5. Trade-offs
 
 List the tradeoffs analysis, comparing pros and cons for each major decision.
@@ -157,8 +159,34 @@ CONS (+)
   * Higher latency between updates (depends on poll interval).
   * Scales poorly (many clients -> many HTTP requests).
 
-#### Cache layer
+#### 5.4 Cache layer
 
+##### 5.4.1 Redis
+PROS (+)
+  * Rich Data Structures: Redis supports hashes, sets, sorted sets, bitmaps, and atomic counters, enabling complex real-time operations such as vote counting and user uniqueness checks.
+  * Atomic Operations: Operations like INCR, HINCRBY, SETNX, and Lua scripts guarantee correctness under high concurrency, which is essential for voting systems.
+  * Persistence Options: Redis offers RDB and AOF persistence, ensuring data durability during crashes.
+  * Pub/Sub Support: Redis can push real-time updates through Pub/Sub, enabling instant updates for dashboards and WebSocket-based clients.
+  * Replication & Clustering: Redis Cluster provides automatic sharding and replication for high availability and horizontal scalability.
+
+CONS (–)
+  * Higher Resource Usage: Rich data structures and persistence add memory overhead and CPU use, making Redis more expensive to operate at scale.
+  * More Operational Complexity: Redis clustering, failover, and persistence tuning require deeper operational knowledge.
+  * Single-Threaded per Shard: Although extremely fast, operations are serialized per shard, which may limit throughput for some workloads.
+  * Overkill for Simple Cache: If you only need GET/SET caching with no atomicity or structures, Redis provides features you don’t need and increases overhead.
+
+##### 5.4.2 Memcached
+PROS (+)
+  * Extremely Lightweight: Memcached is optimized for pure in-memory key-value caching with very low overhead, giving it high throughput for simple GET/SET.
+  * Simple Horizontal Scaling: Memcached nodes are stateless and client-side sharded, making scaling out trivial.
+  * Lower Cost: Since it uses less memory overhead and no persistence, Memcached is cheaper to run at large scale.
+  * Ideal for Simple Cache Layer: Perfect for caching HTML fragments, sessions, or API responses where atomicity and structure are not needed.
+
+CONS (–)
+  * No Persistence: Data is lost on restart or failure, making Memcached unsuitable for scenarios where counts or state must survive crashes.
+  * No Complex Data Types: Only supports raw key-value pairs, preventing efficient server-side counters, sets, or hash operations.  
+  * No Pub/Sub or Streaming: Cannot support real-time update features, forcing additional components for push-based dashboards.
+  * No Replication Built-In: Failures mean immediate data loss unless handled at the application layer.
 
 ### 🌏 6. For each key major component
 
@@ -190,6 +218,46 @@ Explain the techniques, principles,types of observability that will be used, key
 
 For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3, Neo4J etc...) describe the schemas, what would be stored there and why, main queries, expectations on performance. Diagrams are welcome but you really need some dictionaries.
 
+##### 10.1 Redis
+###### 10.1.1 Creaating the real-time vote counter
+```
+# HINCRBY is atomic: safe for concurrent voting.
+
+Key: poll:<poll_id>:counts
+Type: HASH
+Fields:
+  <option_id>:<count>
+```
+Operations
+```
+HSET poll:<pull_id>:counts A 0 B 0 C 0 # to create
+HINCRBY poll:<pull_id>:counts <OPTION_ID> <QUANTITY_TO_INCREMENT> # to increment into the vote list
+HGETALL poll:<pull_id>:counts # to get all options and values from the vote list
+HGET poll:<pull_id>:counts "B" # to get a value from specific vote option
+```
+###### 10.1.2 Ensuring Unique Votes
+```
+# HINCRBY is atomic: safe for concurrent voting.
+Key: poll:<poll_id>:voters
+Type: SET
+Value: <user_id>
+```
+Operations
+```
+SADD poll:<poll_id>:voters "user_001"  # to create
+SISMEMBER poll:<poll_id>:voters "user_001" # check if the value exists
+```
+###### 10.1.3 Pub/Sub for Live Result Updates
+```
+Channel: poll:<poll_id>:updates
+Type: PUBSUB
+```
+operations
+```
+PUBLISH poll:<pull_id>:updates '{"option":"A","count":12004}'
+SUBSCRIBE poll:<pull_id>:updates
+```
+
 ### 🖹 11. Technology Stack
 
 Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
@@ -205,6 +273,10 @@ WHY:
   * SSE is one-way only (server -> client): WS support full two-way messaging.
   * Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
   * Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
+
+##### 11.4 Redis
+We chose Redis as the caching layer for the voting system due to its strong support for atomic operations, which are essential to guarantee correctness under high concurrency.  
+Redis provides native atomic commands, such as `INCR`, `HSET`, and `HINCRBY`, which ensure that vote increments and state transitions occur safely even when millions of users interact simultaneously.
 
 ### 🖹 12. References
 
