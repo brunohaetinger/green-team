@@ -1,8 +1,8 @@
 # 🧬 02.MAR.2026 - ARCHITECTURE KATA
 
-Template: https://github.com/diegopacheco/tech-resources/blob/master/arch-doc-template.md
-
+## Objective 
 You must design a Realtime voting system with the following requirements:
+
     1. Never loose Data
     2. Be secure and prevent bots and bad actors
     3. Handle 300M users 
@@ -11,6 +11,7 @@ You must design a Realtime voting system with the following requirements:
     6. Should be Realtime
     
 Restrictions:
+
     • Serverless
     • MongoDB
     • On-Premise, Google Cloude, Azure
@@ -42,8 +43,8 @@ We have to design an architecture for a realtime voting system that will handle 
 ### 3. 🎯 Non-Goals
 
 ```
-1. Serverless: it has high latency, cold startup and resources and execution time are limited.
-2. MongoDB - WHY ?
+1. Serverless: it has high latency, cold startup, resources and execution time are limited.
+2. MongoDB - Due to its eventual consistency characteristic, reading may not be realtime.
 3. On-Premisse and other clouds than AWS: AWS is the chosen cloud as it's more reliable and scalable
 4. OpenShift - OpenShift is a proprietary solution, prefer K8s or other opensource microservice solution.
 5. Mainframe or Monolith solutions - The system will need to automatically scale, quickly and on-demand.
@@ -51,8 +52,8 @@ We have to design an architecture for a realtime voting system that will handle 
 
 ### 📐 3. Principles
 
-List in form of bullets what design principles you want to be followed, it's great to have 5-10 lines.
-Example:
+Design principles we want to follow:
+
 ```
 1. Low Coupling: We need to watch for coupling all times.
 2. Flexibility: Users should be able to customize behavior without leaking the internals of the system. Leverage interfaces.
@@ -60,16 +61,18 @@ Example:
 4. Testability: Chaos engineering is a must and property testing. Testing should be done by engineers all times.
 5. Cache efficiency: Should leverage SSD caches and all forms of caches as much as possible.
 ```
+
 Recommended Reading: http://diego-pacheco.blogspot.com/2018/01/stability-principles.html
 
 ### 🏗️ 4. Overall Diagrams
 
-Here there will be a bunch of diagrams, to understand the solution.
-```
-🗂️ 4.1 Overall architecture: Show the big picture, relationship between macro components.
+Here is a bunch of diagrams to understand the solution
+[coiso](http://asd)
+
+🗂️ 4.1 [Overall](arch.drawio)    architecture: Show the big picture, relationship between macro components.
 🗂️ 4.2 Deployment: Show the infra in a big picture. 
 🗂️ 4.3 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered. 
-```
+
 Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.html
 
 ### 🧭 5. Trade-offs
@@ -79,9 +82,8 @@ Before you need list all your major decisions, them run tradeoffs on than.
 example:
 Major Decisions: 
 ```
-1. One mobile code base - should be (...)
-2. Reusable capability and low latency backends should be (...)
-3. Cache efficiency therefore should do (...)
+1. Language 
+
 ```
 Tradeoffs:
 ```
