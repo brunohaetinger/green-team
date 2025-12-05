@@ -23,9 +23,22 @@ Restrictions:
 ### 1. 🎯 Problem Statement and Context
 
 What is the problem? What is the context of the problem?
-```
-We have to design an architecture for a realtime voting system that will handle millions of users and high peaks of requests per second. We must ensure a smooth experience to the user when voting, each vote is unique and the user can check realtime results. It has to be reliable, scalable, secure, recoverable and auditable.
-```
+
+>We have to design an architecture for a **realtime voting system** that will handle
+>millions of users and high peaks of requests per second. 
+>
+> **Requirements**: 
+>
+> * We must ensure a smooth experience to the user when voting
+> * Each vote must be unique
+> * The user can check realtime results. 
+> * It has to be
+>   * reliable
+>   * scalable
+>   * secure
+>   * recoverable
+>   * auditable
+
 
 ### 2. 🎯 Goals
 
@@ -143,6 +156,8 @@ CONS (+)
   * Inefficient: many requests with no data = waste.
   * Higher latency between updates (depends on poll interval).
   * Scales poorly (many clients -> many HTTP requests).
+
+#### Cache layer
 
 
 ### 🌏 6. For each key major component
