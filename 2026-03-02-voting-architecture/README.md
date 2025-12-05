@@ -56,10 +56,11 @@ Design principles we want to follow:
 
 ```
 1. Low Coupling: We need to watch for coupling all times.
-2. Flexibility: Users should be able to customize behavior without leaking the internals of the system. Leverage interfaces.
-3. Observability: we should expose all key metrics on main features. Sucess and errors counters need to be exposed.
-4. Testability: Chaos engineering is a must and property testing. Testing should be done by engineers all times.
-5. Cache efficiency: Should leverage SSD caches and all forms of caches as much as possible.
+2. Isolation: Resources and environments should be isolated
+3. Reliability: The system should be highly-available(99.9%) mainly during peaks
+4. Observability: we should expose all key metrics on main features. Sucess and errors counters need to be exposed.
+5. Testability: Load testing, unit, integration and E2E tests should be done by engineers all times.
+6. Cache efficiency: Should leverage SSD caches and all forms of caches as much as possible.
 ```
 
 Recommended Reading: http://diego-pacheco.blogspot.com/2018/01/stability-principles.html
