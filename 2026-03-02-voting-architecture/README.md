@@ -99,6 +99,52 @@ CONS (+)
 PS: Be careful to not confuse problem with explanation. 
 <BR/>Recommended reading: http://diego-pacheco.blogspot.com/2023/07/tradeoffs.html
 
+#### 5.3 Websocket, SSE and Polling
+
+##### 5.3.1 Websocket
+A full-duplex, persisnt connection where client can push data at any time.
+
+PROS (+)
+  * Real-time, bidirectional communication.
+  * Minimal overhead after connection is established.
+  * High throughput, good for chat apps, multiplayer games, collaborative editors.
+  * Works well for many messages per second.
+
+CONS (+)
+  * More complex to implement than other.
+  * Not ideal for simple one-way updates.
+  * Not supported by older proxies without WebSocket upgrades.
+
+##### 5.3.2 Server-Sent Events (SSE)
+A single long-lived http connection where server pushes updates.  
+Unidirectional (client cannot send messages back over the same channel).
+
+PROS (+)
+  * Very simple to implement (just a text stream from server).
+  * Auto-reconnect built into the browser EventSource.
+  * Uses regular HTTP-proxy-friendly.
+  * Lightweight for one-direction real-time feeds.
+
+CONS (+)
+  * Not bidirectional.
+  * Not ideal for very high-frequency updates.
+  * Limited browser support on some older/embedded environments.
+  * No binary data (text only unless you encode).
+
+##### 5.3.3 Polling
+Client periodically requests new data with repeated HTTP requests.
+
+PROS (+)
+  * Easiest to implement.
+  * Works everywhere, no special protocols.
+  * Good for low-frequency or low-priority updates.
+
+CONS (+)
+  * Inefficient: many requests with no data = waste.
+  * Higher latency between updates (depends on poll interval).
+  * Scales poorly (many clients -> many HTTP requests).
+
+
 ### 🌏 6. For each key major component
 
 What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
@@ -136,6 +182,14 @@ Describe your stack, what databases would be used, what servers, what kind of co
 - Backend:
 - Frontend: 
 
+#### 11.3 Websocket
+WebSockets are chosen because they are bidirectional, scalable, secure, reliable, and optimized for real-time systems - all critical requirements for a massive voting platform.
+
+WHY:
+  * Bidirecional communication: Clients must send votes, and the server must confirm them.
+  * SSE is one-way only (server -> client): WS support full two-way messaging.
+  * Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
+  * Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
 
 ### 🖹 12. References
 
