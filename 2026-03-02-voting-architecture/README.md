@@ -81,6 +81,8 @@ Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.h
 List the tradeoffs analysis, comparing pros and cons for each major decision.
 Before you need list all your major decisions, them run tradeoffs on than.
 example:
+
+#TODO - Add as coisas que decicimos
 Major Decisions: 
 ```
 1. Language 
@@ -108,9 +110,15 @@ What is a majore component? A service, a lambda, a important ui, a generalized a
 ```
 6.1 - Class Diagram              : classic uml diagram with attributes and methods
 6.2 - Contract Documentation     : Operations, Inputs and Outputs
+#TODO - Definir o contrato da api
 6.3 - Persistence Model          : Diagrams, Table structure, partiotioning, main queries.
-6.4 - Algorithms/Data Structures : Spesific algos that need to be used, along size with spesific data structures.
+#TODO - Definir as tabelas, os campos, as interacoes entre tabelas, definir tb algumas queries (ex, votos de uma votacao, apuracoes, votos que x usuario fez)
+
+
+6.4 - Algorithms/Data Structures : Specific algos that need to be used, along size with spesific data structures.
+#TODO - Se tiver alguma data structure diferente, uma linked list, queue ou algo diferente pra solucionar useCase específico, tem que botar aqui
 ```
+
 
 Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc... 
 
@@ -127,11 +135,12 @@ Explain the techniques, principles, types of tests and will be performaned, and 
 ### 🖹 9. Observability strategy
 
 Explain the techniques, principles,types of observability that will be used, key metrics, what would be logged and how to design proper dashboards and alerts.
+#TODO - O que nois vai monitorá ?
 
 ### 🖹 10. Data Store Designs
 
 For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3, Neo4J etc...) describe the schemas, what would be stored there and why, main queries, expectations on performance. Diagrams are welcome but you really need some dictionaries.
-
+#TODO - Pq o cache, pq os bancos que decidimos?
 ### 🖹 11. Technology Stack
 
 Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
