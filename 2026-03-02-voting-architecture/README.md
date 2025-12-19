@@ -220,74 +220,75 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 
 ##### 10.1 Redis
 ###### 10.1.1 Creating the real-time vote counter
-```
+``` bash
 # HINCRBY is atomic: safe for concurrent voting.
+# Key: poll:<poll_id>:counts
+# Type: HASH
+# Fields:
+#  <option_id>:<count>
 
-Key: poll:<poll_id>:counts
-Type: HASH
-Fields:
-  <option_id>:<count>
-```
-Operations
-```
-HSET poll:<pull_id>:counts A 0 B 0 C 0 # to create
-HINCRBY poll:<pull_id>:counts <OPTION_ID> <QUANTITY_TO_INCREMENT> # to increment into the vote list
-HGETALL poll:<pull_id>:counts # to get all options and values from the vote list
-HGET poll:<pull_id>:counts "B" # to get a value from specific vote option
-```
-###### 10.1.2 Ensuring Unique Votes
-```
-# HINCRBY is atomic: safe for concurrent voting.
-Key: poll:<poll_id>:voters
-Type: SET
-Value: <user_id>
-```
-Operations
-```
-SADD poll:<poll_id>:voters "user_001"  # to create
-SISMEMBER poll:<poll_id>:voters "user_001" # check if the value exists
+# to create vote list
+HSET poll:<POLL_ID>:counts <OPTION_ID> <OPTION_VALUE> <OPTION_ID> <OPTION_VALUE> <OPTION_ID> <OPTION_VALUE>
+
+# to increment int othe vote list
+HINCRBY poll:<POLL_ID>:counts <OPTION_ID> <VALUE>
+
+# to get all options and values
+HGETALL poll:<POLL_ID>:counts
+
+# to get a value from specific vote option
+HGET poll:<POLL_ID>:counts <OPTION_ID>
+
+# Ensuring unique Votes
+# HINCRBY is atomic: safe for concurrent voting
+# Key: poll:<POLL_ID>:voters
+# Type: SET
+# Value: <USER_ID>
+
+# to create
+SADD poll:<POLL_ID>:voters <USER_ID>
+
+# To verify if the value exists, it means, it the user already voted
+SISMEMBER poll:<POLL_ID>:voters <USER_ID>
 ```
 ###### 10.1.3 Redis stream for batch Result Updates
-
-```
-Channel: poll:<poll_id>:updates
-Type: STREAM
-```
-
 Execution Plan
 
 * Set batch size: Decide how many votes should trigger a batch update
-* Increment temporary batch hash: Every vote increments the option count in `poll:<poll_id>:batch_counts`
+* Increment temporary batch hash: Every vote increments the option count in `poll:<POLL_ID>:batch_counts`
 * Check batch threshold: Sum all votes in the batch; if total >= batch size, continue
-* Publish batch to stream: Send accumulated counts to `poll:<poll_id>:updates` in a single XADD
+* Publish batch to stream: Send accumulated counts to `poll:<POLL_ID>:updates` in a single XADD
 * Reset temporary batch hash: Clear counts for the next batch
 * Consumer reads stream: Process batch updates in real-time, without one event per vote
    
 operations
-```
+``` bash
+# Channel: poll:<poll_id>:updates
+# Type: STREAM
+
 # Set the number of votes per batch
-SET poll:<poll_id>:batch 100
+SET poll:<POLL_ID>:batch 100
 
 # Increment vote counts for each option in a temporary hash
-HINCRBY poll:<poll_id>:batch_counts "A" 1
-HINCRBY poll:<poll_id>:batch_counts "B" 1
-HINCRBY poll:<poll_id>:batch_counts "C" 1
+HINCRBY poll:<POLL_ID>:batch_counts "A" 1
+HINCRBY poll:<POLL_ID>:batch_counts "B" 1
+HINCRBY poll:<POLL_ID>:batch_counts "C" 1
 
 # Sum all values in the temporary batch hash
 # If total votes >= batch, proceed to publish
-HVALS poll:<poll_id>:batch_counts
+HVALS poll:<POLL_ID>:batch_counts
 
 # Add the accumulated batch counts to the stream
-XADD poll:<poll_id>:updates * \
+XADD poll:<POLL_ID>:updates * \
     A <count_A> \
     B <count_B> \
     C <count_C>
 
 # Clear the temporary batch hash for next batch
-DEL poll:<poll_id>:batch_counts
+DEL poll:<POLL_ID>:batch_counts
 
 # Consumer reads new batch updates from the stream
-XREAD COUNT 1 BLOCK 0 STREAMS poll:<poll_id>:updates $
+XREAD COUNT 1 BLOCK 0 STREAMS poll:<POLL_ID>:updates $
 ```
 
 ###### To ensure atomicity, we use Lua script.
