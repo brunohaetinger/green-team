@@ -1,0 +1,21 @@
+# Build context exclusions
+.git
+.gitignore
+.idea
+.vscode
+*.swp
+*.swo
+*.DS_Store
+node_modules
+dist
+bin
+
+# Test and reports
+**/*_test.go
+k6-report.html
+k6-summary.json
+k6/
+
+# Local env files
+.env
+docker-compose.override.yml
