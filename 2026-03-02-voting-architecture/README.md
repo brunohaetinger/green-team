@@ -219,7 +219,7 @@ Explain the techniques, principles,types of observability that will be used, key
 For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3, Neo4J etc...) describe the schemas, what would be stored there and why, main queries, expectations on performance. Diagrams are welcome but you really need some dictionaries.
 
 ##### 10.1 Redis
-###### 10.1.1 Creaating the real-time vote counter
+###### 10.1.1 Creating the real-time vote counter
 ```
 # HINCRBY is atomic: safe for concurrent voting.
 
@@ -251,7 +251,7 @@ SISMEMBER poll:<poll_id>:voters "user_001" # check if the value exists
 
 ```
 Channel: poll:<poll_id>:updates
-Type: poll:<poll_id>:updates
+Type: STREAM
 ```
 
 Execution Plan
