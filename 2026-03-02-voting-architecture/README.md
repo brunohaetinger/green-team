@@ -247,15 +247,118 @@ Operations
 SADD poll:<poll_id>:voters "user_001"  # to create
 SISMEMBER poll:<poll_id>:voters "user_001" # check if the value exists
 ```
-###### 10.1.3 Pub/Sub for Live Result Updates
+###### 10.1.3 Redis stream for batch Result Updates
+
 ```
 Channel: poll:<poll_id>:updates
-Type: PUBSUB
+Type: poll:<poll_id>:updates
 ```
+
+Execution Plan
+
+* Set batch size: Decide how many votes should trigger a batch update
+* Increment temporary batch hash: Every vote increments the option count in `poll:<poll_id>:batch_counts`
+* Check batch threshold: Sum all votes in the batch; if total >= batch size, continue
+* Publish batch to stream: Send accumulated counts to `poll:<poll_id>:updates` in a single XADD
+* Reset temporary batch hash: Clear counts for the next batch
+* Consumer reads stream: Process batch updates in real-time, without one event per vote
+   
 operations
 ```
-PUBLISH poll:<pull_id>:updates '{"option":"A","count":12004}'
-SUBSCRIBE poll:<pull_id>:updates
+# Set the number of votes per batch
+SET poll:<poll_id>:batch 100
+
+# Increment vote counts for each option in a temporary hash
+HINCRBY poll:<poll_id>:batch_counts "A" 1
+HINCRBY poll:<poll_id>:batch_counts "B" 1
+HINCRBY poll:<poll_id>:batch_counts "C" 1
+
+# Sum all values in the temporary batch hash
+# If total votes >= batch, proceed to publish
+HVALS poll:<poll_id>:batch_counts
+
+# Add the accumulated batch counts to the stream
+XADD poll:<poll_id>:updates * \
+    A <count_A> \
+    B <count_B> \
+    C <count_C>
+
+# Clear the temporary batch hash for next batch
+DEL poll:<poll_id>:batch_counts
+
+# Consumer reads new batch updates from the stream
+XREAD COUNT 1 BLOCK 0 STREAMS poll:<poll_id>:updates $
+```
+
+###### To ensure atomicity, we use Lua script.
+``` lua
+local pollID      = ARGV[1]
+local userID      = ARGV[2]
+local optionID    = ARGV[3]
+
+-- define all keys internally based on <POLL_ID>
+local votersSetKey    = "poll:" .. pollID .. ":voters"
+local countsHashKey   = "poll:" .. pollID .. ":counts"
+local batchCountsHash = "poll:" .. pollID .. ":batch_counts"
+local batchStreamKey  = "poll:" .. pollID .. ":updates"
+local batchSizeKey    = "poll:" .. pollID .. ":batch"
+
+-- check if user already voted
+if redis.call("SISMEMBER", votersSetKey, userID) == 1 then
+    return {err="USER_ALREADY_VOTED"}
+end
+
+-- add user to voters set
+redis.call("SADD", votersSetKey, userID)
+
+-- increment total votes
+redis.call("HINCRBY", countsHashKey, optionID, 1)
+
+-- increment batch count
+redis.call("HINCRBY", batchCountsHash, optionID, 1)
+
+-- calculate total votes in batch
+local totalBatchVotes = 0
+local batchValues = redis.call("HVALS", batchCountsHash)
+for i=1, #batchValues do
+    totalBatchVotes = totalBatchVotes + tonumber(batchValues[i])
+end
+
+-- get batch size
+local batchSize = tonumber(redis.call("GET", batchSizeKey))
+
+-- if batch reached, push to stream and reset batch_counts
+if totalBatchVotes >= batchSize then
+    local batchData = redis.call("HGETALL", batchCountsHash)
+    redis.call("XADD", batchStreamKey, "*", unpack(batchData))
+    redis.call("DEL", batchCountsHash)
+    return {"BATCH_PUBLISHED", batchData}
+end
+
+return {"VOTE_ADDED"}
+```
+usage example in golang
+``` go
+argv := []interface{}{<POLL_ID>, <USER_ID>, <OPTION_ID>}
+
+res, err := rdb.Eval(ctx, <LUA_SCRIPT>, nil, argv...).Result()
+if err != nil {
+    fmt.Println("Error voting:", err)
+} else {
+    fmt.Printf("Vote result for %s: %v\n", userID, res)
+}
+```
+usage example in rust
+``` rust
+let result: redis::Value = redis::Script::new(<LUA_SCRIPT>)
+    .key("")
+    .arg(<POOL_ID>)
+    .arg(<USER_ID>)
+    .arg(<OPTION_ID>)
+    .invoke_async(&mut con)
+    .await?;
+
+println!("Vote result: {:?}", result);
 ```
 
 ### 🖹 11. Technology Stack
