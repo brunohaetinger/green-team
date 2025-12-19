@@ -380,7 +380,7 @@ WHY:
 ##### 11.4 Redis
 We chose Redis as the caching layer for the voting system due to its strong support for atomic operations, which are essential to guarantee correctness under high concurrency.  
 Redis provides native atomic commands, such as `INCR`, `HSET`, and `HINCRBY`, which ensure that vote increments and state transitions occur safely even when millions of users interact simultaneously.
-And also because Redis can work with pub and sub, which is important for updating frontend subscribers to rerender your screen in realtime.
+And also because we can use Redis Stream, which is important for updating frontend subscribers to rerender your screen in realtime.
 
 ### 🖹 12. References
 
