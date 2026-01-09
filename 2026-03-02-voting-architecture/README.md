@@ -114,9 +114,26 @@ CONS (+)
 PS: Be careful to not confuse problem with explanation. 
 <BR/>Recommended reading: http://diego-pacheco.blogspot.com/2023/07/tradeoffs.html
 
-#### 5.3 Websocket, SSE and Polling
+### 5.1 Backend
 
-##### 5.3.1 Websocket
+## 5.1.1 Go (Golang)
+
+**Pros**: Fast execution and compilation, simple and efficient concurrency through goroutines and channels, mature ecosystem with extensive libraries, easy deployment via compiled binaries, excellent tooling and IDE support.
+**Cons**: Garbage collector can introduce occasional microsecond-level pauses under heavy load.
+
+## 5.1.2 Rust
+
+**Pros**: Maximum performance with zero-cost abstractions, memory safety without garbage collection, deterministic performance for ultra-low-latency requirements, strong type system catches errors at compile time, no runtime overhead.
+**Cons**: Longer compile times compared to Go. Smaller ecosystem compared to established languages.
+
+## 5.1.3 Java / Kotlin
+
+**Pros:** Mature ecosystem, gret integration for Kafka Streams (unmatched for stateful stream processing), robust JVM with advanced JIT compilation, Spring framework for quick development.
+**Cons**: GC tuning complexity at scale, higher memory footprint, slower startup times, unpredictable latency spikes during GC pauses, which is unacceptable for real-time voting where every millisecond matters.
+
+#### 5.2 Websocket, SSE and Polling
+
+##### 5.2.1 Websocket
 A full-duplex, persisnt connection where client can push data at any time.
 
 PROS (+)
@@ -130,7 +147,7 @@ CONS (+)
   * Not ideal for simple one-way updates.
   * Not supported by older proxies without WebSocket upgrades.
 
-##### 5.3.2 Server-Sent Events (SSE)
+##### 5.2.2 Server-Sent Events (SSE)
 A single long-lived http connection where server pushes updates.  
 Unidirectional (client cannot send messages back over the same channel).
 
@@ -146,7 +163,7 @@ CONS (+)
   * Limited browser support on some older/embedded environments.
   * No binary data (text only unless you encode).
 
-##### 5.3.3 Polling
+##### 5.2.3 Polling
 Client periodically requests new data with repeated HTTP requests.
 
 PROS (+)
@@ -159,9 +176,9 @@ CONS (+)
   * Higher latency between updates (depends on poll interval).
   * Scales poorly (many clients -> many HTTP requests).
 
-#### 5.4 Cache layer
+#### 5.3 Cache layer
 
-##### 5.4.1 Redis
+##### 5.3.1 Redis
 PROS (+)
   * Rich Data Structures: Redis supports hashes, sets, sorted sets, bitmaps, and atomic counters, enabling complex real-time operations such as vote counting and user uniqueness checks.
   * Atomic Operations: Operations like INCR, HINCRBY, SETNX, and Lua scripts guarantee correctness under high concurrency, which is essential for voting systems.
@@ -175,7 +192,7 @@ CONS (–)
   * Single-Threaded per Shard: Although extremely fast, operations are serialized per shard, which may limit throughput for some workloads.
   * Overkill for Simple Cache: If you only need GET/SET caching with no atomicity or structures, Redis provides features you don’t need and increases overhead.
 
-##### 5.4.2 Memcached
+##### 5.3.2 Memcached
 PROS (+)
   * Extremely Lightweight: Memcached is optimized for pure in-memory key-value caching with very low overhead, giving it high throughput for simple GET/SET.
   * Simple Horizontal Scaling: Memcached nodes are stateless and client-side sharded, making scaling out trivial.
@@ -204,19 +221,48 @@ Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-d
 
 ### 🖹 7. Migrations
 
-IF Migrations are required describe the migrations strategy with proper diagrams, text and tradeoffs.
+No migration required in this project
+
 
 ### 🖹 8. Testing strategy
 
 Explain the techniques, principles, types of tests and will be performaned, and spesific details how to mock data, stress test it, spesific chaos goals and assumptions.
 
+- What kind of tests are we going to implement ?
+- What tests we should have more in our project ?
+- When tests are going to run?
+- Which tools are we going to use ?
+- What are we going to test ? Any KPIs to be defined ?
+- Which are the most important features ?
+
+
 ### 🖹 9. Observability strategy
 
 Explain the techniques, principles,types of observability that will be used, key metrics, what would be logged and how to design proper dashboards and alerts.
 
+#### 9.1 Metrics collection and Dashboards
+
+- What metrics to collect ?
+- What dashboards to use? which metrics to display ?
+
+#### 9.2 Logging
+
+- What is important to log ?
+- How to make it easy to keep track of logs ?
+
+#### 9.3 Alerting and Incident Response
+
+- What will trigger alerts ? What are the boundaries to evaluate ?
+
+#### 9.4 Distributed Tracing
+
 ### 🖹 10. Data Store Designs
 
 For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3, Neo4J etc...) describe the schemas, what would be stored there and why, main queries, expectations on performance. Diagrams are welcome but you really need some dictionaries.
+
+- Queries examples, per service?
+- Partitioning ?
+- Caching ?
 
 ##### 10.1 Redis
 ###### 10.1.1 Creating the real-time vote counter
@@ -260,7 +306,7 @@ Execution Plan
 * Publish batch to stream: Send accumulated counts to `poll:<POLL_ID>:updates` in a single XADD
 * Reset temporary batch hash: Clear counts for the next batch
 * Consumer reads stream: Process batch updates in real-time, without one event per vote
-   
+
 operations
 ``` bash
 # Channel: poll:<poll_id>:updates
@@ -367,7 +413,12 @@ println!("Vote result: {:?}", result);
 Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
 
 - Backend:
+
+**Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
+
 - Frontend: 
+- Infrastructure:
+- Data:
 
 #### 11.3 Websocket
 WebSockets are chosen because they are bidirectional, scalable, secure, reliable, and optimized for real-time systems - all critical requirements for a massive voting platform.
