@@ -68,8 +68,10 @@ Here there will be a bunch of diagrams, to understand the solution.
 ```
 🗂️ 4.1 Overall architecture: Show the big picture, relationship between macro components.
 🗂️ 4.2 Deployment: Show the infra in a big picture. 
-🗂️ 4.3 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered. 
 ```
+
+#### 4.3 Use Cases: 
+![Use Case Diagram](use-cases.drawio.png)
 Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.html
 
 ### 🧭 5. Trade-offs
@@ -134,7 +136,11 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
 
 - Backend:
-- Frontend: 
+- Frontend:
+  - reCaptcha V3 (Invisible Captcha)
+    - Analyzes user interactions in the background without friction and better suitable than challenges that nowadays can be bypassed by AI.
+  - JS Challenges
+    - To ensure the client is a real browser executing JS code, preventing basic bots which do not run JS.
 
 
 ### 🖹 12. References
