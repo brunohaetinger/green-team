@@ -23,9 +23,22 @@ Restrictions:
 ### 1. 🎯 Problem Statement and Context
 
 What is the problem? What is the context of the problem?
-```
-We have to design an architecture for a realtime voting system that will handle millions of users and high peaks of requests per second. We must ensure a smooth experience to the user when voting, each vote is unique and the user can check realtime results. It has to be reliable, scalable, secure, recoverable and auditable.
-```
+
+>We have to design an architecture for a **realtime voting system** that will handle
+>millions of users and high peaks of requests per second. 
+>
+> **Requirements**: 
+>
+> * We must ensure a smooth experience to the user when voting
+> * Each vote must be unique
+> * The user can check realtime results. 
+> * It has to be
+>   * reliable
+>   * scalable
+>   * secure
+>   * recoverable
+>   * auditable
+
 
 ### 2. 🎯 Goals
 
@@ -72,6 +85,8 @@ Here there will be a bunch of diagrams, to understand the solution.
 ```
 Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.html
 
+#### Cache layer diagram
+
 ### 🧭 5. Trade-offs
 
 List the tradeoffs analysis, comparing pros and cons for each major decision.
@@ -101,20 +116,94 @@ PS: Be careful to not confuse problem with explanation.
 
 ### 5.1 Backend
 
-## Go (Golang)
+## 5.1.1 Go (Golang)
 
 **Pros**: Fast execution and compilation, simple and efficient concurrency through goroutines and channels, mature ecosystem with extensive libraries, easy deployment via compiled binaries, excellent tooling and IDE support.
 **Cons**: Garbage collector can introduce occasional microsecond-level pauses under heavy load.
 
-## Rust
+## 5.1.2 Rust
 
 **Pros**: Maximum performance with zero-cost abstractions, memory safety without garbage collection, deterministic performance for ultra-low-latency requirements, strong type system catches errors at compile time, no runtime overhead.
 **Cons**: Longer compile times compared to Go. Smaller ecosystem compared to established languages.
 
-## Java / Kotlin
+## 5.1.3 Java / Kotlin
 
 **Pros:** Mature ecosystem, gret integration for Kafka Streams (unmatched for stateful stream processing), robust JVM with advanced JIT compilation, Spring framework for quick development.
 **Cons**: GC tuning complexity at scale, higher memory footprint, slower startup times, unpredictable latency spikes during GC pauses, which is unacceptable for real-time voting where every millisecond matters.
+
+#### 5.2 Websocket, SSE and Polling
+
+##### 5.2.1 Websocket
+A full-duplex, persisnt connection where client can push data at any time.
+
+PROS (+)
+  * Real-time, bidirectional communication.
+  * Minimal overhead after connection is established.
+  * High throughput, good for chat apps, multiplayer games, collaborative editors.
+  * Works well for many messages per second.
+
+CONS (+)
+  * More complex to implement than other.
+  * Not ideal for simple one-way updates.
+  * Not supported by older proxies without WebSocket upgrades.
+
+##### 5.2.2 Server-Sent Events (SSE)
+A single long-lived http connection where server pushes updates.  
+Unidirectional (client cannot send messages back over the same channel).
+
+PROS (+)
+  * Very simple to implement (just a text stream from server).
+  * Auto-reconnect built into the browser EventSource.
+  * Uses regular HTTP-proxy-friendly.
+  * Lightweight for one-direction real-time feeds.
+
+CONS (+)
+  * Not bidirectional.
+  * Not ideal for very high-frequency updates.
+  * Limited browser support on some older/embedded environments.
+  * No binary data (text only unless you encode).
+
+##### 5.2.3 Polling
+Client periodically requests new data with repeated HTTP requests.
+
+PROS (+)
+  * Easiest to implement.
+  * Works everywhere, no special protocols.
+  * Good for low-frequency or low-priority updates.
+
+CONS (+)
+  * Inefficient: many requests with no data = waste.
+  * Higher latency between updates (depends on poll interval).
+  * Scales poorly (many clients -> many HTTP requests).
+
+#### 5.3 Cache layer
+
+##### 5.3.1 Redis
+PROS (+)
+  * Rich Data Structures: Redis supports hashes, sets, sorted sets, bitmaps, and atomic counters, enabling complex real-time operations such as vote counting and user uniqueness checks.
+  * Atomic Operations: Operations like INCR, HINCRBY, SETNX, and Lua scripts guarantee correctness under high concurrency, which is essential for voting systems.
+  * Persistence Options: Redis offers RDB and AOF persistence, ensuring data durability during crashes.
+  * Pub/Sub Support: Redis can push real-time updates through Pub/Sub, enabling instant updates for dashboards and WebSocket-based clients.
+  * Replication & Clustering: Redis Cluster provides automatic sharding and replication for high availability and horizontal scalability.
+
+CONS (–)
+  * Higher Resource Usage: Rich data structures and persistence add memory overhead and CPU use, making Redis more expensive to operate at scale.
+  * More Operational Complexity: Redis clustering, failover, and persistence tuning require deeper operational knowledge.
+  * Single-Threaded per Shard: Although extremely fast, operations are serialized per shard, which may limit throughput for some workloads.
+  * Overkill for Simple Cache: If you only need GET/SET caching with no atomicity or structures, Redis provides features you don’t need and increases overhead.
+
+##### 5.3.2 Memcached
+PROS (+)
+  * Extremely Lightweight: Memcached is optimized for pure in-memory key-value caching with very low overhead, giving it high throughput for simple GET/SET.
+  * Simple Horizontal Scaling: Memcached nodes are stateless and client-side sharded, making scaling out trivial.
+  * Lower Cost: Since it uses less memory overhead and no persistence, Memcached is cheaper to run at large scale.
+  * Ideal for Simple Cache Layer: Perfect for caching HTML fragments, sessions, or API responses where atomicity and structure are not needed.
+
+CONS (–)
+  * No Persistence: Data is lost on restart or failure, making Memcached unsuitable for scenarios where counts or state must survive crashes.
+  * No Complex Data Types: Only supports raw key-value pairs, preventing efficient server-side counters, sets, or hash operations.  
+  * No Pub/Sub or Streaming: Cannot support real-time update features, forcing additional components for push-based dashboards.
+  * No Replication Built-In: Failures mean immediate data loss unless handled at the application layer.
 
 ### 🌏 6. For each key major component
 
@@ -175,6 +264,150 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 - Partitioning ?
 - Caching ?
 
+##### 10.1 Redis
+###### 10.1.1 Creating the real-time vote counter
+``` bash
+# HINCRBY is atomic: safe for concurrent voting.
+# Key: poll:<poll_id>:counts
+# Type: HASH
+# Fields:
+#  <option_id>:<count>
+
+# to create vote list
+HSET poll:<POLL_ID>:counts <OPTION_ID> <OPTION_VALUE> <OPTION_ID> <OPTION_VALUE> <OPTION_ID> <OPTION_VALUE>
+
+# to increment int othe vote list
+HINCRBY poll:<POLL_ID>:counts <OPTION_ID> <VALUE>
+
+# to get all options and values
+HGETALL poll:<POLL_ID>:counts
+
+# to get a value from specific vote option
+HGET poll:<POLL_ID>:counts <OPTION_ID>
+
+# Ensuring unique Votes
+# HINCRBY is atomic: safe for concurrent voting
+# Key: poll:<POLL_ID>:voters
+# Type: SET
+# Value: <USER_ID>
+
+# to create
+SADD poll:<POLL_ID>:voters <USER_ID>
+
+# To verify if the value exists, it means, it the user already voted
+SISMEMBER poll:<POLL_ID>:voters <USER_ID>
+```
+###### 10.1.3 Redis stream for batch Result Updates
+Execution Plan
+
+* Set batch size: Decide how many votes should trigger a batch update
+* Increment temporary batch hash: Every vote increments the option count in `poll:<POLL_ID>:batch_counts`
+* Check batch threshold: Sum all votes in the batch; if total >= batch size, continue
+* Publish batch to stream: Send accumulated counts to `poll:<POLL_ID>:updates` in a single XADD
+* Reset temporary batch hash: Clear counts for the next batch
+* Consumer reads stream: Process batch updates in real-time, without one event per vote
+
+operations
+``` bash
+# Channel: poll:<poll_id>:updates
+# Type: STREAM
+
+# Set the number of votes per batch
+SET poll:<POLL_ID>:batch 100
+
+# Increment vote counts for each option in a temporary hash
+HINCRBY poll:<POLL_ID>:batch_counts "A" 1
+HINCRBY poll:<POLL_ID>:batch_counts "B" 1
+HINCRBY poll:<POLL_ID>:batch_counts "C" 1
+
+# Sum all values in the temporary batch hash
+# If total votes >= batch, proceed to publish
+HVALS poll:<POLL_ID>:batch_counts
+
+# Add the accumulated batch counts to the stream
+XADD poll:<POLL_ID>:updates * \
+    A <count_A> \
+    B <count_B> \
+    C <count_C>
+
+# Clear the temporary batch hash for next batch
+DEL poll:<POLL_ID>:batch_counts
+
+# Consumer reads new batch updates from the stream
+XREAD COUNT 1 BLOCK 0 STREAMS poll:<POLL_ID>:updates $
+```
+
+###### To ensure atomicity, we use Lua script.
+``` lua
+local pollID      = ARGV[1]
+local userID      = ARGV[2]
+local optionID    = ARGV[3]
+
+-- define all keys internally based on <POLL_ID>
+local votersSetKey    = "poll:" .. pollID .. ":voters"
+local countsHashKey   = "poll:" .. pollID .. ":counts"
+local batchCountsHash = "poll:" .. pollID .. ":batch_counts"
+local batchStreamKey  = "poll:" .. pollID .. ":updates"
+local batchSizeKey    = "poll:" .. pollID .. ":batch"
+
+-- check if user already voted
+if redis.call("SISMEMBER", votersSetKey, userID) == 1 then
+    return {err="USER_ALREADY_VOTED"}
+end
+
+-- add user to voters set
+redis.call("SADD", votersSetKey, userID)
+
+-- increment total votes
+redis.call("HINCRBY", countsHashKey, optionID, 1)
+
+-- increment batch count
+redis.call("HINCRBY", batchCountsHash, optionID, 1)
+
+-- calculate total votes in batch
+local totalBatchVotes = 0
+local batchValues = redis.call("HVALS", batchCountsHash)
+for i=1, #batchValues do
+    totalBatchVotes = totalBatchVotes + tonumber(batchValues[i])
+end
+
+-- get batch size
+local batchSize = tonumber(redis.call("GET", batchSizeKey))
+
+-- if batch reached, push to stream and reset batch_counts
+if totalBatchVotes >= batchSize then
+    local batchData = redis.call("HGETALL", batchCountsHash)
+    redis.call("XADD", batchStreamKey, "*", unpack(batchData))
+    redis.call("DEL", batchCountsHash)
+    return {"BATCH_PUBLISHED", batchData}
+end
+
+return {"VOTE_ADDED"}
+```
+usage example in golang
+``` go
+argv := []interface{}{<POLL_ID>, <USER_ID>, <OPTION_ID>}
+
+res, err := rdb.Eval(ctx, <LUA_SCRIPT>, nil, argv...).Result()
+if err != nil {
+    fmt.Println("Error voting:", err)
+} else {
+    fmt.Printf("Vote result for %s: %v\n", userID, res)
+}
+```
+usage example in rust
+``` rust
+let result: redis::Value = redis::Script::new(<LUA_SCRIPT>)
+    .key("")
+    .arg(<POOL_ID>)
+    .arg(<USER_ID>)
+    .arg(<OPTION_ID>)
+    .invoke_async(&mut con)
+    .await?;
+
+println!("Vote result: {:?}", result);
+```
+
 ### 🖹 11. Technology Stack
 
 Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
@@ -187,6 +420,19 @@ Describe your stack, what databases would be used, what servers, what kind of co
 - Infrastructure:
 - Data:
 
+#### 11.3 Websocket
+WebSockets are chosen because they are bidirectional, scalable, secure, reliable, and optimized for real-time systems - all critical requirements for a massive voting platform.
+
+WHY:
+  * Bidirecional communication: Clients must send votes, and the server must confirm them.
+  * SSE is one-way only (server -> client): WS support full two-way messaging.
+  * Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
+  * Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
+
+##### 11.4 Redis
+We chose Redis as the caching layer for the voting system due to its strong support for atomic operations, which are essential to guarantee correctness under high concurrency.  
+Redis provides native atomic commands, such as `INCR`, `HSET`, and `HINCRBY`, which ensure that vote increments and state transitions occur safely even when millions of users interact simultaneously.
+And also because we can use Redis Stream, which is important for updating frontend subscribers to rerender your screen in realtime.
 
 ### 🖹 12. References
 
