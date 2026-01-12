@@ -50,8 +50,3 @@ pub struct CreatePollRequest {
     pub question: String,
     pub options: Vec<String>, // labels of the options
 }
-
-#[derive(Debug, Deserialize)]
-pub struct CreateOptionRequest {
-    pub label: String,
-}

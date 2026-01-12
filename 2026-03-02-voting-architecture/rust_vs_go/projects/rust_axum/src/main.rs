@@ -1,4 +1,4 @@
-//
+//imports
 use axum::{
     extract::{WebSocketUpgrade, Path, State},
     http::StatusCode,
@@ -10,7 +10,7 @@ use axum::extract::ws::{WebSocket, Message};
 use futures::{StreamExt};
 
 use std::{
-    collections::{HashMap},
+    collections::{HashMap,HashSet},
     net::SocketAddr,
     sync::{Arc, atomic::AtomicU32},
 };
@@ -19,7 +19,7 @@ use tokio::sync::{broadcast, RwLock};
 
 use voting_system::{
     AppState, VoteRequest, Poll, PollId,
-    ApiError,
+    ApiError, CreatePollRequest, OptionItem,
 };
 
 // ENDPOINTS
@@ -96,8 +96,6 @@ async fn get_poll(
         Err(StatusCode::NOT_FOUND)
     }
 }
-
-//todo : add create poll endpoint
 //todo: add websocket endpoint
 
 // GET /ws -> stream poll updates via WebSocket
@@ -107,7 +105,6 @@ async fn ws_handler(
 ) -> impl IntoResponse {
     ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
-
 
 // Socket handler
 async fn handle_socket(mut socket: WebSocket, state: AppState) {
@@ -129,6 +126,43 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
             }
         }
     }
+}
+
+// POST /polls -> create a new poll
+async fn create_poll(
+    State(state): State<AppState>,
+    Json(payload): Json<CreatePollRequest>,
+) -> Result<Json<Poll>, (StatusCode, Json<ApiError>)> {
+    
+    let poll_id = state.next_poll_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    let mut polls = state.polls.write().await;
+    let mut next_option_id: u32 = 1;
+
+    let options: Vec<OptionItem> = payload
+        .options
+        .into_iter()
+        .map(|label| {
+            let id = next_option_id;
+            next_option_id += 1;
+            OptionItem {
+                id,
+                label,
+                votes: 0,
+            }
+        })
+        .collect();
+
+    let new_poll = Poll {
+        id: poll_id,
+        question: payload.question,
+        is_open: true,
+        options,
+        voters: HashSet::new(),
+    };
+
+    polls.insert(poll_id, new_poll.clone());
+
+    Ok(Json(new_poll))
 }
 
 // MAIN
@@ -157,7 +191,8 @@ async fn main() {
         .route("/polls", get(list_polls))
         .route("/polls/:poll_id", get(get_poll))
         .route("/ws", get(ws_handler)) 
-        .with_state(state);
+        .route("/polls", post(create_poll))
+        .with_state(state.clone());
 
     // start server
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
@@ -166,5 +201,14 @@ async fn main() {
     // create TCP listener
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
+
+    //Adding poll for testing
+    /*let _ = create_poll(
+        State(state.clone()), 
+        Json(CreatePollRequest {
+            question: "Which language is your favorite?".into(),
+            options: vec!["Rust".into(), "Go".into(), "Python".into()],
+        })
+    ).await;*/
     
 }

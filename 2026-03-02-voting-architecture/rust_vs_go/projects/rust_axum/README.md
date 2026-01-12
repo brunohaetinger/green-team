@@ -47,14 +47,25 @@ cargo run
 
 ## How to Call API
 
-1. Vote
+1. Creating the poll
+
+```
+curl --location 'http://localhost:8080/polls' \
+--header 'Content-Type: application/json' \
+--data '{
+    "question":"Which language is your favorite?",
+    "options": ["Rust", "Go", "Java", "Python"]
+}'
+```
+
+2. Vote
 
 ```
 curl --location 'http://localhost:8080/vote' \
 --header 'Content-Type: application/json' \
 --data '{
-    "poll_id": 1,
-    "option_id": 1,
+    "poll_id": 2,
+    "option_id": 3,
     "voter_id": "7559d194-a50f-45e5-8048-c9ff8d139d7c"
 }'
 ```
