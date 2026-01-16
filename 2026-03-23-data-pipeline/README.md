@@ -94,3 +94,14 @@ Spark wins in ease of observability.
 ✖ Higher maintenance cost for inexperienced teams  
 
 Spark has lower operational overhead.
+
+### Choice
+
+Spark is the better choice in this project because:
+
+- The problem is analytical, not explicitly real-time critical.
+- Data lineage and observability are hard requirements, and Spark’s ecosystem is more mature.
+- Ingestion from DBs, files, and traditional services aligns naturally with batch/micro-batch processing.
+- ~~The team is not specialized in data streaming, making Spark safer to implement and operate.~~
+
+We chose Apache Spark because it satisfies all functional requirements while minimizing operational complexity and delivery risk. Since sub-second latency is not a requirement, Spark’s micro-batch model is sufficient for analytical rankings and provides better governance and observability for the current team.
