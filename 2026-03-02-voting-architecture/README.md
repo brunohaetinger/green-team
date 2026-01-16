@@ -205,6 +205,51 @@ CONS (–)
   * No Pub/Sub or Streaming: Cannot support real-time update features, forcing additional components for push-based dashboards.
   * No Replication Built-In: Failures mean immediate data loss unless handled at the application layer.
 
+#### 5.4 Frontend:
+
+##### 5.4.1 Solid.js
+
+PROS (+) 
+  * Fine-grained reactivity: It is a pattern that update only the exact piece of the UI that depends on the changed data, without re-rerender the component, it is great for real time projects.
+  * Very low runtime overhead: Solid uses almost no framework code in the browser.
+  * Very recommended for high-frequency updates.
+
+CONS (+)
+  * Small ecosystem: Maybe it can't have some integrations and libraries.
+
+##### 5.4.2 Svelte
+
+PROS (+) 
+  * Fast and lightweight output: Compile the code to pure JavaScript without a virtual DOM, producing very small bundles.
+  * Built-in reactivity: The UI automatically updates when data changes. Without state libraries.
+  * Smaller bundle size, specially for less complex apps.
+
+CONS (+)
+  * Small ecosystem: Maybe it can't have some integrations and libraries.
+  * Has a great way to update the DOM, better than Virtual DOM, but not so performatic than Solid.js.
+
+##### 5.4.3 React
+
+PROS (+) 
+  * Because of its large number of clients has a mature ecosystem.
+  * Very stable and enterprise acceptance.
+
+CONS (+)
+  * Uses Virtual DOM, which adds overhead on every update.
+  * Has a bundle size bigger than the others.
+
+##### 5.4.4 Next.js
+
+PROS (+) 
+  * Based on React.js = almost the same community.
+  * Great resources for complex scenarios around the full-stack development.
+  * Strong ecosystem and enterprise adoption.
+
+CONS (+)
+  * For not complex projects, it may be not necessary because its native resources that won't be used.
+  * Bundle size bigger than the others.
+  * It is default SSR, which is not required for our scenario.
+
 ### 🌏 6. For each key major component
 
 What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
@@ -417,6 +462,16 @@ Describe your stack, what databases would be used, what servers, what kind of co
 **Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
 
 - Frontend: 
+#### 11.2 Frontend:
+
+Chosen Solid.js because it is the most performatic solution.
+
+Solid.js is a highly performant, lightweight UI library for building reactive interfaces, specially strong in real-time, high-frequency update scenarios. It focuses on fine-grained reactivity, meaning the framework updates only the exact parts of the DOM that depend on changed data.
+
+Why popular frameworks like React and Next was not chosen?
+
+React and Next.js offer a strong ecosystem support, but their features introduce unnecessary overhead for a CSR-only, WebSocket-driven real-time voting system.
+
 - Infrastructure:
 - Data:
 
