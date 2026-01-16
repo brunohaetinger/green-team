@@ -1,8 +1,8 @@
 # 🧬 02.MAR.2026 - ARCHITECTURE KATA
 
-Template: https://github.com/diegopacheco/tech-resources/blob/master/arch-doc-template.md
-
+## Objective 
 You must design a Realtime voting system with the following requirements:
+
     1. Never loose Data
     2. Be secure and prevent bots and bad actors
     3. Handle 300M users 
@@ -11,6 +11,7 @@ You must design a Realtime voting system with the following requirements:
     6. Should be Realtime
     
 Restrictions:
+
     • Serverless
     • MongoDB
     • On-Premise, Google Cloude, Azure
@@ -55,8 +56,8 @@ What is the problem? What is the context of the problem?
 ### 3. 🎯 Non-Goals
 
 ```
-1. Serverless: it has high latency, cold startup and resources and execution time are limited.
-2. MongoDB - WHY ?
+1. Serverless: it has high latency, cold startup, resources and execution time are limited.
+2. MongoDB - Due to its eventual consistency characteristic, reading may not be realtime.
 3. On-Premisse and other clouds than AWS: AWS is the chosen cloud as it's more reliable and scalable
 4. OpenShift - OpenShift is a proprietary solution, prefer K8s or other opensource microservice solution.
 5. Mainframe or Monolith solutions - The system will need to automatically scale, quickly and on-demand.
@@ -64,25 +65,28 @@ What is the problem? What is the context of the problem?
 
 ### 📐 3. Principles
 
-List in form of bullets what design principles you want to be followed, it's great to have 5-10 lines.
-Example:
+Design principles we want to follow:
+
 ```
 1. Low Coupling: We need to watch for coupling all times.
-2. Flexibility: Users should be able to customize behavior without leaking the internals of the system. Leverage interfaces.
-3. Observability: we should expose all key metrics on main features. Sucess and errors counters need to be exposed.
-4. Testability: Chaos engineering is a must and property testing. Testing should be done by engineers all times.
-5. Cache efficiency: Should leverage SSD caches and all forms of caches as much as possible.
+2. Isolation: Resources and environments should be isolated
+3. Reliability: The system should be highly-available(99.9%) mainly during peaks
+4. Observability: we should expose all key metrics on main features. Sucess and errors counters need to be exposed.
+5. Testability: Load testing, unit, integration and E2E tests should be done by engineers all times.
+6. Cache efficiency: Should leverage SSD caches and all forms of caches as much as possible.
 ```
+
 Recommended Reading: http://diego-pacheco.blogspot.com/2018/01/stability-principles.html
 
 ### 🏗️ 4. Overall Diagrams
 
-Here there will be a bunch of diagrams, to understand the solution.
-```
-🗂️ 4.1 Overall architecture: Show the big picture, relationship between macro components.
+Here is a bunch of diagrams to understand the solution
+[coiso](http://asd)
+
+🗂️ 4.1 [Overall](arch.drawio)    architecture: Show the big picture, relationship between macro components.
 🗂️ 4.2 Deployment: Show the infra in a big picture. 
 🗂️ 4.3 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered. 
-```
+
 Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.html
 
 #### Cache layer diagram
@@ -92,11 +96,12 @@ Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.h
 List the tradeoffs analysis, comparing pros and cons for each major decision.
 Before you need list all your major decisions, them run tradeoffs on than.
 example:
+
+#TODO - Add all decisions we made
 Major Decisions: 
 ```
-1. One mobile code base - should be (...)
-2. Reusable capability and low latency backends should be (...)
-3. Cache efficiency therefore should do (...)
+1. Language 
+
 ```
 Tradeoffs:
 ```
@@ -256,9 +261,15 @@ What is a majore component? A service, a lambda, a important ui, a generalized a
 ```
 6.1 - Class Diagram              : classic uml diagram with attributes and methods
 6.2 - Contract Documentation     : Operations, Inputs and Outputs
+#TODO - Define api contract
 6.3 - Persistence Model          : Diagrams, Table structure, partiotioning, main queries.
-6.4 - Algorithms/Data Structures : Spesific algos that need to be used, along size with spesific data structures.
+#TODO - Define the tables, fields, and interactions between tables; also define some queries (e.g., votes for a given election, results, votes cast by a specific user).
+
+
+6.4 - Algorithms/Data Structures : Specific algos that need to be used, along size with spesific data structures.
+#TODO - If there is any different data structure (a linked list, queue, or something else) to solve a specific use case, it must be added here.
 ```
+
 
 Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc... 
 
@@ -284,6 +295,7 @@ Explain the techniques, principles, types of tests and will be performaned, and 
 ### 🖹 9. Observability strategy
 
 Explain the techniques, principles,types of observability that will be used, key metrics, what would be logged and how to design proper dashboards and alerts.
+#TODO - What's going to be monitored ?
 
 #### 9.1 Metrics collection and Dashboards
 
