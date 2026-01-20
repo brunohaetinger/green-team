@@ -299,6 +299,15 @@ No migration required in this project
 
 #### 8.1 Types of Tests to Implement - Priority
 
+| Test Type                | Purpose                                                              | Priority |
+| ------------------------ | -------------------------------------------------------------------- | -------- |
+| **Unit Tests**           | Validate individual functions (vote validation, deduplication logic) | High     |
+| **Integration Tests**    | Test Redis/PostgreSQL interactions, queue, processing                | High     |
+| **Load Tests**           | Verify 250k RPS handling                                             | High     |
+| **Contract/API Tests**   | Validate HTTP endpoints, request/response schemas                    | Medium   |
+| **Chaos Engineering**    | Failure injection (Redis down, DB failover, network partitions)      | Medium   |
+| **Property-Based Tests** | Verify invariants (vote count = unique voters)                       | Medium   |
+
 #### 8.2 Tools
 
 #### 8.3 When Tests Run
