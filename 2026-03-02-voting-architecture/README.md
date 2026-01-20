@@ -271,15 +271,24 @@ No migration required in this project
 
 ### 🖹 8. Testing strategy
 
-Explain the techniques, principles, types of tests and will be performaned, and spesific details how to mock data, stress test it, spesific chaos goals and assumptions.
+#### 8.1 Types of Tests to Implement
 
-- What kind of tests are we going to implement ?
-- What tests we should have more in our project ?
-- When tests are going to run?
-- Which tools are we going to use ?
-- What are we going to test ? Any KPIs to be defined ?
-- Which are the most important features ?
+| Test Type                | Purpose                                                              | Priority |
+| ------------------------ | -------------------------------------------------------------------- | -------- |
+| **Unit Tests**           | Validate individual functions (vote validation, deduplication logic) | High     |
+| **Integration Tests**    | Test Redis/PostgreSQL interactions, queue processing                 | High     |
+| **Load Tests**           | Verify 250k RPS handling                                             | High     |
+| **Contract/API Tests**   | Validate HTTP endpoints, request/response schemas                    | Medium   |
+| **Chaos Engineering**    | Failure injection (Redis down, DB failover, network partitions)      | Medium   |
+| **Property-Based Tests** | Verify invariants (vote count = unique voters)                       | Medium   |
 
+#### 8.2 Tools
+
+#### 8.3 When Tests Run
+
+#### 8.4 KPIs and Thresholds
+
+#### 8.5 Most Important Features to Test
 
 ### 🖹 9. Observability strategy
 
