@@ -2,15 +2,21 @@
 
 Template: https://github.com/diegopacheco/tech-resources/blob/master/arch-doc-template.md
 
-You must design a Realtime voting system with the following requirements: 1. Never loose Data 2. Be secure and prevent bots and bad actors 3. Handle 300M users 4. Handle peak of 250k RPS 5. Must ensure users vote only once 6. Should be Realtime
-
+You must design a Realtime voting system with the following requirements:
+    1. Never loose Data
+    2. Be secure and prevent bots and bad actors
+    3. Handle 300M users 
+    4. Handle peak of 250k RPS
+    5. Must ensure users vote only once
+    6. Should be Realtime
+    
 Restrictions:
-• Serverless
-• MongoDB
-• On-Premise, Google Cloude, Azure
-• OpenShift
-• Mainframes
-• Monolith Solutions
+    • Serverless
+    • MongoDB
+    • On-Premise, Google Cloude, Azure
+    • OpenShift
+    • Mainframes
+    • Monolith Solutions
 
 ## 🏛️ Structure
 
@@ -18,20 +24,21 @@ Restrictions:
 
 What is the problem? What is the context of the problem?
 
-> We have to design an architecture for a **realtime voting system** that will handle
-> millions of users and high peaks of requests per second.
+>We have to design an architecture for a **realtime voting system** that will handle
+>millions of users and high peaks of requests per second. 
 >
-> **Requirements**:
+> **Requirements**: 
 >
-> - We must ensure a smooth experience to the user when voting
-> - Each vote must be unique
-> - The user can check realtime results.
-> - It has to be
->   - reliable
->   - scalable
->   - secure
->   - recoverable
->   - auditable
+> * We must ensure a smooth experience to the user when voting
+> * Each vote must be unique
+> * The user can check realtime results. 
+> * It has to be
+>   * reliable
+>   * scalable
+>   * secure
+>   * recoverable
+>   * auditable
+
 
 ### 2. 🎯 Goals
 
@@ -59,7 +66,6 @@ What is the problem? What is the context of the problem?
 
 List in form of bullets what design principles you want to be followed, it's great to have 5-10 lines.
 Example:
-
 ```
 1. Low Coupling: We need to watch for coupling all times.
 2. Flexibility: Users should be able to customize behavior without leaking the internals of the system. Leverage interfaces.
@@ -67,19 +73,16 @@ Example:
 4. Testability: Chaos engineering is a must and property testing. Testing should be done by engineers all times.
 5. Cache efficiency: Should leverage SSD caches and all forms of caches as much as possible.
 ```
-
 Recommended Reading: http://diego-pacheco.blogspot.com/2018/01/stability-principles.html
 
 ### 🏗️ 4. Overall Diagrams
 
 Here there will be a bunch of diagrams, to understand the solution.
-
 ```
 🗂️ 4.1 Overall architecture: Show the big picture, relationship between macro components.
-🗂️ 4.2 Deployment: Show the infra in a big picture.
-🗂️ 4.3 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered.
+🗂️ 4.2 Deployment: Show the infra in a big picture. 
+🗂️ 4.3 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered. 
 ```
-
 Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.html
 
 #### Cache layer diagram
@@ -89,32 +92,26 @@ Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.h
 List the tradeoffs analysis, comparing pros and cons for each major decision.
 Before you need list all your major decisions, them run tradeoffs on than.
 example:
-Major Decisions:
-
+Major Decisions: 
 ```
 1. One mobile code base - should be (...)
 2. Reusable capability and low latency backends should be (...)
 3. Cache efficiency therefore should do (...)
 ```
-
 Tradeoffs:
-
 ```
 1. React Native vs (Flutter and Native)
 2. Serverless vs Microservices
 3. Redis vs Enbeded Caches
 ```
-
 Each tradeoff line need to be:
-
 ```
-PROS (+)
+PROS (+) 
   * Benefit: Explanation that justify why the benefit is true.
 CONS (+)
   * Problem: Explanation that justify why the problem is true.
 ```
-
-PS: Be careful to not confuse problem with explanation.
+PS: Be careful to not confuse problem with explanation. 
 <BR/>Recommended reading: http://diego-pacheco.blogspot.com/2023/07/tradeoffs.html
 
 ### 5.1 Backend
@@ -137,149 +134,125 @@ PS: Be careful to not confuse problem with explanation.
 #### 5.2 Websocket, SSE and Polling
 
 ##### 5.2.1 Websocket
-
 A full-duplex, persisnt connection where client can push data at any time.
 
 PROS (+)
-
-- Real-time, bidirectional communication.
-- Minimal overhead after connection is established.
-- High throughput, good for chat apps, multiplayer games, collaborative editors.
-- Works well for many messages per second.
+  * Real-time, bidirectional communication.
+  * Minimal overhead after connection is established.
+  * High throughput, good for chat apps, multiplayer games, collaborative editors.
+  * Works well for many messages per second.
 
 CONS (+)
-
-- More complex to implement than other.
-- Not ideal for simple one-way updates.
-- Not supported by older proxies without WebSocket upgrades.
+  * More complex to implement than other.
+  * Not ideal for simple one-way updates.
+  * Not supported by older proxies without WebSocket upgrades.
 
 ##### 5.2.2 Server-Sent Events (SSE)
-
 A single long-lived http connection where server pushes updates.  
 Unidirectional (client cannot send messages back over the same channel).
 
 PROS (+)
-
-- Very simple to implement (just a text stream from server).
-- Auto-reconnect built into the browser EventSource.
-- Uses regular HTTP-proxy-friendly.
-- Lightweight for one-direction real-time feeds.
+  * Very simple to implement (just a text stream from server).
+  * Auto-reconnect built into the browser EventSource.
+  * Uses regular HTTP-proxy-friendly.
+  * Lightweight for one-direction real-time feeds.
 
 CONS (+)
-
-- Not bidirectional.
-- Not ideal for very high-frequency updates.
-- Limited browser support on some older/embedded environments.
-- No binary data (text only unless you encode).
+  * Not bidirectional.
+  * Not ideal for very high-frequency updates.
+  * Limited browser support on some older/embedded environments.
+  * No binary data (text only unless you encode).
 
 ##### 5.2.3 Polling
-
 Client periodically requests new data with repeated HTTP requests.
 
 PROS (+)
-
-- Easiest to implement.
-- Works everywhere, no special protocols.
-- Good for low-frequency or low-priority updates.
+  * Easiest to implement.
+  * Works everywhere, no special protocols.
+  * Good for low-frequency or low-priority updates.
 
 CONS (+)
-
-- Inefficient: many requests with no data = waste.
-- Higher latency between updates (depends on poll interval).
-- Scales poorly (many clients -> many HTTP requests).
+  * Inefficient: many requests with no data = waste.
+  * Higher latency between updates (depends on poll interval).
+  * Scales poorly (many clients -> many HTTP requests).
 
 #### 5.3 Cache layer
 
 ##### 5.3.1 Redis
-
 PROS (+)
-
-- Rich Data Structures: Redis supports hashes, sets, sorted sets, bitmaps, and atomic counters, enabling complex real-time operations such as vote counting and user uniqueness checks.
-- Atomic Operations: Operations like INCR, HINCRBY, SETNX, and Lua scripts guarantee correctness under high concurrency, which is essential for voting systems.
-- Persistence Options: Redis offers RDB and AOF persistence, ensuring data durability during crashes.
-- Pub/Sub Support: Redis can push real-time updates through Pub/Sub, enabling instant updates for dashboards and WebSocket-based clients.
-- Replication & Clustering: Redis Cluster provides automatic sharding and replication for high availability and horizontal scalability.
+  * Rich Data Structures: Redis supports hashes, sets, sorted sets, bitmaps, and atomic counters, enabling complex real-time operations such as vote counting and user uniqueness checks.
+  * Atomic Operations: Operations like INCR, HINCRBY, SETNX, and Lua scripts guarantee correctness under high concurrency, which is essential for voting systems.
+  * Persistence Options: Redis offers RDB and AOF persistence, ensuring data durability during crashes.
+  * Pub/Sub Support: Redis can push real-time updates through Pub/Sub, enabling instant updates for dashboards and WebSocket-based clients.
+  * Replication & Clustering: Redis Cluster provides automatic sharding and replication for high availability and horizontal scalability.
 
 CONS (–)
-
-- Higher Resource Usage: Rich data structures and persistence add memory overhead and CPU use, making Redis more expensive to operate at scale.
-- More Operational Complexity: Redis clustering, failover, and persistence tuning require deeper operational knowledge.
-- Single-Threaded per Shard: Although extremely fast, operations are serialized per shard, which may limit throughput for some workloads.
-- Overkill for Simple Cache: If you only need GET/SET caching with no atomicity or structures, Redis provides features you don’t need and increases overhead.
+  * Higher Resource Usage: Rich data structures and persistence add memory overhead and CPU use, making Redis more expensive to operate at scale.
+  * More Operational Complexity: Redis clustering, failover, and persistence tuning require deeper operational knowledge.
+  * Single-Threaded per Shard: Although extremely fast, operations are serialized per shard, which may limit throughput for some workloads.
+  * Overkill for Simple Cache: If you only need GET/SET caching with no atomicity or structures, Redis provides features you don’t need and increases overhead.
 
 ##### 5.3.2 Memcached
-
 PROS (+)
-
-- Extremely Lightweight: Memcached is optimized for pure in-memory key-value caching with very low overhead, giving it high throughput for simple GET/SET.
-- Simple Horizontal Scaling: Memcached nodes are stateless and client-side sharded, making scaling out trivial.
-- Lower Cost: Since it uses less memory overhead and no persistence, Memcached is cheaper to run at large scale.
-- Ideal for Simple Cache Layer: Perfect for caching HTML fragments, sessions, or API responses where atomicity and structure are not needed.
+  * Extremely Lightweight: Memcached is optimized for pure in-memory key-value caching with very low overhead, giving it high throughput for simple GET/SET.
+  * Simple Horizontal Scaling: Memcached nodes are stateless and client-side sharded, making scaling out trivial.
+  * Lower Cost: Since it uses less memory overhead and no persistence, Memcached is cheaper to run at large scale.
+  * Ideal for Simple Cache Layer: Perfect for caching HTML fragments, sessions, or API responses where atomicity and structure are not needed.
 
 CONS (–)
-
-- No Persistence: Data is lost on restart or failure, making Memcached unsuitable for scenarios where counts or state must survive crashes.
-- No Complex Data Types: Only supports raw key-value pairs, preventing efficient server-side counters, sets, or hash operations.
-- No Pub/Sub or Streaming: Cannot support real-time update features, forcing additional components for push-based dashboards.
-- No Replication Built-In: Failures mean immediate data loss unless handled at the application layer.
+  * No Persistence: Data is lost on restart or failure, making Memcached unsuitable for scenarios where counts or state must survive crashes.
+  * No Complex Data Types: Only supports raw key-value pairs, preventing efficient server-side counters, sets, or hash operations.  
+  * No Pub/Sub or Streaming: Cannot support real-time update features, forcing additional components for push-based dashboards.
+  * No Replication Built-In: Failures mean immediate data loss unless handled at the application layer.
 
 #### 5.4 Frontend:
 
 ##### 5.4.1 Solid.js
 
-PROS (+)
-
-- Fine-grained reactivity: It is a pattern that update only the exact piece of the UI that depends on the changed data, without re-rerender the component, it is great for real time projects.
-- Very low runtime overhead: Solid uses almost no framework code in the browser.
-- Very recommended for high-frequency updates.
+PROS (+) 
+  * Fine-grained reactivity: It is a pattern that update only the exact piece of the UI that depends on the changed data, without re-rerender the component, it is great for real time projects.
+  * Very low runtime overhead: Solid uses almost no framework code in the browser.
+  * Very recommended for high-frequency updates.
 
 CONS (+)
-
-- Small ecosystem: Maybe it can't have some integrations and libraries.
+  * Small ecosystem: Maybe it can't have some integrations and libraries.
 
 ##### 5.4.2 Svelte
 
-PROS (+)
-
-- Fast and lightweight output: Compile the code to pure JavaScript without a virtual DOM, producing very small bundles.
-- Built-in reactivity: The UI automatically updates when data changes. Without state libraries.
-- Smaller bundle size, specially for less complex apps.
+PROS (+) 
+  * Fast and lightweight output: Compile the code to pure JavaScript without a virtual DOM, producing very small bundles.
+  * Built-in reactivity: The UI automatically updates when data changes. Without state libraries.
+  * Smaller bundle size, specially for less complex apps.
 
 CONS (+)
-
-- Small ecosystem: Maybe it can't have some integrations and libraries.
-- Has a great way to update the DOM, better than Virtual DOM, but not so performatic than Solid.js.
+  * Small ecosystem: Maybe it can't have some integrations and libraries.
+  * Has a great way to update the DOM, better than Virtual DOM, but not so performatic than Solid.js.
 
 ##### 5.4.3 React
 
-PROS (+)
-
-- Because of its large number of clients has a mature ecosystem.
-- Very stable and enterprise acceptance.
+PROS (+) 
+  * Because of its large number of clients has a mature ecosystem.
+  * Very stable and enterprise acceptance.
 
 CONS (+)
-
-- Uses Virtual DOM, which adds overhead on every update.
-- Has a bundle size bigger than the others.
+  * Uses Virtual DOM, which adds overhead on every update.
+  * Has a bundle size bigger than the others.
 
 ##### 5.4.4 Next.js
 
-PROS (+)
-
-- Based on React.js = almost the same community.
-- Great resources for complex scenarios around the full-stack development.
-- Strong ecosystem and enterprise adoption.
+PROS (+) 
+  * Based on React.js = almost the same community.
+  * Great resources for complex scenarios around the full-stack development.
+  * Strong ecosystem and enterprise adoption.
 
 CONS (+)
-
-- For not complex projects, it may be not necessary because its native resources that won't be used.
-- Bundle size bigger than the others.
-- It is default SSR, which is not required for our scenario.
+  * For not complex projects, it may be not necessary because its native resources that won't be used.
+  * Bundle size bigger than the others.
+  * It is default SSR, which is not required for our scenario.
 
 ### 🌏 6. For each key major component
 
 What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
-
 ```
 6.1 - Class Diagram              : classic uml diagram with attributes and methods
 6.2 - Contract Documentation     : Operations, Inputs and Outputs
@@ -287,7 +260,7 @@ What is a majore component? A service, a lambda, a important ui, a generalized a
 6.4 - Algorithms/Data Structures : Spesific algos that need to be used, along size with spesific data structures.
 ```
 
-Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc...
+Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc... 
 
 Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-design-forgotten.html
 
@@ -295,26 +268,18 @@ Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-d
 
 No migration required in this project
 
-### 8. Testing strategy
 
-#### 8.1 Types of Tests to Implement - Priority
+### 🖹 8. Testing strategy
 
-| Test Type                | Purpose                                                              | Priority |
-| ------------------------ | -------------------------------------------------------------------- | -------- |
-| **Unit Tests**           | Validate individual functions (vote validation, deduplication logic) | High     |
-| **Integration Tests**    | Test Redis/PostgreSQL interactions, queue, processing                | High     |
-| **Load Tests**           | Verify 250k RPS handling                                             | High     |
-| **Contract/API Tests**   | Validate HTTP endpoints, request/response schemas                    | Medium   |
-| **Chaos Engineering**    | Failure injection (Redis down, DB failover, network partitions)      | Medium   |
-| **Property-Based Tests** | Verify invariants (vote count = unique voters)                       | Medium   |
+Explain the techniques, principles, types of tests and will be performaned, and spesific details how to mock data, stress test it, spesific chaos goals and assumptions.
 
-#### 8.2 Tools
+- What kind of tests are we going to implement ?
+- What tests we should have more in our project ?
+- When tests are going to run?
+- Which tools are we going to use ?
+- What are we going to test ? Any KPIs to be defined ?
+- Which are the most important features ?
 
-#### 8.3 When Tests Run
-
-#### 8.4 KPIs and Thresholds
-
-#### 8.5 Most Important Features to Test
 
 ### 🖹 9. Observability strategy
 
@@ -345,10 +310,8 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 - Caching ?
 
 ##### 10.1 Redis
-
 ###### 10.1.1 Creating the real-time vote counter
-
-```bash
+``` bash
 # HINCRBY is atomic: safe for concurrent voting.
 # Key: poll:<poll_id>:counts
 # Type: HASH
@@ -379,21 +342,18 @@ SADD poll:<POLL_ID>:voters <USER_ID>
 # To verify if the value exists, it means, it the user already voted
 SISMEMBER poll:<POLL_ID>:voters <USER_ID>
 ```
-
 ###### 10.1.3 Redis stream for batch Result Updates
-
 Execution Plan
 
-- Set batch size: Decide how many votes should trigger a batch update
-- Increment temporary batch hash: Every vote increments the option count in `poll:<POLL_ID>:batch_counts`
-- Check batch threshold: Sum all votes in the batch; if total >= batch size, continue
-- Publish batch to stream: Send accumulated counts to `poll:<POLL_ID>:updates` in a single XADD
-- Reset temporary batch hash: Clear counts for the next batch
-- Consumer reads stream: Process batch updates in real-time, without one event per vote
+* Set batch size: Decide how many votes should trigger a batch update
+* Increment temporary batch hash: Every vote increments the option count in `poll:<POLL_ID>:batch_counts`
+* Check batch threshold: Sum all votes in the batch; if total >= batch size, continue
+* Publish batch to stream: Send accumulated counts to `poll:<POLL_ID>:updates` in a single XADD
+* Reset temporary batch hash: Clear counts for the next batch
+* Consumer reads stream: Process batch updates in real-time, without one event per vote
 
 operations
-
-```bash
+``` bash
 # Channel: poll:<poll_id>:updates
 # Type: STREAM
 
@@ -423,8 +383,7 @@ XREAD COUNT 1 BLOCK 0 STREAMS poll:<POLL_ID>:updates $
 ```
 
 ###### To ensure atomicity, we use Lua script.
-
-```lua
+``` lua
 local pollID      = ARGV[1]
 local userID      = ARGV[2]
 local optionID    = ARGV[3]
@@ -470,10 +429,8 @@ end
 
 return {"VOTE_ADDED"}
 ```
-
 usage example in golang
-
-```go
+``` go
 argv := []interface{}{<POLL_ID>, <USER_ID>, <OPTION_ID>}
 
 res, err := rdb.Eval(ctx, <LUA_SCRIPT>, nil, argv...).Result()
@@ -483,10 +440,8 @@ if err != nil {
     fmt.Printf("Vote result for %s: %v\n", userID, res)
 }
 ```
-
 usage example in rust
-
-```rust
+``` rust
 let result: redis::Value = redis::Script::new(<LUA_SCRIPT>)
     .key("")
     .arg(<POOL_ID>)
@@ -506,8 +461,7 @@ Describe your stack, what databases would be used, what servers, what kind of co
 
 **Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
 
-- Frontend:
-
+- Frontend: 
 #### 11.2 Frontend:
 
 Chosen Solid.js because it is the most performatic solution.
@@ -522,34 +476,31 @@ React and Next.js offer a strong ecosystem support, but their features introduce
 - Data:
 
 #### 11.3 Websocket
-
 WebSockets are chosen because they are bidirectional, scalable, secure, reliable, and optimized for real-time systems - all critical requirements for a massive voting platform.
 
 WHY:
-
-- Bidirecional communication: Clients must send votes, and the server must confirm them.
-- SSE is one-way only (server -> client): WS support full two-way messaging.
-- Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
-- Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
+  * Bidirecional communication: Clients must send votes, and the server must confirm them.
+  * SSE is one-way only (server -> client): WS support full two-way messaging.
+  * Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
+  * Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
 
 ##### 11.4 Redis
-
 We chose Redis as the caching layer for the voting system due to its strong support for atomic operations, which are essential to guarantee correctness under high concurrency.  
 Redis provides native atomic commands, such as `INCR`, `HSET`, and `HINCRBY`, which ensure that vote increments and state transitions occur safely even when millions of users interact simultaneously.
 And also because we can use Redis Stream, which is important for updating frontend subscribers to rerender your screen in realtime.
 
 ### 🖹 12. References
 
-- Architecture Anti-Patterns: https://architecture-antipatterns.tech/
-- EIP https://www.enterpriseintegrationpatterns.com/
-- SOA Patterns https://patterns.arcitura.com/soa-patterns
-- API Patterns https://microservice-api-patterns.org/
-- Anti-Patterns https://sourcemaking.com/antipatterns/software-development-antipatterns
-- Refactoring Patterns https://sourcemaking.com/refactoring/refactorings
-- Database Refactoring Patterns https://databaserefactoring.com/
-- Data Modelling Redis https://redis.com/blog/nosql-data-modeling/
-- Cloud Patterns https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/introduction.html
-- 12 Factors App https://12factor.net/
-- Relational DB Patterns https://www.geeksforgeeks.org/design-patterns-for-relational-databases/
-- Rendering Patterns https://www.patterns.dev/vanilla/rendering-patterns/
-- REST API Design https://blog.stoplight.io/api-design-patterns-for-rest-web-services
+* Architecture Anti-Patterns: https://architecture-antipatterns.tech/
+* EIP https://www.enterpriseintegrationpatterns.com/
+* SOA Patterns https://patterns.arcitura.com/soa-patterns
+* API Patterns https://microservice-api-patterns.org/
+* Anti-Patterns https://sourcemaking.com/antipatterns/software-development-antipatterns
+* Refactoring Patterns https://sourcemaking.com/refactoring/refactorings
+* Database Refactoring Patterns https://databaserefactoring.com/
+* Data Modelling Redis https://redis.com/blog/nosql-data-modeling/
+* Cloud Patterns https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/introduction.html
+* 12 Factors App https://12factor.net/
+* Relational DB Patterns https://www.geeksforgeeks.org/design-patterns-for-relational-databases/
+* Rendering Patterns https://www.patterns.dev/vanilla/rendering-patterns/
+* REST API Design https://blog.stoplight.io/api-design-patterns-for-rest-web-services
