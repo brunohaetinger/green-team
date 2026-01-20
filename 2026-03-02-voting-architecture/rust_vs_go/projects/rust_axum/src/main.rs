@@ -66,7 +66,7 @@ pub async fn vote(
         let _ = state.ws_tx.send(poll.clone());
 
         return (
-            StatusCode::OK,
+            StatusCode::CREATED,
             Json(ApiError { message: "Voto registrado com sucesso".into() })
         );
     }
@@ -132,7 +132,7 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
 async fn create_poll(
     State(state): State<AppState>,
     Json(payload): Json<CreatePollRequest>,
-) -> Result<Json<Poll>, (StatusCode, Json<ApiError>)> {
+) -> (StatusCode, Json<Poll>) {
     
     let poll_id = state.next_poll_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     let mut polls = state.polls.write().await;
@@ -162,7 +162,10 @@ async fn create_poll(
 
     polls.insert(poll_id, new_poll.clone());
 
-    Ok(Json(new_poll))
+    return(
+         StatusCode::CREATED,
+         Json(new_poll)
+    )
 }
 
 // MAIN

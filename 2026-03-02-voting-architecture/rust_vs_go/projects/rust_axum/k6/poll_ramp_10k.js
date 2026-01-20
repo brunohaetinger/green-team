@@ -66,7 +66,11 @@ export default function (data) {
   const url = `${BASE_URL}/vote`;
 
   const voterID = `vu${__VU}-it${__ITER}-${Date.now()}`;
-
+// {
+    // "poll_id": 2,
+    // "option_id": 3,
+    // "voter_id": "7559d194-a50f-45e5-8048-c9ff8d139d7c"
+// }
   const payload = JSON.stringify({ poll_id: pollID, option_id: optionID, voter_id: voterID });
   const params = { headers: { 'Content-Type': 'application/json' }, tags: { endpoint: 'vote' } };
   const res = http.post(url, payload, params);
