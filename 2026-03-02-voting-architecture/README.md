@@ -457,11 +457,10 @@ println!("Vote result: {:?}", result);
 
 Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
 
-- Backend:
-
-**Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
-
-- Frontend: 
+#### 11.1 Backend:
+//TODO edit after decision
+We chose Go for its lightweight concurrency model, which enables efficient parallelism with low latency and memory usage. Its strong built-in networking support, fast startup times, and simple deployment via single binaries make it well suited for high-RPS microservices and distributed systems.
+ 
 #### 11.2 Frontend:
 
 Chosen Solid.js because it is the most performatic solution.
