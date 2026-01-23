@@ -1,0 +1,12 @@
+services:
+  app:
+    image: voting_system
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8g
