@@ -81,8 +81,10 @@ Here there will be a bunch of diagrams, to understand the solution.
 ```
 🗂️ 4.1 Overall architecture: Show the big picture, relationship between macro components.
 🗂️ 4.2 Deployment: Show the infra in a big picture. 
-🗂️ 4.3 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered. 
 ```
+
+#### 4.3 Use Cases: 
+![Use Case Diagram](use-cases.drawio.png)
 Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.html
 
 #### Cache layer diagram
@@ -462,7 +464,7 @@ Describe your stack, what databases would be used, what servers, what kind of co
 **Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
 
 - Frontend: 
-#### 11.2 Frontend:
+#### 11.2 Frontend Framework:
 
 Chosen Solid.js because it is the most performatic solution.
 
@@ -475,7 +477,13 @@ React and Next.js offer a strong ecosystem support, but their features introduce
 - Infrastructure:
 - Data:
 
-#### 11.3 Websocket
+#### 11.3 - UI Bot prevention
+- reCaptcha V3 (Invisible Captcha)
+  - Analyzes user interactions in the background without friction and better suitable than challenges that nowadays can be bypassed by AI.
+- JS Challenges
+  - To ensure the client is a real browser executing JS code, preventing basic bots which do not run JS.
+
+#### 11.4 Websocket
 WebSockets are chosen because they are bidirectional, scalable, secure, reliable, and optimized for real-time systems - all critical requirements for a massive voting platform.
 
 WHY:
@@ -484,7 +492,7 @@ WHY:
   * Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
   * Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
 
-##### 11.4 Redis
+##### 11.5 Redis
 We chose Redis as the caching layer for the voting system due to its strong support for atomic operations, which are essential to guarantee correctness under high concurrency.  
 Redis provides native atomic commands, such as `INCR`, `HSET`, and `HINCRBY`, which ensure that vote increments and state transitions occur safely even when millions of users interact simultaneously.
 And also because we can use Redis Stream, which is important for updating frontend subscribers to rerender your screen in realtime.
