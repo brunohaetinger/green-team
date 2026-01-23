@@ -455,13 +455,10 @@ println!("Vote result: {:?}", result);
 
 ### 🖹 11. Technology Stack
 
-Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
-
-- Backend:
+#### 11.1 Backend:
 
 **Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
 
-- Frontend: 
 #### 11.2 Frontend:
 
 Chosen Solid.js because it is the most performatic solution.
@@ -472,10 +469,12 @@ Why popular frameworks like React and Next was not chosen?
 
 React and Next.js offer a strong ecosystem support, but their features introduce unnecessary overhead for a CSR-only, WebSocket-driven real-time voting system.
 
-- Infrastructure:
-- Data:
+<!-- Remove ? -->
+<!-- - Infrastructure:
+- Data: -->
 
 #### 11.3 Websocket
+
 WebSockets are chosen because they are bidirectional, scalable, secure, reliable, and optimized for real-time systems - all critical requirements for a massive voting platform.
 
 WHY:
@@ -485,6 +484,7 @@ WHY:
   * Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
 
 ##### 11.4 Redis
+
 We chose Redis as the caching layer for the voting system due to its strong support for atomic operations, which are essential to guarantee correctness under high concurrency.  
 Redis provides native atomic commands, such as `INCR`, `HSET`, and `HINCRBY`, which ensure that vote increments and state transitions occur safely even when millions of users interact simultaneously.
 And also because we can use Redis Stream, which is important for updating frontend subscribers to rerender your screen in realtime.
