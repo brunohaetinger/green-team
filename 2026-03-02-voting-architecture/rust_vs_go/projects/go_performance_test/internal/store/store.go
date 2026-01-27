@@ -2,6 +2,7 @@ package store
 
 import (
     "errors"
+    "os"
     "sort"
     "sync"
     "strings"
@@ -34,12 +35,15 @@ type MemoryStore struct {
     mu          sync.RWMutex
     polls       map[string]*models.Poll
     optionIndex map[string]*models.OptionItem
+    skipVoter   bool
 }
 
 func New() *MemoryStore {
+    skip := strings.TrimSpace(os.Getenv("SKIP_VOTER_TRACK")) == "1"
     return &MemoryStore{
         polls:       make(map[string]*models.Poll),
         optionIndex: make(map[string]*models.OptionItem),
+        skipVoter:   skip,
     }
 }
 
@@ -82,24 +86,32 @@ func (s *MemoryStore) CheckPollAndOption(pollID, optionID string) error {
 }
 
 func (s *MemoryStore) ApplyVote(v models.VoteRequest) error {
-    s.mu.Lock()
-    defer s.mu.Unlock()
+    // Fast path: locate poll and option under read lock, then mutate under per-poll lock.
+    s.mu.RLock()
     p, ok := s.polls[v.PollID]
     if !ok {
+        s.mu.RUnlock()
         return errors.New("poll not found")
-    }
-    if !p.IsOpen {
-        return errors.New("poll is closed")
     }
     opt, ok := p.Options[v.OptionID]
     if !ok {
+        s.mu.RUnlock()
         return errors.New("option not found in poll")
     }
-    if _, voted := p.Voters[v.VoterID]; voted {
-        return errors.New("voter has already voted in this poll")
+    s.mu.RUnlock()
+
+    p.Mu.Lock()
+    defer p.Mu.Unlock()
+    if !p.IsOpen {
+        return errors.New("poll is closed")
+    }
+    if !s.skipVoter {
+        if _, voted := p.Voters[v.VoterID]; voted {
+            return errors.New("voter has already voted in this poll")
+        }
+        p.Voters[v.VoterID] = struct{}{}
     }
     opt.Votes++
-    p.Voters[v.VoterID] = struct{}{}
     return nil
 }
 

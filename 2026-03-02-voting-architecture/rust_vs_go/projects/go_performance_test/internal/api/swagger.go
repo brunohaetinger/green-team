@@ -2,6 +2,8 @@ package api
 
 import (
     "net/http"
+
+    "github.com/gin-gonic/gin"
 )
 
 const openAPISpec = `{
@@ -70,15 +72,15 @@ const openAPISpec = `{
   }
 }`
 
-func registerSwagger() {
-    http.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
-        _, _ = w.Write([]byte(openAPISpec))
+func registerSwagger(r gin.IRoutes) {
+    r.GET("/swagger.json", func(c *gin.Context) {
+        c.Header("Content-Type", "application/json")
+        c.String(http.StatusOK, openAPISpec)
     })
 
-    http.HandleFunc("/swagger", func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "text/html; charset=utf-8")
-        _, _ = w.Write([]byte(`<!doctype html>
+    r.GET("/swagger", func(c *gin.Context) {
+        c.Header("Content-Type", "text/html; charset=utf-8")
+        c.String(http.StatusOK, `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -98,6 +100,6 @@ func registerSwagger() {
       });
     </script>
   </body>
-</html>`))
+</html>`)
     })
 }

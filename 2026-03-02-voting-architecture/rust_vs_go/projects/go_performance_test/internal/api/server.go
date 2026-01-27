@@ -1,18 +1,19 @@
 package api
 
 import (
-	"encoding/json"
-	"log"
-	"net/http"
-	"os"
-	"sort"
-	"strconv"
-	"strings"
+    "encoding/json"
+    "log"
+    "net/http"
+    "os"
+    "sort"
+    "strconv"
+    "strings"
 
-	"github.com/thiagonasc/poll/internal/models"
-	"github.com/thiagonasc/poll/internal/processor"
-	"github.com/thiagonasc/poll/internal/seed"
-	"github.com/thiagonasc/poll/internal/store"
+    "github.com/gin-gonic/gin"
+    "github.com/thiagonasc/poll/internal/models"
+    "github.com/thiagonasc/poll/internal/processor"
+    "github.com/thiagonasc/poll/internal/seed"
+    "github.com/thiagonasc/poll/internal/store"
 )
 
 type OptionItemDTO struct {
@@ -33,6 +34,7 @@ type Server struct {
     store  store.Store
     votes  *processor.Processor
     closer func()
+    router *gin.Engine
 }
 
 func NewServer() *Server {
@@ -87,61 +89,66 @@ func NewServer() *Server {
 			log.Printf("invalid VOTE_WORKERS=%q, using auto", v)
 		}
 	}
-	vp := processor.New(st, bufSize, workers)
-	return &Server{store: st, votes: vp, closer: closer}
+    vp := processor.New(st, bufSize, workers)
+
+    // Gin setup: default to release mode unless explicitly overridden
+    if strings.TrimSpace(os.Getenv("GIN_MODE")) == "" {
+        gin.SetMode(gin.ReleaseMode)
+    }
+    r := gin.New()
+    // minimal middleware for performance
+    r.Use(gin.Recovery())
+
+    srv := &Server{store: st, votes: vp, closer: closer, router: r}
+    srv.Routes()
+    return srv
 }
 
 func (s *Server) Routes() {
-    registerSwagger()
-    http.HandleFunc("/vote", s.handleVote)
-    http.HandleFunc("/polls", s.handlePolls)
-    http.HandleFunc("/options", s.handleOptions)
+    // Swagger endpoints
+    registerSwagger(s.router)
+
+    // Map existing http.Handler funcs through Gin wrappers for minimal changes
+    s.router.POST("/vote", func(c *gin.Context) { s.handleVote(c.Writer, c.Request) })
+    s.router.POST("/polls", func(c *gin.Context) { s.handlePolls(c.Writer, c.Request) })
+    s.router.POST("/options", func(c *gin.Context) { s.handleOptions(c.Writer, c.Request) })
 }
 
 func (s *Server) Close() {
-	s.votes.Close()
-	if s.closer != nil {
-		s.closer()
-	}
+    s.votes.Close()
+    if s.closer != nil {
+        s.closer()
+    }
+}
+
+// Handler exposes the Gin router as an http.Handler for the HTTP server.
+func (s *Server) Handler() http.Handler {
+    return s.router
 }
 
 func (s *Server) handleVote(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	var req models.VoteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
-		return
-	}
-	req.PollID = strings.TrimSpace(req.PollID)
-	req.OptionID = strings.TrimSpace(req.OptionID)
-	req.VoterID = strings.TrimSpace(req.VoterID)
-	if req.PollID == "" || req.OptionID == "" || req.VoterID == "" {
-		http.Error(w, "poll_id, option_id, voter_id are required", http.StatusBadRequest)
-		return
-	}
+    if r.Method != http.MethodPost {
+        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+    var req models.VoteRequest
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w, "invalid JSON", http.StatusBadRequest)
+        return
+    }
+    req.PollID = strings.TrimSpace(req.PollID)
+    req.OptionID = strings.TrimSpace(req.OptionID)
+    req.VoterID = strings.TrimSpace(req.VoterID)
+    if req.PollID == "" || req.OptionID == "" || req.VoterID == "" {
+        http.Error(w, "poll_id, option_id, voter_id are required", http.StatusBadRequest)
+        return
+    }
 
-	if err := s.store.CheckPollAndOption(req.PollID, req.OptionID); err != nil {
-		switch err.Error() {
-		case "poll not found":
-			http.Error(w, err.Error(), http.StatusNotFound)
-		case "poll is closed":
-			http.Error(w, err.Error(), http.StatusConflict)
-		case "option not found in poll":
-			http.Error(w, err.Error(), http.StatusNotFound)
-		default:
-			http.Error(w, "bad request", http.StatusBadRequest)
-		}
-		return
-	}
-
-	if ok := s.votes.Enqueue(req); !ok {
-		http.Error(w, "server is busy, please retry", http.StatusServiceUnavailable)
-		return
-	}
-	w.WriteHeader(http.StatusAccepted)
+    if ok := s.votes.Enqueue(req); !ok {
+        http.Error(w, "server is busy, please retry", http.StatusServiceUnavailable)
+        return
+    }
+    w.WriteHeader(http.StatusAccepted)
 }
 
 func (s *Server) handleGetOption(w http.ResponseWriter, r *http.Request) {
