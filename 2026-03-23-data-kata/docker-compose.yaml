@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  file-viewer:
+    image: alpine
+    volumes:
+      - ./data:/data
+    command: tail -f /dev/null
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: datakata
+    ports:
+      - "5432:5432"
+
+  web-server:
+    build: ./web-server
+    ports:
+      - "8080:8080"
