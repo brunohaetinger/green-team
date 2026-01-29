@@ -1,29 +1,29 @@
 package api
 
 import (
-    "encoding/json"
-    "log"
-    "net/http"
-    "os"
-    "sort"
-    "strconv"
-    "strings"
+	"encoding/json"
+	"log"
+	"net/http"
+	"os"
+	"sort"
+	"strconv"
+	"strings"
 
-    "github.com/gin-gonic/gin"
-    "github.com/thiagonasc/poll/internal/models"
-    "github.com/thiagonasc/poll/internal/processor"
-    "github.com/thiagonasc/poll/internal/seed"
-    "github.com/thiagonasc/poll/internal/store"
+	"github.com/gin-gonic/gin"
+	"github.com/thiagonasc/poll/internal/models"
+	"github.com/thiagonasc/poll/internal/processor"
+	"github.com/thiagonasc/poll/internal/seed"
+	"github.com/thiagonasc/poll/internal/store"
 )
 
 type OptionItemDTO struct {
-    ID    string `json:"id"`
-    Label string `json:"label"`
-    Votes int    `json:"votes"`
+	ID    uint32 `json:"id"`
+	Label string `json:"label"`
+	Votes int    `json:"votes"`
 }
 
 type PollResponse struct {
-	ID       string          `json:"id"`
+	ID       uint32          `json:"id"`
 	Question string          `json:"question"`
 	IsOpen   bool            `json:"is_open"`
 	Options  []OptionItemDTO `json:"options"`
@@ -31,47 +31,47 @@ type PollResponse struct {
 }
 
 type Server struct {
-    store  store.Store
-    votes  *processor.Processor
-    closer func()
-    router *gin.Engine
+	store  store.Store
+	votes  *processor.Processor
+	closer func()
+	router *gin.Engine
 }
 
 func NewServer() *Server {
-    var st store.Store
-    var closer func()
-    dsn := strings.TrimSpace(os.Getenv("DB_URL"))
-    backend := strings.ToLower(strings.TrimSpace(os.Getenv("STORE_BACKEND")))
+	var st store.Store
+	var closer func()
+	dsn := strings.TrimSpace(os.Getenv("DB_URL"))
+	backend := strings.ToLower(strings.TrimSpace(os.Getenv("STORE_BACKEND")))
 
-    switch backend {
-    case "postgres", "pg", "postgresql":
-        if dsn != "" {
-            if pg, c, err := store.NewPostgres(dsn); err == nil {
-                st = pg
-                closer = c
-            } else {
-                log.Printf("failed to init postgres store: %v, falling back to memory", err)
-            }
-        } else {
-            log.Printf("STORE_BACKEND=postgres but DB_URL is empty; falling back to memory store")
-        }
-    case "memory", "mem", "inmemory", "in-memory":
-    default:
-        if dsn != "" {
-            if pg, c, err := store.NewPostgres(dsn); err == nil {
-                st = pg
-                closer = c
-            } else {
-                log.Printf("failed to init postgres store: %v, falling back to memory", err)
-            }
-        }
-    }
-    if st == nil {
-        ms := store.New()
-        seed.SeedDemo(ms)
-        st = ms
-        closer = func() {}
-    }
+	switch backend {
+	case "postgres", "pg", "postgresql":
+		if dsn != "" {
+			if pg, c, err := store.NewPostgres(dsn); err == nil {
+				st = pg
+				closer = c
+			} else {
+				log.Printf("failed to init postgres store: %v, falling back to memory", err)
+			}
+		} else {
+			log.Printf("STORE_BACKEND=postgres but DB_URL is empty; falling back to memory store")
+		}
+	case "memory", "mem", "inmemory", "in-memory":
+	default:
+		if dsn != "" {
+			if pg, c, err := store.NewPostgres(dsn); err == nil {
+				st = pg
+				closer = c
+			} else {
+				log.Printf("failed to init postgres store: %v, falling back to memory", err)
+			}
+		}
+	}
+	if st == nil {
+		ms := store.New()
+		seed.SeedDemo(ms)
+		st = ms
+		closer = func() {}
+	}
 
 	bufSize := 1_000_000
 	if v := strings.TrimSpace(os.Getenv("VOTE_QUEUE_SIZE")); v != "" {
@@ -89,66 +89,64 @@ func NewServer() *Server {
 			log.Printf("invalid VOTE_WORKERS=%q, using auto", v)
 		}
 	}
-    vp := processor.New(st, bufSize, workers)
+	vp := processor.New(st, bufSize, workers)
 
-    // Gin setup: default to release mode unless explicitly overridden
-    if strings.TrimSpace(os.Getenv("GIN_MODE")) == "" {
-        gin.SetMode(gin.ReleaseMode)
-    }
-    r := gin.New()
-    // minimal middleware for performance
-    r.Use(gin.Recovery())
+	// Gin setup: default to release mode unless explicitly overridden
+	if strings.TrimSpace(os.Getenv("GIN_MODE")) == "" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	r := gin.New()
+	// minimal middleware for performance
+	r.Use(gin.Recovery())
 
-    srv := &Server{store: st, votes: vp, closer: closer, router: r}
-    srv.Routes()
-    return srv
+	srv := &Server{store: st, votes: vp, closer: closer, router: r}
+	srv.Routes()
+	return srv
 }
 
 func (s *Server) Routes() {
-    // Swagger endpoints
-    registerSwagger(s.router)
+	// Swagger endpoints
+	registerSwagger(s.router)
 
-    // Map existing http.Handler funcs through Gin wrappers for minimal changes
-    s.router.POST("/vote", func(c *gin.Context) { s.handleVote(c.Writer, c.Request) })
-    s.router.POST("/polls", func(c *gin.Context) { s.handlePolls(c.Writer, c.Request) })
-    s.router.POST("/options", func(c *gin.Context) { s.handleOptions(c.Writer, c.Request) })
+	// Map existing http.Handler funcs through Gin wrappers for minimal changes
+	s.router.POST("/vote", func(c *gin.Context) { s.handleVote(c.Writer, c.Request) })
+	s.router.POST("/polls", func(c *gin.Context) { s.handlePolls(c.Writer, c.Request) })
+	s.router.POST("/options", func(c *gin.Context) { s.handleOptions(c.Writer, c.Request) })
 }
 
 func (s *Server) Close() {
-    s.votes.Close()
-    if s.closer != nil {
-        s.closer()
-    }
+	s.votes.Close()
+	if s.closer != nil {
+		s.closer()
+	}
 }
 
 // Handler exposes the Gin router as an http.Handler for the HTTP server.
 func (s *Server) Handler() http.Handler {
-    return s.router
+	return s.router
 }
 
 func (s *Server) handleVote(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
-    var req models.VoteRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "invalid JSON", http.StatusBadRequest)
-        return
-    }
-    req.PollID = strings.TrimSpace(req.PollID)
-    req.OptionID = strings.TrimSpace(req.OptionID)
-    req.VoterID = strings.TrimSpace(req.VoterID)
-    if req.PollID == "" || req.OptionID == "" || req.VoterID == "" {
-        http.Error(w, "poll_id, option_id, voter_id are required", http.StatusBadRequest)
-        return
-    }
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req models.VoteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	req.VoterID = strings.TrimSpace(req.VoterID)
+	if req.PollID == 0 || req.OptionID == 0 || req.VoterID == "" {
+		http.Error(w, "poll_id, option_id, voter_id are required", http.StatusBadRequest)
+		return
+	}
 
-    if ok := s.votes.Enqueue(req); !ok {
-        http.Error(w, "server is busy, please retry", http.StatusServiceUnavailable)
-        return
-    }
-    w.WriteHeader(http.StatusAccepted)
+	if ok := s.votes.Enqueue(req); !ok {
+		http.Error(w, "server is busy, please retry", http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (s *Server) handleGetOption(w http.ResponseWriter, r *http.Request) {
@@ -156,12 +154,17 @@ func (s *Server) handleGetOption(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	id := strings.TrimSpace(r.URL.Query().Get("id"))
-	if id == "" {
+	idStr := strings.TrimSpace(r.URL.Query().Get("id"))
+	if idStr == "" {
 		http.Error(w, "id is required", http.StatusBadRequest)
 		return
 	}
-	opt, ok := s.store.GetOption(id)
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	opt, ok := s.store.GetOption(uint32(id))
 	if !ok {
 		http.Error(w, "option not found", http.StatusNotFound)
 		return
@@ -171,7 +174,7 @@ func (s *Server) handleGetOption(w http.ResponseWriter, r *http.Request) {
 }
 
 type createPollReq struct {
-	ID       string `json:"id"`
+	ID       uint32 `json:"id"`
 	Question string `json:"question"`
 	IsOpen   *bool  `json:"is_open"`
 }
@@ -179,9 +182,9 @@ type createPollReq struct {
 func (s *Server) handlePolls(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		id := strings.TrimSpace(r.URL.Query().Get("id"))
+		idStr := strings.TrimSpace(r.URL.Query().Get("id"))
 		w.Header().Set("Content-Type", "application/json")
-		if id == "" {
+		if idStr == "" {
 			snaps := s.store.ListPollSnapshots()
 			out := make([]PollResponse, 0, len(snaps))
 			for _, snap := range snaps {
@@ -195,7 +198,12 @@ func (s *Server) handlePolls(w http.ResponseWriter, r *http.Request) {
 			_ = json.NewEncoder(w).Encode(out)
 			return
 		}
-		snap, ok := s.store.GetPollSnapshot(id)
+		id, err := strconv.ParseUint(idStr, 10, 32)
+		if err != nil {
+			http.Error(w, "invalid id", http.StatusBadRequest)
+			return
+		}
+		snap, ok := s.store.GetPollSnapshot(uint32(id))
 		if !ok {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
@@ -212,17 +220,16 @@ func (s *Server) handlePolls(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid JSON", http.StatusBadRequest)
 			return
 		}
-		id := strings.TrimSpace(req.ID)
 		q := strings.TrimSpace(req.Question)
 		isOpen := true
 		if req.IsOpen != nil {
 			isOpen = *req.IsOpen
 		}
-		if id == "" || q == "" {
+		if req.ID == 0 || q == "" {
 			http.Error(w, "id and question are required", http.StatusBadRequest)
 			return
 		}
-		if err := s.store.CreatePoll(id, q, isOpen); err != nil {
+		if err := s.store.CreatePoll(req.ID, q, isOpen); err != nil {
 			status := http.StatusBadRequest
 			if strings.Contains(err.Error(), "already exists") {
 				status = http.StatusConflict
@@ -244,13 +251,12 @@ func (s *Server) handlePolls(w http.ResponseWriter, r *http.Request) {
 			b := true
 			req.IsOpen = &b
 		}
-		id := strings.TrimSpace(req.ID)
 		q := strings.TrimSpace(req.Question)
-		if id == "" || q == "" {
+		if req.ID == 0 || q == "" {
 			http.Error(w, "id and question are required", http.StatusBadRequest)
 			return
 		}
-		if err := s.store.UpdatePoll(id, q, *req.IsOpen); err != nil {
+		if err := s.store.UpdatePoll(req.ID, q, *req.IsOpen); err != nil {
 			status := http.StatusBadRequest
 			if strings.Contains(err.Error(), "not found") {
 				status = http.StatusNotFound
@@ -261,12 +267,17 @@ func (s *Server) handlePolls(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	case http.MethodDelete:
-		id := strings.TrimSpace(r.URL.Query().Get("id"))
-		if id == "" {
+		idStr := strings.TrimSpace(r.URL.Query().Get("id"))
+		if idStr == "" {
 			http.Error(w, "id is required", http.StatusBadRequest)
 			return
 		}
-		if err := s.store.DeletePoll(id); err != nil {
+		id, err := strconv.ParseUint(idStr, 10, 32)
+		if err != nil {
+			http.Error(w, "invalid id", http.StatusBadRequest)
+			return
+		}
+		if err := s.store.DeletePoll(uint32(id)); err != nil {
 			status := http.StatusBadRequest
 			if strings.Contains(err.Error(), "not found") {
 				status = http.StatusNotFound
@@ -283,18 +294,23 @@ func (s *Server) handlePolls(w http.ResponseWriter, r *http.Request) {
 }
 
 type optionReq struct {
-	ID     string `json:"id"`
-	PollID string `json:"poll_id"`
+	ID     uint32 `json:"id"`
+	PollID uint32 `json:"poll_id"`
 	Label  string `json:"label"`
 }
 
 func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		id := strings.TrimSpace(r.URL.Query().Get("id"))
+		idStr := strings.TrimSpace(r.URL.Query().Get("id"))
 		w.Header().Set("Content-Type", "application/json")
- 	if id != "" {
-			if opt, ok := s.store.GetOption(id); ok {
+		if idStr != "" {
+			id, err := strconv.ParseUint(idStr, 10, 32)
+			if err != nil {
+				http.Error(w, "invalid id", http.StatusBadRequest)
+				return
+			}
+			if opt, ok := s.store.GetOption(uint32(id)); ok {
 				dto := OptionItemDTO{ID: opt.ID, Label: opt.Label, Votes: opt.Votes}
 				_ = json.NewEncoder(w).Encode(dto)
 				return
@@ -302,7 +318,16 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
-		pollID := strings.TrimSpace(r.URL.Query().Get("poll_id"))
+		pollIDStr := strings.TrimSpace(r.URL.Query().Get("poll_id"))
+		var pollID uint32
+		if pollIDStr != "" {
+			id, err := strconv.ParseUint(pollIDStr, 10, 32)
+			if err != nil {
+				http.Error(w, "invalid poll_id", http.StatusBadRequest)
+				return
+			}
+			pollID = uint32(id)
+		}
 		items := s.store.ListOptions(pollID)
 		out := make([]OptionItemDTO, 0, len(items))
 		for _, o := range items {
@@ -315,11 +340,11 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid JSON", http.StatusBadRequest)
 			return
 		}
-		if strings.TrimSpace(req.PollID) == "" || strings.TrimSpace(req.ID) == "" || strings.TrimSpace(req.Label) == "" {
+		if req.PollID == 0 || req.ID == 0 || strings.TrimSpace(req.Label) == "" {
 			http.Error(w, "poll_id, id, label are required", http.StatusBadRequest)
 			return
 		}
-		if err := s.store.AddOption(strings.TrimSpace(req.PollID), strings.TrimSpace(req.ID), strings.TrimSpace(req.Label)); err != nil {
+		if err := s.store.AddOption(req.PollID, req.ID, strings.TrimSpace(req.Label)); err != nil {
 			status := http.StatusBadRequest
 			if strings.Contains(err.Error(), "not found") {
 				status = http.StatusNotFound
@@ -336,11 +361,11 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid JSON", http.StatusBadRequest)
 			return
 		}
-		if strings.TrimSpace(req.ID) == "" || strings.TrimSpace(req.Label) == "" {
+		if req.ID == 0 || strings.TrimSpace(req.Label) == "" {
 			http.Error(w, "id and label are required", http.StatusBadRequest)
 			return
 		}
-		if err := s.store.UpdateOption(strings.TrimSpace(req.ID), strings.TrimSpace(req.Label)); err != nil {
+		if err := s.store.UpdateOption(req.ID, strings.TrimSpace(req.Label)); err != nil {
 			status := http.StatusBadRequest
 			if strings.Contains(err.Error(), "not found") {
 				status = http.StatusNotFound
@@ -350,12 +375,17 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusNoContent)
 	case http.MethodDelete:
-		id := strings.TrimSpace(r.URL.Query().Get("id"))
-		if id == "" {
+		idStr := strings.TrimSpace(r.URL.Query().Get("id"))
+		if idStr == "" {
 			http.Error(w, "id is required", http.StatusBadRequest)
 			return
 		}
-		if err := s.store.DeleteOption(id); err != nil {
+		id, err := strconv.ParseUint(idStr, 10, 32)
+		if err != nil {
+			http.Error(w, "invalid id", http.StatusBadRequest)
+			return
+		}
+		if err := s.store.DeleteOption(uint32(id)); err != nil {
 			status := http.StatusBadRequest
 			if strings.Contains(err.Error(), "not found") {
 				status = http.StatusNotFound
@@ -370,27 +400,32 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
 }
 
 type voterReq struct {
-	PollID  string `json:"poll_id"`
+	PollID  uint32 `json:"poll_id"`
 	VoterID string `json:"voter_id"`
 }
 
 func (s *Server) handleVoters(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		pid := strings.TrimSpace(r.URL.Query().Get("poll_id"))
-		if pid == "" {
+		pidStr := strings.TrimSpace(r.URL.Query().Get("poll_id"))
+		if pidStr == "" {
 			http.Error(w, "poll_id is required", http.StatusBadRequest)
 			return
 		}
-		snap, ok := s.store.GetPollSnapshot(pid)
+		pid, err := strconv.ParseUint(pidStr, 10, 32)
+		if err != nil {
+			http.Error(w, "invalid poll_id", http.StatusBadRequest)
+			return
+		}
+		snap, ok := s.store.GetPollSnapshot(uint32(pid))
 		if !ok {
 			http.Error(w, "poll not found", http.StatusNotFound)
 			return
 		}
 		resp := struct {
-			PollID string   `json:"poll_id"`
+			PollID uint32   `json:"poll_id"`
 			Voters []string `json:"voters"`
-		}{PollID: pid, Voters: snap.Voters}
+		}{PollID: uint32(pid), Voters: snap.Voters}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(resp)
 	case http.MethodPost:
@@ -399,13 +434,12 @@ func (s *Server) handleVoters(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid JSON", http.StatusBadRequest)
 			return
 		}
-		pid := strings.TrimSpace(req.PollID)
 		vid := strings.TrimSpace(req.VoterID)
-		if pid == "" || vid == "" {
+		if req.PollID == 0 || vid == "" {
 			http.Error(w, "poll_id and voter_id are required", http.StatusBadRequest)
 			return
 		}
-		if err := s.store.AddVoter(pid, vid); err != nil {
+		if err := s.store.AddVoter(req.PollID, vid); err != nil {
 			status := http.StatusBadRequest
 			if strings.Contains(err.Error(), "not found") {
 				status = http.StatusNotFound
@@ -417,13 +451,18 @@ func (s *Server) handleVoters(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusCreated)
 	case http.MethodDelete:
-		pid := strings.TrimSpace(r.URL.Query().Get("poll_id"))
+		pidStr := strings.TrimSpace(r.URL.Query().Get("poll_id"))
 		vid := strings.TrimSpace(r.URL.Query().Get("voter_id"))
-		if pid == "" || vid == "" {
+		if pidStr == "" || vid == "" {
 			http.Error(w, "poll_id and voter_id are required", http.StatusBadRequest)
 			return
 		}
-		if err := s.store.DeleteVoter(pid, vid); err != nil {
+		pid, err := strconv.ParseUint(pidStr, 10, 32)
+		if err != nil {
+			http.Error(w, "invalid poll_id", http.StatusBadRequest)
+			return
+		}
+		if err := s.store.DeleteVoter(uint32(pid), vid); err != nil {
 			status := http.StatusBadRequest
 			if strings.Contains(err.Error(), "not found") {
 				status = http.StatusNotFound
@@ -442,12 +481,17 @@ func (s *Server) handleGetPoll(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	id := strings.TrimSpace(r.URL.Query().Get("id"))
-	if id == "" {
+	idStr := strings.TrimSpace(r.URL.Query().Get("id"))
+	if idStr == "" {
 		http.Error(w, "id is required", http.StatusBadRequest)
 		return
 	}
-	snap, ok := s.store.GetPollSnapshot(id)
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	snap, ok := s.store.GetPollSnapshot(uint32(id))
 	if !ok {
 		http.Error(w, "poll not found", http.StatusNotFound)
 		return

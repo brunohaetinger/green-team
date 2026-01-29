@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  go-performance-test:
+    build:
+      context: ./go_performance_test
+      dockerfile: Dockerfile
+    image: go-performance-test:local
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - STORE_BACKEND=${STORE_BACKEND:-memory}
+      - DB_URL=${DB_URL:-}
+      - REDIS_URL=${REDIS_URL:-}
+      - REDIS_QUEUE_NAME=${REDIS_QUEUE_NAME:-votes}
+      - ENABLE_REUSEPORT=${ENABLE_REUSEPORT:-}
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8g
+
+  rust-axum:
+    build:
+      context: ./rust_axum
+      dockerfile: Dockerfile
+    image: rust-axum:local
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8g

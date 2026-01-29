@@ -1,9 +1,9 @@
 package api
 
 import (
-    "net/http"
+	"net/http"
 
-    "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 const openAPISpec = `{
@@ -44,7 +44,7 @@ const openAPISpec = `{
       "post": {
         "tags": ["LoadTest"],
         "summary": "Create a poll",
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","required":["id","question"],"properties":{"id":{"type":"string"},"question":{"type":"string"},"is_open":{"type":"boolean"}}}}}},
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","required":["id","question"],"properties":{"id":{"type":"integer"},"question":{"type":"string"},"is_open":{"type":"boolean"}}}}}},
         "responses": {"201": {"description": "Created"}, "409": {"description": "Already exists"}}
       }
     },
@@ -52,7 +52,7 @@ const openAPISpec = `{
       "post": {
         "tags": ["LoadTest"],
         "summary": "Add option to a poll",
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","required":["id","poll_id","label"],"properties":{"id":{"type":"string"},"poll_id":{"type":"string"},"label":{"type":"string"}}}}}},
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","required":["id","poll_id","label"],"properties":{"id":{"type":"integer"},"poll_id":{"type":"integer"},"label":{"type":"string"}}}}}},
         "responses": {"201": {"description": "Created"}, "404": {"description": "Poll not found"}, "409": {"description": "Already exists"}}
       }
     }
@@ -63,24 +63,24 @@ const openAPISpec = `{
         "type": "object",
         "required": ["poll_id", "option_id", "voter_id"],
         "properties": {
-          "poll_id": { "type": "string" },
-          "option_id": { "type": "string" },
+          "poll_id": { "type": "integer" },
+          "option_id": { "type": "integer" },
           "voter_id": { "type": "string" }
         }
       }
     }
   }
-}`
+} `
 
 func registerSwagger(r gin.IRoutes) {
-    r.GET("/swagger.json", func(c *gin.Context) {
-        c.Header("Content-Type", "application/json")
-        c.String(http.StatusOK, openAPISpec)
-    })
+	r.GET("/swagger.json", func(c *gin.Context) {
+		c.Header("Content-Type", "application/json")
+		c.String(http.StatusOK, openAPISpec)
+	})
 
-    r.GET("/swagger", func(c *gin.Context) {
-        c.Header("Content-Type", "text/html; charset=utf-8")
-        c.String(http.StatusOK, `<!doctype html>
+	r.GET("/swagger", func(c *gin.Context) {
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -101,5 +101,5 @@ func registerSwagger(r gin.IRoutes) {
     </script>
   </body>
 </html>`)
-    })
+	})
 }
