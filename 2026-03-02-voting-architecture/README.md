@@ -309,35 +309,91 @@ No migration required in this project
 
 ### 🖹 8. Testing strategy
 
-#### 8.1 Types of Tests to Implement
+#### 8.1 Unit Tests (Priority: High)
 
-| Test Type                | Purpose                                                              | Priority |
-| ------------------------ | -------------------------------------------------------------------- | -------- |
-| **Unit Tests**           | Validate individual functions (vote validation, deduplication logic) | High     |
-| **Integration Tests**    | Test Redis/PostgreSQL interactions, queue processing                 | High     |
-| **Load Tests**           | Verify 250k RPS handling                                             | High     |
-| **Contract/API Tests**   | Validate HTTP endpoints, request/response schemas                    | Medium   |
-| **Chaos Engineering**    | Failure injection (Redis down, DB failover, network partitions)      | Medium   |
-| **Property-Based Tests** | Verify invariants (vote count = unique voters)                       | Medium   |
+Validate individual functions (vote validation, deduplication logic)
 
-#### 8.2 Tools
+##### 8.1.1 Tools
 
-#### 8.3 When Tests Run
+##### 8.1.2 When Tests Run
 
-#### 8.4 KPIs and Thresholds
+##### 8.1.3 KPIs and Thresholds
 
-#### 8.5 Most Important Features to
-
-##### Critical:
+##### 8.1.4 Most Important Features
 
 - Unique voter enforcement - Each user votes only once
 - Vote count accuracy - No lost or duplicate votes
 
-##### Important:
+#### 8.2 Integration Tests (Priority: High)
+
+Test Redis/PostgreSQL interactions, queue processing
+
+##### 8.2.1 Tools
+
+##### 8.2.2 When Tests Run
+
+##### 8.2.3 KPIs and Thresholds
+
+##### 8.2.4 Most Important Features
 
 - Concurrent vote processing - Race condition handling
 - Redis failover behavior - Fallback to in-memory
+
+#### 8.3 Load Tests (Priority: High)
+
+Verify 250k RPS handling
+
+##### 8.3.1 Tools
+
+##### 8.3.2 When Tests Run
+
+##### 8.3.3 KPIs and Thresholds
+
+##### 8.3.4 Most Important Features
+
+- System throughput under peak load
+- Response time percentiles (p50, p95, p99)
+
+#### 8.4 Contract/API Tests (Priority: Medium)
+
+Validate HTTP endpoints, request/response schemas
+
+##### 8.4.1 Tools
+
+##### 8.4.2 When Tests Run
+
+##### 8.4.3 KPIs and Thresholds
+
+##### 8.4.4 Most Important Features
+
 - API input validation - Malformed requests rejected
+- Response schema compliance
+
+#### 8.5 Chaos Engineering (Priority: Medium)
+
+Failure injection (Redis down, DB failover, network partitions)
+
+##### 8.5.1 Tools
+
+##### 8.5.2 When Tests Run
+
+##### 8.5.3 KPIs and Thresholds
+
+##### 8.5.4 Most Important Features
+
+#### 8.6 Property-Based Tests (Priority: Medium)
+
+Verify invariants (vote count = unique voters)
+
+##### 8.6.1 Tools
+
+##### 8.6.2 When Tests Run
+
+##### 8.6.3 KPIs and Thresholds
+
+##### 8.6.4 Most Important Features
+
+- Vote count invariant - total votes equals unique voters
 
 ### 🖹 9. Observability strategy
 
