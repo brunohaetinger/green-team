@@ -315,9 +315,20 @@ Validate individual functions (vote validation, deduplication logic)
 
 ##### 8.1.1 Tools
 
+- Frontend: [Solid testing library](https://testing-library.com/docs/solid-testing-library/intro/)
+- Backend: TO-DO
+
 ##### 8.1.2 When Tests Run
 
+- In continuous integration pipelines;
+- Before code push;
+- During development;
+
 ##### 8.1.3 KPIs and Thresholds
+
+| KPI            | Threshold | Rationale                      |
+| -------------- | --------- | ------------------------------ |
+| Test pass rate | 100%      | No broken tests merged to main |
 
 ##### 8.1.4 Most Important Features
 
