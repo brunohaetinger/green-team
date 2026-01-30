@@ -270,6 +270,42 @@ CONS (+)
   * It is default SSR, which is not required for our scenario.
 ```
 
+
+### 5.5 Authentication Provider
+
+#### Auth0
+
+PROS (+)
+
+- managed service, it reduces the infrastructure complexidade and maintainance
+- security patching automated
+- average SLA 99.99%
+
+
+CONS (-)
+- High pricing model, in the site the show cost calculation until 10.000 MAU (monthly active users) and it costs 17,600k dollares yearly. Above it they provide a sales team contact.
+- Dependency from a external service for a critical path from the system.
+- It also a SPOF
+
+#### KeyCloak
+
+PROS (+)
+
+- More control over the application
+- "Free", we will not have monthly costs related a service provide BUT we will have costs from infrasture (AWS) and team costs to managed all components.
+
+CONS (-)
+- Security patching will be our team responsibility
+- Complex architecture for horizontal scaling: offload session to infinitspan, JVM tunning, Database setup, Load balancer, ...
+  
+Both solutions provides
+
+- MFA support
+- Reset password flows
+
+
+  
+
 ### 🌏 6. For each key major component
 
 What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
