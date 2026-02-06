@@ -6,11 +6,11 @@ WORKDIR /app
 RUN apk add --no-cache musl-dev vim curl
 
 COPY . .
-RUN cargo build
+RUN cargo build --release
 
 FROM alpine:3.22
 WORKDIR /app
 
-COPY --from=build /app/target/debug /app/
+COPY --from=build /app/target/release/voting_system /app/
 
 CMD ["/app/voting_system"]

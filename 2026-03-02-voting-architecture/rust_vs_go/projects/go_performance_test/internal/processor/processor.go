@@ -28,13 +28,13 @@ type Processor struct {
 
 func New(s store.Store, buffer int, workers int) *Processor {
     if workers <= 0 {
-        workers = runtime.NumCPU() * 32
+        workers = runtime.NumCPU() * 128
     }
-    if workers < 128 {
-        workers = 128
+    if workers < 512 {
+        workers = 512
     }
-    if workers > 4096 {
-        workers = 4096
+    if workers > 8192 {
+        workers = 8192
     }
     p := &Processor{store: s}
 
