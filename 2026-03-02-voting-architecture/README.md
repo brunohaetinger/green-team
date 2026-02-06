@@ -304,6 +304,25 @@ Both solutions provides
 - Reset password flows
 
 
+### Authentication Flow
+
+The user clicks the authentication button and is redirected to the login screen managed by Keycloak.
+
+After Keycloak authenticates the user, an access_token containing the user’s roles will be sent to a callback URL.
+
+Every request made by the frontend will pass through the API Gateway, which will validate the JWT. To do this, it will query the IdP to retrieve the public key, and with it validate the token and its signature. Once authorization is completed, the request will be forwarded to the target service.
+The target service will have a filter/middleware that intercepts requests, extracts the access_token from the headers, queries Keycloak’s public key, and validates the token. For performance reasons, the public key may be cached locally for a short period of time.
+
+![](images/authentication-flow.png)
+
+Drivers:
+
+- We need to have a simple authorization system, so roles will be sufficient.
+- Token validation at the edge level will protect us from receiving requests that are not authenticated.
+- Token validation in the target service is important because it prevents any kind of bypass and reinforces that the service will only process authorized users.
+- Frequent retrieval of the public key from Keycloak is a challenge; to address this, we will add a local cache in the target service.
+- In the API Gateway, we will use the JWT Authorizer, which will integrate with the IdP, and we will use a 5-minute cache for the public key.
+
   
 
 ### 🌏 6. For each key major component
