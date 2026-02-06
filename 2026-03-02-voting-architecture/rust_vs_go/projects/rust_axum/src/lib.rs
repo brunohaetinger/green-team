@@ -1,6 +1,5 @@
 use std::sync::{Arc, atomic::AtomicU32};
 use std::collections::{HashMap, HashSet};
-use uuid::Uuid;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 
@@ -30,14 +29,14 @@ pub struct Poll {
     pub question: String,
     pub is_open: bool,
     pub options: Vec<OptionItem>,
-    pub voters: HashSet<Uuid>, // Set of voter IDs who have voted in this poll
+    pub voters: HashSet<String>, // Set of voter IDs who have voted in this poll
 }
 
 #[derive(Debug, Deserialize)]
 pub struct VoteRequest {
     pub poll_id: PollId, // ID of the poll being voted in
     pub option_id: OptionId, // ID of the option being voted for
-    pub voter_id: Uuid, // unique ID for each voter
+    pub voter_id: String, // unique ID for each voter
 }
 
 #[derive(Serialize)]

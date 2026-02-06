@@ -109,6 +109,7 @@ func (s *Server) Routes() {
 	registerSwagger(s.router)
 
 	// Map existing http.Handler funcs through Gin wrappers for minimal changes
+	s.router.GET("/health", func(c *gin.Context) { c.Status(http.StatusOK) })
 	s.router.POST("/vote", func(c *gin.Context) { s.handleVote(c.Writer, c.Request) })
 	s.router.POST("/polls", func(c *gin.Context) { s.handlePolls(c.Writer, c.Request) })
 	s.router.POST("/options", func(c *gin.Context) { s.handleOptions(c.Writer, c.Request) })
@@ -146,7 +147,7 @@ func (s *Server) handleVote(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "server is busy, please retry", http.StatusServiceUnavailable)
 		return
 	}
-	w.WriteHeader(http.StatusAccepted)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Server) handleGetOption(w http.ResponseWriter, r *http.Request) {
@@ -239,7 +240,7 @@ func (s *Server) handlePolls(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), status)
 			return
 		}
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 		return
 	case http.MethodPut:
 		var req createPollReq

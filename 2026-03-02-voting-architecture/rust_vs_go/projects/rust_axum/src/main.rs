@@ -8,6 +8,7 @@ use axum::{
 };
 use axum::extract::ws::{WebSocket, Message};
 use futures::{StreamExt};
+use serde::Deserialize;
 
 use std::{
     collections::{HashMap,HashSet},
@@ -19,7 +20,7 @@ use tokio::sync::{broadcast, RwLock};
 
 use voting_system::{
     AppState, VoteRequest, Poll, PollId,
-    ApiError, CreatePollRequest, OptionItem,
+    ApiError, OptionItem,
 };
 
 // ENDPOINTS
@@ -66,7 +67,7 @@ pub async fn vote(
         let _ = state.ws_tx.send(poll.clone());
 
         return (
-            StatusCode::CREATED,
+            StatusCode::ACCEPTED,
             Json(ApiError { message: "Voto registrado com sucesso".into() })
         );
     }
@@ -129,17 +130,37 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
 }
 
 // POST /polls -> create a new poll
+#[derive(Debug, Deserialize)]
+pub struct CreatePollInput {
+    pub id: Option<PollId>,
+    pub question: String,
+    pub is_open: Option<bool>,
+    pub options: Option<Vec<String>>,
+}
+
 async fn create_poll(
     State(state): State<AppState>,
-    Json(payload): Json<CreatePollRequest>,
-) -> (StatusCode, Json<Poll>) {
-    
-    let poll_id = state.next_poll_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    Json(payload): Json<CreatePollInput>,
+) -> (StatusCode, Json<serde_json::Value>) {
     let mut polls = state.polls.write().await;
-    let mut next_option_id: u32 = 1;
+    
+    let poll_id = match payload.id {
+        Some(id) => {
+            if polls.contains_key(&id) {
+                return (
+                    StatusCode::CONFLICT,
+                    Json(serde_json::json!({ "message": "Poll already exists" }))
+                );
+            }
+            id
+        },
+        None => state.next_poll_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
+    };
 
+    let mut next_option_id: u32 = 1;
     let options: Vec<OptionItem> = payload
         .options
+        .unwrap_or_default()
         .into_iter()
         .map(|label| {
             let id = next_option_id;
@@ -155,17 +176,48 @@ async fn create_poll(
     let new_poll = Poll {
         id: poll_id,
         question: payload.question,
-        is_open: true,
+        is_open: payload.is_open.unwrap_or(true),
         options,
         voters: HashSet::new(),
     };
 
     polls.insert(poll_id, new_poll.clone());
 
-    return(
-         StatusCode::CREATED,
-         Json(new_poll)
-    )
+    (StatusCode::CREATED, Json(serde_json::to_value(new_poll).unwrap()))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AddOptionRequest {
+    pub id: u32,
+    pub poll_id: u32,
+    pub label: String,
+}
+
+async fn add_option(
+    State(state): State<AppState>,
+    Json(payload): Json<AddOptionRequest>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    let mut polls = state.polls.write().await;
+    if let Some(poll) = polls.get_mut(&payload.poll_id) {
+        if poll.options.iter().any(|o| o.id == payload.id) {
+             return (
+                StatusCode::CONFLICT,
+                Json(serde_json::json!({ "message": "Option already exists" }))
+            );
+        }
+        poll.options.push(OptionItem {
+            id: payload.id,
+            label: payload.label,
+            votes: 0,
+        });
+        return (StatusCode::CREATED, Json(serde_json::json!({ "message": "Option added" })));
+    }
+    (StatusCode::NOT_FOUND, Json(serde_json::json!({ "message": "Poll not found" })))
+}
+
+// GET /health -> health check
+async fn health_check() -> StatusCode {
+    StatusCode::OK
 }
 
 // MAIN
@@ -190,15 +242,17 @@ async fn main() {
 
     // build app with routes
     let app = Router::new()
+        .route("/health", get(health_check))
         .route("/vote", post(vote))
         .route("/polls", get(list_polls))
         .route("/polls/:poll_id", get(get_poll))
         .route("/ws", get(ws_handler)) 
         .route("/polls", post(create_poll))
+        .route("/options", post(add_option))
         .with_state(state.clone());
 
     // start server
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     println!("🚀 Server running on http://{}", addr);
 
     // create TCP listener

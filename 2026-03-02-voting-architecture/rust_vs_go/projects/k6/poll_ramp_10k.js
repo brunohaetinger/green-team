@@ -6,6 +6,7 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const USE_SETUP = (__ENV.USE_SETUP || '') !== '' && __ENV.USE_SETUP !== '0' ? true : false;
 const SLEEP_MS = (__ENV.SLEEP_MS ? parseInt(__ENV.SLEEP_MS, 10) : 0) || 0;
 const TARGET_VUS = (__ENV.TARGET_VUS ? parseInt(__ENV.TARGET_VUS, 10) : 10000) || 10000;
+const REPORT_NAME = __ENV.REPORT_NAME || 'k6-report.html';
 
 let POLL_ID = __ENV.POLL_ID ? parseInt(__ENV.POLL_ID, 10) : 1;
 let OPTION_ID = __ENV.OPTION_ID ? parseInt(__ENV.OPTION_ID, 10) : 1;
@@ -83,7 +84,7 @@ export default function (data) {
 
 export function handleSummary(data) {
   return {
-    'k6-report.html': htmlReport(data),
+    [REPORT_NAME]: htmlReport(data),
     'k6-summary.json': JSON.stringify(data, null, 2),
   };
 }
