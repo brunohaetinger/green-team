@@ -345,23 +345,30 @@ Explain the techniques, principles, types of tests and will be performaned, and 
 
 ### 🖹 9. Observability strategy
 
-Explain the techniques, principles,types of observability that will be used, key metrics, what would be logged and how to design proper dashboards and alerts.
+The observability strategy focuses on system health monitoring using an open-source stack designed for extreme scale. Audit logging for vote integrity is handled separately at the database level to ensure clear separation between operational health and business audit trails.
 
-#### 9.1 Metrics collection and Dashboards
+## 9.1 **Stack**
+- **Metrics**: Prometheus for time-series metrics collection.
+- **Visualization**: Grafana for dashboards and alerting UI.
+- **Logs**: Loki for log aggregation with native Grafana integration.
+- **Tracing**: Tempo for distributed tracing with S3 storage.
+- **Profiling**: Grafana Pyroscope for continuous performance analysis.
 
-- What metrics to collect ?
-- What dashboards to use? which metrics to display ?
+## 9.2 **Metrics and Resource Efficiency**
+To handle a peak of 250k RPS, we prioritize metric efficiency. We use pre-aggregated counters for high-volume data and strictly enforce **High Cardinality Protection**: labels such as `user_id`, `session_id`, or `poll_id` are forbidden in Prometheus metrics to prevent performance degradation. Instead, these granular identifiers are offloaded to logs and trace attributes. Additionally, **Continuous Profiling** is active across all services to identify CPU and memory bottlenecks in real-time, ensuring optimal resource utilization and cost control during traffic spikes.
 
-#### 9.2 Logging
+## 9.3 **Dashboards and RED Metrics**
+We monitor system health through Request rate, Error rate, and Duration for all services, focusing on p50, p95, and p99 latencies. Specialized dashboards provide visibility into:
+- **System Overview**: Global health, service availability, and current RPS versus provisioned capacity.
+- **Voting Pipeline**: Granular metrics on vote success/failure rates, duplicate detection efficiency, and database write latency.
+- **Infrastructure**: Real-time resource utilization for Redis clusters, PostgreSQL instances, and WebSocket connection density.
+- **Real-time Ops**: A dedicated "War Room" view for peak events showing live voter throughput and error spike detection.
 
-- What is important to log ?
-- How to make it easy to keep track of logs ?
+## 9.4 **Logging and Distributed Tracing**
+All services emit structured JSON logs containing `trace_id` and `span_id` for seamless correlation. To manage the massive volume of data, we implement **Tail-Based Sampling** via OpenTelemetry Collectors. While we only sample 1% of standard successful requests to save on storage, we automatically capture 100% of traces involving errors or high latency (>p99). Logs are retained for 7 days in hot storage and 30 days in cold storage (S3) for post-incident analysis.
 
-#### 9.3 Alerting and Incident Response
-
-- What will trigger alerts ? What are the boundaries to evaluate ?
-
-#### 9.4 Distributed Tracing
+## 9.5 **Alerting and Synthetic Monitoring**
+We use threshold-based alerting via Grafana, routed to Slack for warnings and PagerDuty for critical incidents. To ensure the system is functional even during low-traffic periods or regional outages, we employ **Synthetic Monitoring (Canaries)**. These automated probes simulate the end-to-end voting flow from multiple global regions every minute, providing an early warning system that operates independently of actual user traffic.
 
 ### 🖹 10. Data Store Designs
 
