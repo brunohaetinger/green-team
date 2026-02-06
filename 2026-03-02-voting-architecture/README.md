@@ -308,6 +308,57 @@ Both solutions provides
 
 ### 🌏 6. For each key major component
 
+### VotingService
+
+#### Class Diagram
+
+![UML Diagram](voting-service-class-diagram.drawio.png)
+
+#### Contract Documentation
+
+**1. Cast Vote**
+- Casts an individual vote from a user
+- Path: `/api/v1/voting/vote`
+- Method: `POST`
+
+**Body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| pollId | string | Yes | Unique poll ID |
+| userId | string | Yes | Unique user ID |
+| optionId | string | Yes | Selected option ID |
+| timestamp | Timestamp | Yes | Vote timestamp |
+| ipAddress | string | Yes | Client IP Address |
+
+````JSON
+{
+  "pollId": "6c7d6b39-6150-4f90-bb9a-a41d8671e6eb",
+  "userId": "dd3b71c0-88e1-496c-a183-0810ca5d5260",
+  "optionId": "41b4d1cb-5fbb-487d-95ff-9c51122b8008",
+  "timestamp": "2026-01-01T14:30:00Z",
+  "ipAddress": "192.168.1.100"
+}
+````
+
+
+**Response body:**
+| Field | Type | Description |
+|-------|------|-------------|
+| isSuccessful | bool | Either the vote was successfully casted |
+| message | string | Success/Failure message |
+| voteId | string | Unique vote operation ID |
+
+````JSON
+{
+  "isSuccessful": true,
+  "message": "Vote registered successfully",
+  "voteId": "21142055-d8b1-4ef0-855e-efe36e90f4e4"
+}
+````
+
+
+-----------------------------------------------------------
+
 What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
 ```
 6.1 - Class Diagram              : classic uml diagram with attributes and methods
