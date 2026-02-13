@@ -377,14 +377,35 @@ Test Redis/PostgreSQL interactions, queue processing
 
 ##### 8.2.1 Tools
 
+- Backend: [Testcontainers-go](https://golang.testcontainers.org/) - Spin up real Redis and PostgreSQL instances in Docker for testing
+- Redis: [miniredis](https://github.com/alicebob/miniredis) - In-memory Redis server for fast integration tests
+- Database: [pgx](https://github.com/jackc/pgx) test utilities with transaction rollback pattern
+- HTTP: Go's `net/http/httptest` for API endpoint testing
+
 ##### 8.2.2 When Tests Run
 
+- In continuous integration pipelines (on every PR);
+- Before deployment to staging/production environments;
+- After infrastructure configuration changes;
+- Nightly scheduled runs for extended integration suites;
+
 ##### 8.2.3 KPIs and Thresholds
+
+| KPI                        | Threshold | Rationale                                                       |
+| -------------------------- | --------- | --------------------------------------------------------------- |
+| Test pass rate             | 100%      | No broken integration tests merged to main                      |
+| Redis operation latency    | < 10ms    | Cache operations must remain fast under test conditions         |
+| Database transaction time  | < 100ms   | Ensures queries are optimized and indexes are properly used     |
+| Concurrent vote accuracy   | 100%      | Zero lost or duplicate votes under concurrent test scenarios    |
 
 ##### 8.2.4 Most Important Features
 
 - Concurrent vote processing - Race condition handling
 - Redis failover behavior - Fallback to in-memory
+- PostgreSQL transaction integrity - ACID compliance for vote persistence
+- Redis-to-database consistency - Cached counts match persisted data after sync
+- Queue processing reliability - No vote loss during processor restarts
+- Lua script atomicity - Verify `USER_ALREADY_VOTED` check prevents duplicates under load
 
 #### 8.3 Load Tests (Priority: High)
 
