@@ -443,11 +443,43 @@ Failure injection (Redis down, DB failover, network partitions)
 
 ##### 8.5.1 Tools
 
+- [Chaos Monkey](https://netflix.github.io/chaosmonkey/) - Netflix's tool for randomly terminating instances in production to ensure resilience
+
 ##### 8.5.2 When Tests Run
+
+- Weekly scheduled runs in staging environment;
+- Before major releases to production;
+- After significant infrastructure changes (scaling policies, new regions);
 
 ##### 8.5.3 KPIs and Thresholds
 
+| KPI                              | Threshold   | Rationale                                                              |
+| -------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| Recovery Time Objective (RTO)    | < 30s       | System must recover from component failure within 30 seconds           |
+| Vote loss during failure         | 0           | No votes lost even during Redis/DB failures (queued and retried)       |
+| Error rate during degradation    | < 5%        | Graceful degradation must keep most requests successful                |
+| Fallback activation time         | < 5s        | In-memory fallback must activate quickly when Redis is unavailable     |
+| Data consistency after recovery  | 100%        | Vote counts must reconcile correctly after component recovery          |
+| WebSocket reconnection success   | > 99%       | Clients must automatically reconnect after network disruptions         |
+
 ##### 8.5.4 Most Important Features
+
+- Redis cluster failover - Verify automatic failover to replica and vote processing continuity
+- PostgreSQL RDS failover - Test Multi-AZ failover with zero vote data loss
+- Network partition handling - Ensure split-brain scenarios don't cause duplicate votes
+- Vote processor queue recovery - Validate in-flight votes are not lost during processor restart
+- In-memory fallback activation - Confirm system switches to memory store when Redis is unreachable
+- WebSocket connection resilience - Test client reconnection and state recovery after network drops
+- Cascading failure prevention - Ensure circuit breakers prevent total system collapse
+
+##### 8.5.5 Experiment Scenarios
+
+| Scenario                     | Injection Method                          | Expected Behavior                                      |
+| ---------------------------- | ----------------------------------------- | ------------------------------------------------------ |
+| Random instance termination  | Chaos Monkey: terminate random EC2/pod    | Auto-scaling replaces instance, no vote loss           |
+| Redis primary failure        | Chaos Monkey: terminate Redis primary     | Automatic failover to replica, < 30s recovery          |
+| Vote processor instance kill | Chaos Monkey: kill 50% of processor nodes | Remaining nodes handle load, auto-scaling kicks in     |
+| Full availability zone outage| Chaos Monkey: simulate AZ failure         | Traffic routes to healthy AZ, votes continue processing|
 
 #### 8.6 Property-Based Tests (Priority: Medium)
 
