@@ -517,9 +517,7 @@ println!("Vote result: {:?}", result);
 
 ### 🖹 11. Technology Stack
 
-Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
-
-- Backend:
+#### 11.1 Backend:
 
 **Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
 
@@ -534,8 +532,9 @@ Why popular frameworks like React and Next was not chosen?
 
 React and Next.js offer a strong ecosystem support, but their features introduce unnecessary overhead for a CSR-only, WebSocket-driven real-time voting system.
 
-- Infrastructure:
-- Data:
+<!-- Remove ? -->
+<!-- - Infrastructure:
+- Data: -->
 
 #### 11.3 - UI Bot prevention
 - reCaptcha V3 (Invisible Captcha)
