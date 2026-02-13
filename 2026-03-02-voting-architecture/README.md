@@ -413,14 +413,35 @@ Verify 250k RPS handling
 
 ##### 8.3.1 Tools
 
+- [k6](https://k6.io/) - Modern load testing tool with JavaScript scripting
+
 ##### 8.3.2 When Tests Run
 
+- Before major releases to production;
+- After performance-related code changes;
+- Weekly scheduled runs in staging environment;
+- After infrastructure scaling changes;
+
 ##### 8.3.3 KPIs and Thresholds
+
+| KPI                    | Threshold    | Rationale                                                    |
+| ---------------------- | ------------ | ------------------------------------------------------------ |
+| Throughput             | ≥ 250k RPS   | Must handle peak load requirement                            |
+| Response time (p50)    | < 50ms       | Median response must feel instant                            |
+| Response time (p95)    | < 200ms      | 95th percentile within acceptable latency                    |
+| Response time (p99)    | < 500ms      | Tail latency must not exceed half a second                   |
+| Error rate             | < 0.1%       | Less than 1 in 1000 requests should fail under load          |
+| CPU utilization        | < 80%        | Headroom for traffic spikes                                  |
+| Memory utilization     | < 85%        | Prevent OOM conditions during sustained load                 |
 
 ##### 8.3.4 Most Important Features
 
 - System throughput under peak load
 - Response time percentiles (p50, p95, p99)
+- Vote submission endpoint under concurrent load
+- WebSocket connection scaling to 300M users
+- Redis atomic operations performance under contention
+- Database write throughput for vote persistence
 
 #### 8.4 Contract/API Tests (Priority: Medium)
 
