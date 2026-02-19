@@ -1,8 +1,8 @@
 # 🧬 02.MAR.2026 - ARCHITECTURE KATA
 
-Template: https://github.com/diegopacheco/tech-resources/blob/master/arch-doc-template.md
-
+## Objective 
 You must design a Realtime voting system with the following requirements:
+
     1. Never loose Data
     2. Be secure and prevent bots and bad actors
     3. Handle 300M users 
@@ -11,6 +11,7 @@ You must design a Realtime voting system with the following requirements:
     6. Should be Realtime
     
 Restrictions:
+
     • Serverless
     • MongoDB
     • On-Premise, Google Cloude, Azure
@@ -24,9 +25,8 @@ Restrictions:
 
 What is the problem? What is the context of the problem?
 
->We have to design an architecture for a **realtime voting system** that will handle
->millions of users and high peaks of requests per second. 
->
+We have to design an architecture for a realtime voting system that will handle millions of users and high peaks of requests per second. We must ensure a smooth experience to the user when voting, each vote is unique and the user can check realtime results. It has to be reliable, scalable, secure, recoverable and auditable.
+
 > **Requirements**: 
 >
 > * We must ensure a smooth experience to the user when voting
@@ -55,8 +55,8 @@ What is the problem? What is the context of the problem?
 ### 3. 🎯 Non-Goals
 
 ```
-1. Serverless: it has high latency, cold startup and resources and execution time are limited.
-2. MongoDB - WHY ?
+1. Serverless: it has high latency, cold startup, resources and execution time are limited.
+2. MongoDB - Due to its eventual consistency characteristic, reading may not be realtime.
 3. On-Premisse and other clouds than AWS: AWS is the chosen cloud as it's more reliable and scalable
 4. OpenShift - OpenShift is a proprietary solution, prefer K8s or other opensource microservice solution.
 5. Mainframe or Monolith solutions - The system will need to automatically scale, quickly and on-demand.
@@ -64,41 +64,35 @@ What is the problem? What is the context of the problem?
 
 ### 📐 3. Principles
 
-List in form of bullets what design principles you want to be followed, it's great to have 5-10 lines.
-Example:
+Design principles we want to follow:
+
 ```
 1. Low Coupling: We need to watch for coupling all times.
-2. Flexibility: Users should be able to customize behavior without leaking the internals of the system. Leverage interfaces.
-3. Observability: we should expose all key metrics on main features. Sucess and errors counters need to be exposed.
-4. Testability: Chaos engineering is a must and property testing. Testing should be done by engineers all times.
-5. Cache efficiency: Should leverage SSD caches and all forms of caches as much as possible.
+2. Isolation: Resources and environments should be isolated
+3. Reliability: The system should be highly-available(99.9%) mainly during peaks
+4. Observability: we should expose all key metrics on main features. Sucess and errors counters need to be exposed.
+5. Testability: Load testing, unit, integration and E2E tests should be done by engineers all times.
+6. Cache efficiency: Should leverage SSD caches and all forms of caches as much as possible.
 ```
-Recommended Reading: http://diego-pacheco.blogspot.com/2018/01/stability-principles.html
 
 ### 🏗️ 4. Overall Diagrams
 
-Here there will be a bunch of diagrams, to understand the solution.
-```
-🗂️ 4.1 Overall architecture: Show the big picture, relationship between macro components.
-🗂️ 4.2 Deployment: Show the infra in a big picture. 
-```
+* 🗂️ 4.1 [Overall](arch.drawio) architecture: Show the big picture, relationship between macro components.
+* 🗂️ 4.2 [ Infrastructure diagram](infra.drawio.png): Show the infra in a big picture. 
+* 🗂️ 4.3 [Cache layer diagram](cache-layer.drawio): Show cache architecture
+* 🗂️ 4.4 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered.
 
-#### 4.3 Use Cases: 
-![Use Case Diagram](use-cases.drawio.png)
-Recommended Reading: http://diego-pacheco.blogspot.com/2020/10/uml-hidden-gems.html
-
-#### Cache layer diagram
 
 ### 🧭 5. Trade-offs
 
 List the tradeoffs analysis, comparing pros and cons for each major decision.
 Before you need list all your major decisions, them run tradeoffs on than.
 example:
+
+#TODO - Add all the decisions we made
+
 Major Decisions: 
 ```
-1. One mobile code base - should be (...)
-2. Reusable capability and low latency backends should be (...)
-3. Cache efficiency therefore should do (...)
 ```
 Tradeoffs:
 ```
@@ -106,38 +100,44 @@ Tradeoffs:
 2. Serverless vs Microservices
 3. Redis vs Enbeded Caches
 ```
-Each tradeoff line need to be:
-```
-PROS (+) 
-  * Benefit: Explanation that justify why the benefit is true.
-CONS (+)
-  * Problem: Explanation that justify why the problem is true.
-```
-PS: Be careful to not confuse problem with explanation. 
-<BR/>Recommended reading: http://diego-pacheco.blogspot.com/2023/07/tradeoffs.html
 
 ### 5.1 Backend
 
-## 5.1.1 Go (Golang)
+#### 5.1.1 Go (Golang)
 
-**Pros**: Fast execution and compilation, simple and efficient concurrency through goroutines and channels, mature ecosystem with extensive libraries, easy deployment via compiled binaries, excellent tooling and IDE support.
-**Cons**: Garbage collector can introduce occasional microsecond-level pauses under heavy load.
+```
+PROS (+)
+  * Fast execution and compilation, simple and efficient concurrency through goroutines and channels, mature ecosystem with extensive libraries, easy deployment via compiled binaries, excellent tooling and IDE support.
 
-## 5.1.2 Rust
+CONS (+)
+  * Garbage collector can introduce occasional microsecond-level pauses under heavy load.
+```
 
-**Pros**: Maximum performance with zero-cost abstractions, memory safety without garbage collection, deterministic performance for ultra-low-latency requirements, strong type system catches errors at compile time, no runtime overhead.
-**Cons**: Longer compile times compared to Go. Smaller ecosystem compared to established languages.
+#### 5.1.2 Rust
+```
+PROS (+)
+  * Maximum performance with zero-cost abstractions, memory safety without garbage collection, deterministic performance for ultra-low-latency requirements, strong type system catches errors at compile time, no runtime overhead.
 
-## 5.1.3 Java / Kotlin
+CONS (+)
+  * Longer compile times compared to Go. Smaller ecosystem compared to established languages.
+```
 
-**Pros:** Mature ecosystem, gret integration for Kafka Streams (unmatched for stateful stream processing), robust JVM with advanced JIT compilation, Spring framework for quick development.
-**Cons**: GC tuning complexity at scale, higher memory footprint, slower startup times, unpredictable latency spikes during GC pauses, which is unacceptable for real-time voting where every millisecond matters.
+#### 5.1.3 Java / Kotlin
 
-#### 5.2 Websocket, SSE and Polling
+```
+PROS (+)
+  * Mature ecosystem, gret integration for Kafka Streams (unmatched for stateful stream processing), robust JVM with advanced JIT compilation, Spring framework for quick development.
 
-##### 5.2.1 Websocket
+CONS (+)
+  * GC tuning complexity at scale, higher memory footprint, slower startup times, unpredictable latency spikes during GC pauses, which is unacceptable for real-time voting where every millisecond matters.
+```
+
+### 5.2 Websocket, SSE and Polling
+
+#### 5.2.1 Websocket
 A full-duplex, persisnt connection where client can push data at any time.
 
+```
 PROS (+)
   * Real-time, bidirectional communication.
   * Minimal overhead after connection is established.
@@ -148,11 +148,13 @@ CONS (+)
   * More complex to implement than other.
   * Not ideal for simple one-way updates.
   * Not supported by older proxies without WebSocket upgrades.
+```  
 
-##### 5.2.2 Server-Sent Events (SSE)
+#### 5.2.2 Server-Sent Events (SSE)
 A single long-lived http connection where server pushes updates.  
 Unidirectional (client cannot send messages back over the same channel).
 
+```
 PROS (+)
   * Very simple to implement (just a text stream from server).
   * Auto-reconnect built into the browser EventSource.
@@ -164,10 +166,12 @@ CONS (+)
   * Not ideal for very high-frequency updates.
   * Limited browser support on some older/embedded environments.
   * No binary data (text only unless you encode).
+```
 
-##### 5.2.3 Polling
+#### 5.2.3 Polling
 Client periodically requests new data with repeated HTTP requests.
 
+```
 PROS (+)
   * Easiest to implement.
   * Works everywhere, no special protocols.
@@ -177,10 +181,12 @@ CONS (+)
   * Inefficient: many requests with no data = waste.
   * Higher latency between updates (depends on poll interval).
   * Scales poorly (many clients -> many HTTP requests).
+```  
 
-#### 5.3 Cache layer
+### 5.3 Cache layer
 
-##### 5.3.1 Redis
+#### 5.3.1 Redis
+```
 PROS (+)
   * Rich Data Structures: Redis supports hashes, sets, sorted sets, bitmaps, and atomic counters, enabling complex real-time operations such as vote counting and user uniqueness checks.
   * Atomic Operations: Operations like INCR, HINCRBY, SETNX, and Lua scripts guarantee correctness under high concurrency, which is essential for voting systems.
@@ -193,8 +199,11 @@ CONS (–)
   * More Operational Complexity: Redis clustering, failover, and persistence tuning require deeper operational knowledge.
   * Single-Threaded per Shard: Although extremely fast, operations are serialized per shard, which may limit throughput for some workloads.
   * Overkill for Simple Cache: If you only need GET/SET caching with no atomicity or structures, Redis provides features you don’t need and increases overhead.
+```
 
-##### 5.3.2 Memcached
+#### 5.3.2 Memcached
+
+```
 PROS (+)
   * Extremely Lightweight: Memcached is optimized for pure in-memory key-value caching with very low overhead, giving it high throughput for simple GET/SET.
   * Simple Horizontal Scaling: Memcached nodes are stateless and client-side sharded, making scaling out trivial.
@@ -206,11 +215,13 @@ CONS (–)
   * No Complex Data Types: Only supports raw key-value pairs, preventing efficient server-side counters, sets, or hash operations.  
   * No Pub/Sub or Streaming: Cannot support real-time update features, forcing additional components for push-based dashboards.
   * No Replication Built-In: Failures mean immediate data loss unless handled at the application layer.
+```  
 
-#### 5.4 Frontend:
+### 5.4 Frontend:
 
-##### 5.4.1 Solid.js
+#### 5.4.1 Solid.js
 
+```
 PROS (+) 
   * Fine-grained reactivity: It is a pattern that update only the exact piece of the UI that depends on the changed data, without re-rerender the component, it is great for real time projects.
   * Very low runtime overhead: Solid uses almost no framework code in the browser.
@@ -218,9 +229,11 @@ PROS (+)
 
 CONS (+)
   * Small ecosystem: Maybe it can't have some integrations and libraries.
+```  
 
-##### 5.4.2 Svelte
+#### 5.4.2 Svelte
 
+```
 PROS (+) 
   * Fast and lightweight output: Compile the code to pure JavaScript without a virtual DOM, producing very small bundles.
   * Built-in reactivity: The UI automatically updates when data changes. Without state libraries.
@@ -229,9 +242,11 @@ PROS (+)
 CONS (+)
   * Small ecosystem: Maybe it can't have some integrations and libraries.
   * Has a great way to update the DOM, better than Virtual DOM, but not so performatic than Solid.js.
+```  
 
-##### 5.4.3 React
+#### 5.4.3 React
 
+```
 PROS (+) 
   * Because of its large number of clients has a mature ecosystem.
   * Very stable and enterprise acceptance.
@@ -239,9 +254,11 @@ PROS (+)
 CONS (+)
   * Uses Virtual DOM, which adds overhead on every update.
   * Has a bundle size bigger than the others.
+```
 
-##### 5.4.4 Next.js
+#### 5.4.4 Next.js
 
+```
 PROS (+) 
   * Based on React.js = almost the same community.
   * Great resources for complex scenarios around the full-stack development.
@@ -251,6 +268,62 @@ CONS (+)
   * For not complex projects, it may be not necessary because its native resources that won't be used.
   * Bundle size bigger than the others.
   * It is default SSR, which is not required for our scenario.
+```
+
+
+### 5.5 Authentication Provider
+
+#### Auth0
+
+PROS (+)
+
+- managed service, it reduces the infrastructure complexidade and maintainance
+- security patching automated
+- average SLA 99.99%
+
+
+CONS (-)
+- High pricing model, in the site the show cost calculation until 10.000 MAU (monthly active users) and it costs 17,600k dollares yearly. Above it they provide a sales team contact.
+- Dependency from a external service for a critical path from the system.
+- It also a SPOF
+
+#### KeyCloak
+
+PROS (+)
+
+- More control over the application
+- "Free", we will not have monthly costs related a service provide BUT we will have costs from infrasture (AWS) and team costs to managed all components.
+
+CONS (-)
+- Security patching will be our team responsibility
+- Complex architecture for horizontal scaling: offload session to infinitspan, JVM tunning, Database setup, Load balancer, ...
+  
+Both solutions provides
+
+- MFA support
+- Reset password flows
+
+
+### Authentication Flow
+
+The user clicks the authentication button and is redirected to the login screen managed by Keycloak.
+
+After Keycloak authenticates the user, an access_token containing the user’s roles will be sent to a callback URL.
+
+Every request made by the frontend will pass through the API Gateway, which will validate the JWT. To do this, it will query the IdP to retrieve the public key, and with it validate the token and its signature. Once authorization is completed, the request will be forwarded to the target service.
+The target service will have a filter/middleware that intercepts requests, extracts the access_token from the headers, queries Keycloak’s public key, and validates the token. For performance reasons, the public key may be cached locally for a short period of time.
+
+![](images/authentication-flow.png)
+
+Drivers:
+
+- We need to have a simple authorization system, so roles will be sufficient.
+- Token validation at the edge level will protect us from receiving requests that are not authenticated.
+- Token validation in the target service is important because it prevents any kind of bypass and reinforces that the service will only process authorized users.
+- Frequent retrieval of the public key from Keycloak is a challenge; to address this, we will add a local cache in the target service.
+- In the API Gateway, we will use the JWT Authorizer, which will integrate with the IdP, and we will use a 5-minute cache for the public key.
+
+  
 
 ### 🌏 6. For each key major component
 
@@ -309,9 +382,15 @@ What is a majore component? A service, a lambda, a important ui, a generalized a
 ```
 6.1 - Class Diagram              : classic uml diagram with attributes and methods
 6.2 - Contract Documentation     : Operations, Inputs and Outputs
+#TODO - Define the api contract
 6.3 - Persistence Model          : Diagrams, Table structure, partiotioning, main queries.
-6.4 - Algorithms/Data Structures : Spesific algos that need to be used, along size with spesific data structures.
+#TODO - Define the tables, fields, and interactions between tables; also define some queries (e.g., votes for a given election, results, votes cast by a specific user).
+
+
+6.4 - Algorithms/Data Structures : Specific algos that need to be used, along size with spesific data structures.
+#TODO - If there is any different data structure (a linked list, queue, or something else) to solve a specific use case, it must be added here.
 ```
+
 
 Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc... 
 
@@ -508,9 +587,7 @@ println!("Vote result: {:?}", result);
 
 ### 🖹 11. Technology Stack
 
-Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
-
-- Backend:
+#### 11.1 Backend:
 
 **Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
 
@@ -525,8 +602,9 @@ Why popular frameworks like React and Next was not chosen?
 
 React and Next.js offer a strong ecosystem support, but their features introduce unnecessary overhead for a CSR-only, WebSocket-driven real-time voting system.
 
-- Infrastructure:
-- Data:
+<!-- Remove ? -->
+<!-- - Infrastructure:
+- Data: -->
 
 #### 11.3 - UI Bot prevention
 - reCaptcha V3 (Invisible Captcha)
