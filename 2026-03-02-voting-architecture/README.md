@@ -449,14 +449,34 @@ Validate HTTP endpoints, request/response schemas
 
 ##### 8.4.1 Tools
 
+- [OpenAPI/Swagger](https://swagger.io/specification/) - API specification defining the contract (YAML/JSON)
+- [kin-openapi](https://github.com/getkin/kin-openapi) - Go library to validate requests/responses against OpenAPI spec
+- Go's `net/http/httptest` - Built-in HTTP testing for endpoint validation
+
 ##### 8.4.2 When Tests Run
+
+- On every pull request affecting API endpoints;
+- Before deploying new API versions;
+- When API consumers update their contract expectations;
+- As part of CI pipeline for both provider and consumer services;
 
 ##### 8.4.3 KPIs and Thresholds
 
+| KPI                          | Threshold | Rationale                                                    |
+| ---------------------------- | --------- | ------------------------------------------------------------ |
+| Contract test pass rate      | 100%      | All API contracts must be honored                            |
+| Schema validation coverage   | 100%      | All endpoints must have documented and validated schemas     |
+| Breaking change detection    | 0         | No unintentional breaking changes deployed                   |
+| API response time (contract) | < 100ms   | Contract tests should validate acceptable response times     |
+
 ##### 8.4.4 Most Important Features
 
-- API input validation - Malformed requests rejected
-- Response schema compliance
+- API input validation - Malformed requests rejected with proper error responses
+- Response schema compliance - All responses match documented OpenAPI spec
+- Vote submission contract - Request/response format for POST /polls/{id}/vote
+- Poll results contract - Real-time results endpoint schema validation
+- Error response consistency - Standardized error format across all endpoints
+- Authentication header validation - Proper handling of missing/invalid tokens
 
 #### 8.5 Chaos Engineering (Priority: Medium)
 
@@ -508,13 +528,26 @@ Verify invariants (vote count = unique voters)
 
 ##### 8.6.1 Tools
 
+- [testing/quick](https://pkg.go.dev/testing/quick) - Go standard library for randomized testing (no external dependencies)
+
 ##### 8.6.2 When Tests Run
+
+- On every pull request affecting core voting logic;
+- Nightly extended runs with higher iteration counts;
+- Before major releases;
 
 ##### 8.6.3 KPIs and Thresholds
 
+| KPI                     | Threshold | Rationale                                        |
+| ----------------------- | --------- | ------------------------------------------------ |
+| Property test pass rate | 100%      | All invariants must hold under randomized input  |
+| Iterations per property | ≥ 1,000   | Sufficient coverage of input space               |
+
 ##### 8.6.4 Most Important Features
 
-- Vote count invariant - total votes equals unique voters
+- Vote count invariant - total votes equals count of unique voters
+- Idempotency - duplicate vote submissions don't change state
+- Vote uniqueness - each user can only vote once per poll
 
 ### 🖹 9. Observability strategy
 
