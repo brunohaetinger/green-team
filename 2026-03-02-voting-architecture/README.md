@@ -364,23 +364,111 @@ Explain the techniques, principles, types of tests and will be performaned, and 
 
 ### 🖹 9. Observability strategy
 
-Explain the techniques, principles,types of observability that will be used, key metrics, what would be logged and how to design proper dashboards and alerts.
+The goal is to know what the system is doing at all times: how fast, how many errors, where it's slow, and why. We split this into four areas: metrics, logs, traces, and profiling.
 
-#### 9.1 Metrics collection and Dashboards
+**Stack**
+**Metrics**: Prometheus for time-series metrics collection.
+**Visualization**: Grafana for dashboards and alerting UI.
+**Logs**: Loki for log aggregation with native Grafana integration.
+**Tracing**: Tempo for distributed tracing with S3 storage.
+**Profiling**: Grafana Pyroscope for continuous performance analysis.
+**Instrumentation**: OpenTelemetry SDK on every service
 
-- What metrics to collect ?
-- What dashboards to use? which metrics to display ?
+#### 9.1 Principles
 
-#### 9.2 Logging
+- Every service exposes metrics, logs, and traces. No exceptions.
+- Logs always include `trace_id` and `span_id` so you can jump from a log line straight to the full trace.
+- Never put `user_id`, `session_id`, or any high-cardinality field as a Prometheus label — it kills performance at this scale. Those go into logs and trace attributes instead.
+- Vote counts are pre-aggregated before hitting Prometheus (one counter increment per batch, not per vote).
 
-- What is important to log ?
-- How to make it easy to keep track of logs ?
+#### 9.2 Key Metrics
 
-#### 9.3 Alerting and Incident Response
+**Voting pipeline**
+- `votes_cast_total` by status: `success`, `duplicate`, `fraud_rejected`
+- `vote_processing_duration_seconds` — p50, p95, p99
+- `kafka_consumer_lag` on the vote-events topic
+- `redis_lua_duration_seconds` — time spent in the atomic Lua script per vote
 
-- What will trigger alerts ? What are the boundaries to evaluate ?
+**WebSocket / Realtime**
+- `websocket_connections_active` — total live connections
+- `realtime_update_lag_seconds` — time from vote accepted to result broadcasted (target: p99 < 200ms)
+- `websocket_disconnects_total` by reason
 
-#### 9.4 Distributed Tracing
+**Infrastructure**
+- Redis: memory usage %, hit/miss ratio, command latency p99
+- PostgreSQL: active connections, replication lag, slow query count
+- Kafka: consumer lag per partition, under-replicated partitions
+
+**Traffic**
+- Requests per second per service
+- Error rate per service
+- HTTP latency p95/p99 per route
+
+#### 9.3 Logging
+
+All services log structured JSON to stdout. The OTel Collector ships them to Loki.
+
+- Vote accepted
+- Duplicate vote rejected
+- Fraud signal triggered
+- Redis or Kafka error
+- WebSocket connect / disconnect
+- Auth failure
+
+**Never log:** raw `user_id` in the log body, raw IP addresses, vote content beyond `option_id`, secrets or tokens.
+
+**Retention:** 7 days in Loki (hot), 30 days in S3 (cold). Security/fraud logs: 1 year.
+
+#### 9.4 Dashboards
+
+Four dashboards, each focused on a specific audience:
+
+**System Overview**
+- Current RPS vs. 250k capacity limit
+- Error rate per service (last 5 min)
+- Kafka consumer lag
+- Active WebSocket connections
+- Top-line vote success rate
+
+**Voting Pipeline**
+- Votes/sec over time
+- Success vs. duplicate vs. fraud breakdown (stacked)
+- Redis Lua latency p99
+- Kafka lag on vote-events
+- DB write latency with a 50ms warning line
+
+**Infrastructure**
+- Redis memory %, command latency, hit/miss ratio
+- PostgreSQL connections, replication lag, slow queries
+- Kafka broker health, under-replicated partitions
+
+**War Room**
+- 15-second auto-refresh
+- Current RPS, error rate (last 60s), Kafka lag, Redis memory, WebSocket connections
+- Last 10 alerts fired
+
+#### 9.5 Alerts
+
+Two levels: **Warning** (something is degrading) and **Critical** (SLO breach, wake someone up).
+
+- Vote success rate < 99.9% for 5m / Vote success rate < 99.5% for 2m
+- Kafka consumer lag > 10k for 5m / Kafka consumer lag > 50k for 3m
+- result_propagation p99 > 200ms for 5m / result_propagation p99 > 500ms for 3m
+- Redis memory > 70% / > 85%
+- PostgreSQL replication lag > 10s
+- Inbound RPS drops > 80% vs. baseline
+
+Rules:
+- No alert fires in under 2 minutes — avoids noise from transient spikes.
+- Every alert has a runbook rule pointing to what to do.
+- Schedule silence windows for planned maintenance.
+- Unanswered critical alerts auto-escalate after 10 minutes.
+
+#### 9.6 Distributed Tracing
+
+We sample 1% of normal successful requests. We capture 100% of requests that hit an error or exceed the p99 latency threshold.
+
+Trace covers the full path: `API Gateway → Voting Service → Redis → Kafka → Result Aggregator → WebSocket broadcast`.
 
 ### 🖹 10. Data Store Designs
 
