@@ -1,0 +1,184 @@
+#Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: voting-architecture
+---
+#Service - Go Performance Test
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-performance-test-service
+  namespace: voting-architecture
+spec:
+  type: ClusterIP
+  selector:
+    app: go-performance-test
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+
+
+#Service - Rust Axum
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: rust-axum-service
+#   namespace: voting-architecture
+# spec:
+#   type: ClusterIP
+#   selector:
+#     app: rust-axum
+#   ports:
+#     - port: 3000
+#       targetPort: 3000
+---
+#GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: contour
+spec:
+  controllerName: projectcontour.io/gateway-controller
+---
+#Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: voting-gateway
+  namespace: voting-architecture
+spec:
+  gatewayClassName: contour
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+#HTTPRoute - Go
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: go-performance-test-route
+  namespace: voting-architecture
+spec:
+  parentRefs:
+    - name: voting-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: go-performance-test-service
+          port: 8080
+          weight: 100
+---
+
+
+#HTTPRoute - Rust
+# apiVersion: gateway.networking.k8s.io/v1
+# kind: HTTPRoute
+# metadata:
+#   name: rust-axum-route
+#   namespace: voting-architecture
+# spec:
+#   parentRefs:
+#     - name: voting-gateway
+#   rules:
+#     - matches:
+#         - path:
+#             type: PathPrefix
+#             value: /rust
+#       backendRefs:
+#         - name: rust-axum-service
+#           port: 3000
+#           weight: 100
+---
+#Deployment - Go Performance Test
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-performance-test
+  namespace: voting-architecture
+spec:
+  selector:
+    matchLabels:
+      app: go-performance-test
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: go-performance-test
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - go-performance-test
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: go-performance-test
+          image: jefoso/voting-kata:go-api
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: STORE_BACKEND
+              value: "memory"
+            - name: DB_URL
+              value: ""
+            - name: REDIS_URL
+              value: ""
+            - name: REDIS_QUEUE_NAME
+              value: "votes"
+            - name: ENABLE_REUSEPORT
+              value: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: "6Gi"
+            requests:
+              cpu: "4"
+              memory: "6Gi"
+
+#Deployment - Rust Axum
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: rust-axum
+#   namespace: voting-architecture
+# spec:
+#   selector:
+#     matchLabels:
+#       app: rust-axum
+#   replicas: 1
+#   template:
+#     metadata:
+#       labels:
+#         app: rust-axum
+#     spec:
+#       containers:
+#         - name: rust-axum
+#           image: rust-axum:local
+#           imagePullPolicy: IfNotPresent
+#           ports:
+#             - containerPort: 3000
+#           resources:
+#             limits:
+#               cpu: "4"
+#               memory: "8Gi"
+#             requests:
+#               cpu: "2"
+#               memory: "4Gi"
+---
+

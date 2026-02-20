@@ -5,7 +5,7 @@ services:
     build:
       context: ./go_performance_test
       dockerfile: Dockerfile
-    image: go-performance-test:local
+    image: jefoso/voting-kata:go-api-dev
     ports:
       - "8080:8080"
     environment:
@@ -18,8 +18,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4.0"
-          memory: 8g
+          cpus: "0.5"
+          memory: 256m
 
   rust-axum:
     build:
@@ -31,5 +31,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4.0"
-          memory: 8g
+          cpus: "0.5"
+          memory: 256m
