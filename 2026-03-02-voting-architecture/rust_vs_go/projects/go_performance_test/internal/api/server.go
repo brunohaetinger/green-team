@@ -97,6 +97,7 @@ func NewServer() *Server {
 	}
 	r := gin.New()
 	// minimal middleware for performance
+	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
 	srv := &Server{store: st, votes: vp, closer: closer, router: r}

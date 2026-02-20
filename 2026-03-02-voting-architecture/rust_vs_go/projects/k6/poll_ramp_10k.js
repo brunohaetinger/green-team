@@ -74,7 +74,7 @@ export default function (data) {
   const res = http.post(url, payload, params);
 
   check(res, {
-    'vote accepted (202)': (r) => r.status === 202,
+    'vote accepted (200)': (r) => r.status === 200,
   });
 
   if (SLEEP_MS > 0) {
