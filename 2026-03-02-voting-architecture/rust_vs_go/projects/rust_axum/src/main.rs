@@ -30,11 +30,14 @@ pub async fn vote(
     State(state): State<AppState>, 
     Json(payload): Json<VoteRequest>
 ) -> (StatusCode, Json<ApiError>) {
+    eprintln!("[VOTE] Incoming vote - poll_id: {}, option_id: {}, voter_id: {}", 
+             payload.poll_id, payload.option_id, payload.voter_id);
 
     let mut polls = state.polls.write().await;
 
     let Some(poll) = polls.get_mut(&payload.poll_id) else {
         // poll NOT FOUND
+        eprintln!("[VOTE] ERROR: Poll {} not found", payload.poll_id);
         return (
             StatusCode::NOT_FOUND,
             Json(ApiError { message: "Poll não encontrada".into() })
@@ -43,6 +46,7 @@ pub async fn vote(
 
     if !poll.is_open {
         // poll closed
+        eprintln!("[VOTE] ERROR: Poll {} is closed", payload.poll_id);
         return (
             StatusCode::FORBIDDEN,
             Json(ApiError { message: "A votação está encerrada".into() })
@@ -52,6 +56,7 @@ pub async fn vote(
     // has this voter already voted in this poll?
     if poll.voters.contains(&payload.voter_id) {
         // User has already voted
+        eprintln!("[VOTE] ERROR: Voter {} already voted in poll {}", payload.voter_id, payload.poll_id);
         return (
             StatusCode::CONFLICT,
             Json(ApiError { message: "Usuário já votou nessa poll".into() })
@@ -61,10 +66,22 @@ pub async fn vote(
     // Find the option and increment its vote count
     if let Some(option) = poll.options.iter_mut().find(|opt| opt.id == payload.option_id) {
         option.votes += 1;
-        poll.voters.insert(payload.voter_id);
+        let option_votes = option.votes;
+        
+        poll.voters.insert(payload.voter_id.clone());
+        let total_voters = poll.voters.len();
 
-        // Notify via WebSocket
-        let _ = state.ws_tx.send(poll.clone());
+        // Clone poll while holding the lock
+        let poll_to_send = poll.clone();
+
+        // Release the write lock by dropping it
+        drop(polls);
+
+        // Notify via WebSocket OUTSIDE the lock
+        let _ = state.ws_tx.send(poll_to_send);
+
+        eprintln!("[VOTE] SUCCESS: Vote registered for poll {} - total voters: {}, option {} votes: {}", 
+                 payload.poll_id, total_voters, payload.option_id, option_votes);
 
         return (
             StatusCode::ACCEPTED,
@@ -72,6 +89,7 @@ pub async fn vote(
         );
     }
         // option not found
+        eprintln!("[VOTE] ERROR: Option {} not found in poll {}", payload.option_id, payload.poll_id);
         return (
             StatusCode::BAD_REQUEST,
             Json(ApiError { message: "Opção não encontrada nessa poll".into() })
@@ -82,6 +100,7 @@ pub async fn vote(
 // GET /polls -> list all polls
 async fn list_polls(State(state): State<AppState>) -> Json<HashMap<PollId, Poll>> {
     let polls = state.polls.read().await;
+    eprintln!("[LIST_POLLS] Retrieved {} polls", polls.len());
     Json(polls.clone())
 }
 
@@ -92,8 +111,10 @@ async fn get_poll(
 ) -> Result<Json<Poll>, StatusCode> {
     let polls = state.polls.read().await; 
     if let Some(poll) = polls.get(&poll_id) {
+        eprintln!("[GET_POLL] Retrieved poll {} - voters: {}", poll_id, poll.voters.len());
         Ok(Json(poll.clone()))
     } else {
+        eprintln!("[GET_POLL] ERROR: Poll {} not found", poll_id);
         Err(StatusCode::NOT_FOUND)
     }
 }
@@ -142,11 +163,14 @@ async fn create_poll(
     State(state): State<AppState>,
     Json(payload): Json<CreatePollInput>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    eprintln!("[CREATE_POLL] Creating poll: question='{}', options={}", payload.question, payload.options.as_ref().map(|o| o.len()).unwrap_or(0));
+    
     let mut polls = state.polls.write().await;
     
     let poll_id = match payload.id {
         Some(id) => {
             if polls.contains_key(&id) {
+                eprintln!("[CREATE_POLL] ERROR: Poll {} already exists", id);
                 return (
                     StatusCode::CONFLICT,
                     Json(serde_json::json!({ "message": "Poll already exists" }))
@@ -181,6 +205,8 @@ async fn create_poll(
         voters: HashSet::new(),
     };
 
+    eprintln!("[CREATE_POLL] SUCCESS: Poll {} created with {} options", poll_id, new_poll.options.len());
+
     polls.insert(poll_id, new_poll.clone());
 
     (StatusCode::CREATED, Json(serde_json::to_value(new_poll).unwrap()))
@@ -197,9 +223,12 @@ async fn add_option(
     State(state): State<AppState>,
     Json(payload): Json<AddOptionRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    eprintln!("[ADD_OPTION] Adding option {} to poll {} - label: '{}'", payload.id, payload.poll_id, payload.label);
+    
     let mut polls = state.polls.write().await;
     if let Some(poll) = polls.get_mut(&payload.poll_id) {
         if poll.options.iter().any(|o| o.id == payload.id) {
+            eprintln!("[ADD_OPTION] ERROR: Option {} already exists in poll {}", payload.id, payload.poll_id);
              return (
                 StatusCode::CONFLICT,
                 Json(serde_json::json!({ "message": "Option already exists" }))
@@ -210,20 +239,23 @@ async fn add_option(
             label: payload.label,
             votes: 0,
         });
+        eprintln!("[ADD_OPTION] SUCCESS: Option {} added to poll {}", payload.id, payload.poll_id);
         return (StatusCode::CREATED, Json(serde_json::json!({ "message": "Option added" })));
     }
+    eprintln!("[ADD_OPTION] ERROR: Poll {} not found", payload.poll_id);
     (StatusCode::NOT_FOUND, Json(serde_json::json!({ "message": "Poll not found" })))
 }
 
 // GET /health -> health check
 async fn health_check() -> StatusCode {
+    eprintln!("[HEALTH] Health check requested");
     StatusCode::OK
 }
 
 // MAIN
 #[tokio::main]
 async fn main() {
-    println!("Starting server......");
+    eprintln!("Starting server......");
 
     // Initialize polls store
     let polls_map: HashMap<PollId, Poll> = HashMap::new();
@@ -253,7 +285,7 @@ async fn main() {
 
     // start server
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    println!("🚀 Server running on http://{}", addr);
+    eprintln!("🚀 Server running on http://{}", addr);
 
     // create TCP listener
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();

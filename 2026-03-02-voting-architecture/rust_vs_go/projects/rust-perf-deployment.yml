@@ -1,0 +1,111 @@
+#Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rust-performance-test-ns
+---
+
+#GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: rust-performance-test-gateway
+spec:
+  controllerName: projectcontour.io/gateway-controller
+---
+
+#Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: rust-performance-test-gateway
+  namespace: rust-performance-test-ns
+spec:
+  gatewayClassName: contour
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+
+#HTTPRoute - Rust
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rust-performance-test-route
+  namespace: rust-performance-test-ns
+spec:
+  parentRefs:
+    - name: rust-performance-test-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: rust-performance-test-service
+          port: 3000
+          weight: 100
+---
+
+#Service - rust Performance Test
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-performance-test-service
+  namespace: rust-performance-test-ns
+spec:
+  type: ClusterIP
+  selector:
+    app: rust-performance-test
+  ports:
+    - port: 3000
+      targetPort: 3000
+
+---
+
+#Deployment - Rust Performance Test
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-performance-test
+  namespace: rust-performance-test-ns
+spec:
+  selector:
+    matchLabels:
+      app: rust-performance-test
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: rust-performance-test
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - rust-performance-test
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: rust-performance-test
+          image: jefoso/voting-kata:rust-api
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+          resources:
+            limits:
+              cpu: "4"
+              memory: "6Gi"
+            requests:
+              cpu: "4"
+              memory: "6Gi"

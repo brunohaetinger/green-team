@@ -74,7 +74,11 @@ export default function (data) {
   const res = http.post(url, payload, params);
 
   check(res, {
-    'vote accepted (200)': (r) => r.status === 200,
+    // go
+    // 'vote accepted (200)': (r) => r.status === 200,
+    // rust
+    'vote accepted (202)': (r) => r.status === 202,
+
   });
 
   if (SLEEP_MS > 0) {
