@@ -1,6 +1,6 @@
 services:
   app:
-    image: voting_system
+    image: jefoso/voting-kata:rust-api-dev
     build:
       context: .
     ports:
@@ -8,5 +8,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4.0"
-          memory: 8g
+          cpus: "0.5"
+          memory: 250m
