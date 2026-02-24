@@ -19,7 +19,7 @@ use tokio::sync::{broadcast, RwLock};
 
 use voting_system::{
     AppState, VoteRequest, Poll, PollId,
-    ApiError, CreatePollRequest, OptionItem,
+    ApiError, CreatePollRequest, OptionItem, processor::VoteProcessor,
 };
 
 // ENDPOINTS
@@ -29,53 +29,46 @@ pub async fn vote(
     State(state): State<AppState>, 
     Json(payload): Json<VoteRequest>
 ) -> (StatusCode, Json<ApiError>) {
+    // Quick validation - check if poll and option exist
+    {
+        let polls = state.polls.read().await;
+        
+        let Some(poll) = polls.get(&payload.poll_id) else {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ApiError { message: "Poll não encontrada".into() })
+            );
+        };
 
-    let mut polls = state.polls.write().await;
+        if !poll.is_open {
+            return (
+                StatusCode::FORBIDDEN,
+                Json(ApiError { message: "A votação está encerrada".into() })
+            );
+        }
 
-    let Some(poll) = polls.get_mut(&payload.poll_id) else {
-        // poll NOT FOUND
+        // Check if option exists
+        if !poll.options.iter().any(|opt| opt.id == payload.option_id) {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiError { message: "Opção não encontrada nessa poll".into() })
+            );
+        }
+    }
+
+    // Enqueue the vote for async processing
+    if !state.processor.enqueue(payload).await {
         return (
-            StatusCode::NOT_FOUND,
-            Json(ApiError { message: "Poll não encontrada".into() })
-        );
-    };
-
-    if !poll.is_open {
-        // poll closed
-        return (
-            StatusCode::FORBIDDEN,
-            Json(ApiError { message: "A votação está encerrada".into() })
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ApiError { message: "Fila de votos cheia, tente novamente".into() })
         );
     }
 
-    // has this voter already voted in this poll?
-    if poll.voters.contains(&payload.voter_id) {
-        // User has already voted
-        return (
-            StatusCode::CONFLICT,
-            Json(ApiError { message: "Usuário já votou nessa poll".into() })
-        );
-    }
-
-    // Find the option and increment its vote count
-    if let Some(option) = poll.options.iter_mut().find(|opt| opt.id == payload.option_id) {
-        option.votes += 1;
-        poll.voters.insert(payload.voter_id);
-
-        // Notify via WebSocket
-        let _ = state.ws_tx.send(poll.clone());
-
-        return (
-            StatusCode::CREATED,
-            Json(ApiError { message: "Voto registrado com sucesso".into() })
-        );
-    }
-        // option not found
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(ApiError { message: "Opção não encontrada nessa poll".into() })
-        );
-    
+    // Return 202 Accepted immediately (like Go implementation)
+    (
+        StatusCode::ACCEPTED,
+        Json(ApiError { message: "Voto registrado na fila".into() })
+    )
 }
 
 // GET /polls -> list all polls
@@ -182,11 +175,26 @@ async fn main() {
     // WebSocket broadcast channel
     let (ws_tx, _ws_rx) = broadcast::channel(100);
 
-    //
     let next_poll_id = Arc::new(AtomicU32::new(2));
     
-    // application state
-    let state = AppState { polls, ws_tx, next_poll_id };
+    // Create a placeholder processor (will be replaced immediately)
+    let initial_state = AppState { 
+        polls: polls.clone(), 
+        ws_tx: ws_tx.clone(), 
+        next_poll_id: next_poll_id.clone(),
+        processor: Arc::new(VoteProcessor::new_empty()), 
+    };
+    
+    // Initialize vote processor with async workers
+    let processor = Arc::new(VoteProcessor::new(initial_state, 0)); // 0 = auto-calculated workers
+    
+    // Final application state with processor
+    let state = AppState { 
+        polls, 
+        ws_tx, 
+        next_poll_id,
+        processor,
+    };
 
     // build app with routes
     let app = Router::new()
@@ -204,14 +212,5 @@ async fn main() {
     // create TCP listener
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
-
-    //Adding poll for testing
-    /*let _ = create_poll(
-        State(state.clone()), 
-        Json(CreatePollRequest {
-            question: "Which language is your favorite?".into(),
-            options: vec!["Rust".into(), "Go".into(), "Python".into()],
-        })
-    ).await;*/
     
 }

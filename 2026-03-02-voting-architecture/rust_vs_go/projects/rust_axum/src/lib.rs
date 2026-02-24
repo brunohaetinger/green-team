@@ -4,6 +4,8 @@ use uuid::Uuid;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 
+pub mod processor;
+
 // Type Definitions
 pub type PollId = u32;
 pub type OptionId = u32;
@@ -15,6 +17,7 @@ pub struct AppState {
     pub polls: PollStore,
     pub ws_tx: tokio::sync::broadcast::Sender<Poll>,
     pub next_poll_id: Arc<AtomicU32>,
+    pub processor: Arc<processor::VoteProcessor>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -33,7 +36,7 @@ pub struct Poll {
     pub voters: HashSet<Uuid>, // Set of voter IDs who have voted in this poll
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct VoteRequest {
     pub poll_id: PollId, // ID of the poll being voted in
     pub option_id: OptionId, // ID of the option being voted for
