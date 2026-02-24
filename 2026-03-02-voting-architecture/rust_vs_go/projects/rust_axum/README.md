@@ -8,11 +8,11 @@ Implement: Real time Voting System
 
 ## Do:
 
-- [ ] Implementation
-- [ ] Unit tests
-- [ ] Performance Test / Benchmarks
-- [ ] Proper Documentation
-- [ ] Expose Solution via REST API
+- [x] Implementation
+- [x] Unit tests
+- [x] Performance Test / Benchmarks
+- [x] Proper Documentation
+- [x] Expose Solution via REST API
 
 
 ## How to install

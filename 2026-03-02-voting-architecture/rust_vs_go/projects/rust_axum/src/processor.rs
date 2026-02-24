@@ -1,32 +1,41 @@
 use tokio::sync::broadcast;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use crate::{AppState, VoteRequest};
 
 pub struct VoteProcessor {
     tx: Option<broadcast::Sender<VoteRequest>>,
+    pub processed_count: Arc<AtomicU64>,
 }
 
 impl VoteProcessor {
     /// Create a new empty processor (placeholder)
     pub fn new_empty() -> Self {
-        VoteProcessor { tx: None }
+        VoteProcessor { 
+            tx: None,
+            processed_count: Arc::new(AtomicU64::new(0)),
+        }
     }
 
     /// Create a new vote processor with async workers
     pub fn new(state: AppState, num_workers: usize) -> Self {
-        let (tx, _rx) = broadcast::channel::<VoteRequest>(1_000_000); // 1M buffer like Go
+        // Use broadcast for efficient fan-out to multiple workers
+        let (tx, _) = broadcast::channel::<VoteRequest>(10000); // smaller buffer for broadcast
+        let processed_count = Arc::new(AtomicU64::new(0));
         
         let workers = if num_workers == 0 {
-            (num_cpus::get() * 32).min(4096).max(128)
+            (num_cpus::get() * 2).min(128).max(16)  // More conservative: CPU*2
         } else {
             num_workers
         };
 
-        println!("🔄 Vote processor starting with {} workers", workers);
+        println!("Vote processor starting with {} broadcast workers", workers);
 
         // Spawn worker tasks
         for _ in 0..workers {
             let state = state.clone();
             let mut rx = tx.subscribe();
+            let processed_count = processed_count.clone();
 
             tokio::spawn(async move {
                 loop {
@@ -34,9 +43,10 @@ impl VoteProcessor {
                         Ok(vote) => {
                             // Process the vote without blocking the HTTP request
                             let _ = process_vote(&state, vote).await;
+                            processed_count.fetch_add(1, Ordering::Relaxed);
                         }
                         Err(broadcast::error::RecvError::Lagged(_)) => {
-                            // Too many messages, skip some but continue
+                            // Skip lagged messages, continue
                             continue;
                         }
                         Err(broadcast::error::RecvError::Closed) => {
@@ -48,12 +58,15 @@ impl VoteProcessor {
             });
         }
 
-        VoteProcessor { tx: Some(tx) }
+        VoteProcessor { 
+            tx: Some(tx),
+            processed_count,
+        }
     }
 
     /// Enqueue a vote for async processing
     /// Returns true if enqueued successfully, false if queue is full
-    pub async fn enqueue(&self, vote: VoteRequest) -> bool {
+    pub fn enqueue(&self, vote: VoteRequest) -> bool {
         if let Some(tx) = &self.tx {
             tx.send(vote).is_ok()
         } else {

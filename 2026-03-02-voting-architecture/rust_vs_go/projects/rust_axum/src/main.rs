@@ -57,7 +57,8 @@ pub async fn vote(
     }
 
     // Enqueue the vote for async processing
-    if !state.processor.enqueue(payload).await {
+    if !state.processor.enqueue(payload) {
+        eprintln!("! Failed to enqueue vote");
         return (
             StatusCode::SERVICE_UNAVAILABLE,
             Json(ApiError { message: "Fila de votos cheia, tente novamente".into() })
@@ -161,6 +162,47 @@ async fn create_poll(
     )
 }
 
+// GET /stats -> get processor stats
+async fn get_stats(
+    State(state): State<AppState>,
+) -> Json<serde_json::Value> {
+    let processed = state.processor.processed_count.load(std::sync::atomic::Ordering::Relaxed);
+    Json(serde_json::json!({
+        "votes_processed": processed,
+    }))
+}
+
+// POST /options -> add option to an existing poll
+async fn create_option(
+    State(state): State<AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    // Try to parse poll_id as either number or string
+    let poll_id: u32 = match payload["poll_id"].as_u64() {
+        Some(id) => id as u32,
+        None => match payload["poll_id"].as_str() {
+            Some(s) => s.parse().unwrap_or(0),
+            None => 0,
+        }
+    };
+    
+    let label = payload["label"].as_str().unwrap_or("").to_string();
+    
+    let mut polls = state.polls.write().await;
+    
+    if let Some(poll) = polls.get_mut(&poll_id) {
+        let next_option_id = poll.options.iter().map(|o| o.id).max().unwrap_or(0) + 1;
+        poll.options.push(OptionItem {
+            id: next_option_id,
+            label: label.clone(),
+            votes: 0,
+        });
+        (StatusCode::CREATED, Json(serde_json::json!({ "id": next_option_id })))
+    } else {
+        (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "poll not found" })))
+    }
+}
+
 // MAIN
 #[tokio::main]
 async fn main() {
@@ -201,13 +243,15 @@ async fn main() {
         .route("/vote", post(vote))
         .route("/polls", get(list_polls))
         .route("/polls/:poll_id", get(get_poll))
-        .route("/ws", get(ws_handler)) 
         .route("/polls", post(create_poll))
+        .route("/options", post(create_option))
+        .route("/ws", get(ws_handler)) 
+        .route("/stats", get(get_stats))
         .with_state(state.clone());
 
     // start server
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
-    println!("🚀 Server running on http://{}", addr);
+    println!("Server running on http://{}", addr);
 
     // create TCP listener
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
