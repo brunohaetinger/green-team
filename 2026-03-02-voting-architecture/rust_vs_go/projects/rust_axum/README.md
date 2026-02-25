@@ -83,6 +83,14 @@ curl --location 'http://localhost:8080/vote' \
 cargo test
 ```
 
+### K6 Tests
+1. Inside the folder of K6
+2. run command below:
+```
+k6 run poll_ramp_10k.js
+```
+
+
 
 ## Other commands
 
