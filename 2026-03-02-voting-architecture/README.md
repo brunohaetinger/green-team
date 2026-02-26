@@ -456,9 +456,9 @@ CREATE TABLE voted_poll (
 );
 
 CREATE TABLE voted_option (
-    vote_id BIGINT NOT NULL REFERENCES voted_poll(id) ON DELETE CASCADE,
+    voted_poll_id BIGINT NOT NULL REFERENCES voted_poll(id) ON DELETE CASCADE,
     option_id UUID NOT NULL,
-    PRIMARY KEY (vote_id, option_id)
+    PRIMARY KEY (voted_poll_id, option_id)
 );
 
 CREATE INDEX idx_voted_poll_poll_id ON voted_poll(poll_id);
@@ -486,6 +486,7 @@ CREATE TABLE votes (
     'properties.bootstrap.servers' = '<connection_url>',
     'format' = 'json',
     'scan.startup.mode' = 'group-offsets'
+    /* group-offsets means, start reading from the offsets already committed for this consumer group or continue from where I left off. */
 );
 ```
 
