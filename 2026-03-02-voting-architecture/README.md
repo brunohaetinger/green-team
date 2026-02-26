@@ -387,7 +387,7 @@ The goal is to know what the system is doing at all times: how fast, how many er
 - `votes_cast_total` by status: `success`, `duplicate`, `fraud_rejected`
 - `vote_processing_duration_seconds` — p50, p95, p99
 - `kafka_consumer_lag` on the vote-events topic
-- `redis_lua_duration_seconds` — time spent in the atomic Lua script per vote
+- `flink_job_processing_latency_seconds` — end-to-end latency through Flink aggregation jobs
 
 **WebSocket / Realtime**
 - `websocket_connections_active` — total live connections
@@ -395,7 +395,8 @@ The goal is to know what the system is doing at all times: how fast, how many er
 - `websocket_disconnects_total` by reason
 
 **Infrastructure**
-- Redis: memory usage %, hit/miss ratio, command latency p99
+- Kafka Streams: consumer lag per partition, state store size, stream thread utilization
+- Apache Flink: checkpoint duration, restart count, backpressure ratio per operator
 - PostgreSQL: active connections, replication lag, slow query count
 - Kafka: consumer lag per partition, under-replicated partitions
 
@@ -411,7 +412,7 @@ All services log structured JSON to stdout. The OTel Collector ships them to Lok
 - Vote accepted
 - Duplicate vote rejected
 - Fraud signal triggered
-- Redis or Kafka error
+- Kafka or Flink error
 - WebSocket connect / disconnect
 - Auth failure
 
@@ -433,18 +434,19 @@ Four dashboards, each focused on a specific audience:
 **Voting Pipeline**
 - Votes/sec over time
 - Success vs. duplicate vs. fraud breakdown (stacked)
-- Redis Lua latency p99
-- Kafka lag on vote-events
+- Flink aggregation job latency p99
+- Kafka Streams consumer lag on vote-events
 - DB write latency with a 50ms warning line
 
 **Infrastructure**
-- Redis memory %, command latency, hit/miss ratio
+- Kafka Streams: consumer lag, state store size, thread utilization
+- Apache Flink: checkpoint duration, operator backpressure, job restarts
 - PostgreSQL connections, replication lag, slow queries
 - Kafka broker health, under-replicated partitions
 
 **War Room**
 - 15-second auto-refresh
-- Current RPS, error rate (last 60s), Kafka lag, Redis memory, WebSocket connections
+- Current RPS, error rate (last 60s), Kafka lag, Flink job status, WebSocket connections
 - Last 10 alerts fired
 
 #### 9.5 Alerts
@@ -454,7 +456,8 @@ Two levels: **Warning** (something is degrading) and **Critical** (SLO breach, w
 - Vote success rate < 99.9% for 5m / Vote success rate < 99.5% for 2m
 - Kafka consumer lag > 10k for 5m / Kafka consumer lag > 50k for 3m
 - result_propagation p99 > 200ms for 5m / result_propagation p99 > 500ms for 3m
-- Redis memory > 70% / > 85%
+- Flink checkpoint duration > 30s / Flink job restarts > 3 in 10m
+- Kafka Streams backpressure ratio > 50% for 5m
 - PostgreSQL replication lag > 10s
 - Inbound RPS drops > 80% vs. baseline
 
@@ -468,7 +471,7 @@ Rules:
 
 We sample 1% of normal successful requests. We capture 100% of requests that hit an error or exceed the p99 latency threshold.
 
-Trace covers the full path: `API Gateway → Voting Service → Redis → Kafka → Result Aggregator → WebSocket broadcast`.
+Trace covers the full path: `API Gateway → Voting Service → Kafka → Kafka Streams → Apache Flink → Result Aggregator → WebSocket broadcast`.
 
 ### 🖹 10. Data Store Designs
 
