@@ -78,9 +78,7 @@ Design principles we want to follow:
 ### 🏗️ 4. Overall Diagrams
 
 * 🗂️ 4.1 ![Overall](arch.drawio.png) architecture: Show the big picture, relationship between macro components.
-* 🗂️ 4.2 ![Infrastructure diagram](infra.drawio.png): Show the infra in a big picture. 
-* 🗂️ 4.3 [Cache layer diagram](cache-layer.drawio): Show cache architecture
-* 🗂️ 4.4 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered.
+* 🗂️ 4.2 ![Infrastructure diagram](infra.drawio.png): Show the infra in a big picture.
 
 
 ### 🧭 5. Trade-offs
