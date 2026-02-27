@@ -950,30 +950,11 @@ DO UPDATE SET
 
 **Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
 
-- Frontend:
+#### 11.2 Frontend:
 
-#### 11.2 Frontend Framework:
+Chosen Solid.js because it is the most performatic solution. Solid.js is a highly performant, lightweight UI library for building reactive interfaces, specially strong in real-time, high-frequency update scenarios. It focuses on fine-grained reactivity, meaning the framework updates only the exact parts of the DOM that depend on changed data. 
 
-Chosen Solid.js because it is the most performatic solution.
-
-Solid.js is a highly performant, lightweight UI library for building reactive interfaces, specially strong in real-time, high-frequency update scenarios. It focuses on fine-grained reactivity, meaning the framework updates only the exact parts of the DOM that depend on changed data.
-
-Why popular frameworks like React and Next was not chosen?
-
-React and Next.js offer a strong ecosystem support, but their features introduce unnecessary overhead for a CSR-only, WebSocket-driven real-time voting system.
-
-<!-- Remove ? -->
-<!-- - Infrastructure:
-- Data: -->
-
-#### 11.3 - UI Bot prevention
-
-- reCaptcha V3 (Invisible Captcha)
-  - Analyzes user interactions in the background without friction and better suitable than challenges that nowadays can be bypassed by AI.
-- JS Challenges
-  - To ensure the client is a real browser executing JS code, preventing basic bots which do not run JS.
-
-#### 11.4 Websocket
+#### 11.3 Websocket
 
 WebSockets are chosen because they are bidirectional, scalable, secure, reliable, and optimized for real-time systems - all critical requirements for a massive voting platform.
 
