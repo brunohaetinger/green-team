@@ -1,15 +1,16 @@
 # 🧬 02.MAR.2026 - ARCHITECTURE KATA
 
-## Objective 
+## Objective
+
 You must design a Realtime voting system with the following requirements:
 
     1. Never loose Data
     2. Be secure and prevent bots and bad actors
-    3. Handle 300M users 
+    3. Handle 300M users
     4. Handle peak of 250k RPS
     5. Must ensure users vote only once
     6. Should be Realtime
-    
+
 Restrictions:
 
     • Serverless
@@ -27,18 +28,17 @@ What is the problem? What is the context of the problem?
 
 We have to design an architecture for a realtime voting system that will handle millions of users and high peaks of requests per second. We must ensure a smooth experience to the user when voting, each vote is unique and the user can check realtime results. It has to be reliable, scalable, secure, recoverable and auditable.
 
-> **Requirements**: 
+> **Requirements**:
 >
-> * We must ensure a smooth experience to the user when voting
-> * Each vote must be unique
-> * The user can check realtime results. 
-> * It has to be
->   * reliable
->   * scalable
->   * secure
->   * recoverable
->   * auditable
-
+> - We must ensure a smooth experience to the user when voting
+> - Each vote must be unique
+> - The user can check realtime results.
+> - It has to be
+>   - reliable
+>   - scalable
+>   - secure
+>   - recoverable
+>   - auditable
 
 ### 2. 🎯 Goals
 
@@ -77,11 +77,10 @@ Design principles we want to follow:
 
 ### 🏗️ 4. Overall Diagrams
 
-* 🗂️ 4.1 [Overall](arch.drawio) architecture: Show the big picture, relationship between macro components.
-* 🗂️ 4.2 [ Infrastructure diagram](infra.drawio.png): Show the infra in a big picture. 
-* 🗂️ 4.3 [Cache layer diagram](cache-layer.drawio): Show cache architecture
-* 🗂️ 4.4 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered.
-
+- 🗂️ 4.1 [Overall](arch.drawio) architecture: Show the big picture, relationship between macro components.
+- 🗂️ 4.2 [ Infrastructure diagram](infra.drawio.png): Show the infra in a big picture.
+- 🗂️ 4.3 [Cache layer diagram](cache-layer.drawio): Show cache architecture
+- 🗂️ 4.4 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered.
 
 ### 🧭 5. Trade-offs
 
@@ -91,10 +90,14 @@ example:
 
 #TODO - Add all the decisions we made
 
-Major Decisions: 
+Major Decisions:
+
 ```
+
 ```
+
 Tradeoffs:
+
 ```
 1. React Native vs (Flutter and Native)
 2. Serverless vs Microservices
@@ -114,6 +117,7 @@ CONS (+)
 ```
 
 #### 5.1.2 Rust
+
 ```
 PROS (+)
   * Maximum performance with zero-cost abstractions, memory safety without garbage collection, deterministic performance for ultra-low-latency requirements, strong type system catches errors at compile time, no runtime overhead.
@@ -135,31 +139,35 @@ CONS (+)
 ### 5.2 Websocket, SSE and Polling
 
 #### 5.2.1 Websocket
+
 A full-duplex, persisnt connection where client can push data at any time.
 
 ```
 PROS (+)
-  * Real-time, bidirectional communication.
-  * Minimal overhead after connection is established.
-  * High throughput, good for chat apps, multiplayer games, collaborative editors.
-  * Works well for many messages per second.
+
+- Real-time, bidirectional communication.
+- Minimal overhead after connection is established.
+- High throughput, good for chat apps, multiplayer games, collaborative editors.
+- Works well for many messages per second.
 
 CONS (+)
   * More complex to implement than other.
   * Not ideal for simple one-way updates.
   * Not supported by older proxies without WebSocket upgrades.
-```  
+```
 
 #### 5.2.2 Server-Sent Events (SSE)
+
 A single long-lived http connection where server pushes updates.  
 Unidirectional (client cannot send messages back over the same channel).
 
 ```
 PROS (+)
-  * Very simple to implement (just a text stream from server).
-  * Auto-reconnect built into the browser EventSource.
-  * Uses regular HTTP-proxy-friendly.
-  * Lightweight for one-direction real-time feeds.
+
+- Very simple to implement (just a text stream from server).
+- Auto-reconnect built into the browser EventSource.
+- Uses regular HTTP-proxy-friendly.
+- Lightweight for one-direction real-time feeds.
 
 CONS (+)
   * Not bidirectional.
@@ -169,38 +177,40 @@ CONS (+)
 ```
 
 #### 5.2.3 Polling
+
 Client periodically requests new data with repeated HTTP requests.
 
 ```
 PROS (+)
-  * Easiest to implement.
-  * Works everywhere, no special protocols.
-  * Good for low-frequency or low-priority updates.
+
+- Easiest to implement.
+- Works everywhere, no special protocols.
+- Good for low-frequency or low-priority updates.
 
 CONS (+)
   * Inefficient: many requests with no data = waste.
   * Higher latency between updates (depends on poll interval).
   * Scales poorly (many clients -> many HTTP requests).
-```  
+```
 
 ### 5.4 Frontend:
 
 #### 5.4.1 Solid.js
 
 ```
-PROS (+) 
+PROS (+)
   * Fine-grained reactivity: It is a pattern that update only the exact piece of the UI that depends on the changed data, without re-rerender the component, it is great for real time projects.
   * Very low runtime overhead: Solid uses almost no framework code in the browser.
   * Very recommended for high-frequency updates.
 
 CONS (+)
   * Small ecosystem: Maybe it can't have some integrations and libraries.
-```  
+```
 
 #### 5.4.2 Svelte
 
 ```
-PROS (+) 
+PROS (+)
   * Fast and lightweight output: Compile the code to pure JavaScript without a virtual DOM, producing very small bundles.
   * Built-in reactivity: The UI automatically updates when data changes. Without state libraries.
   * Smaller bundle size, specially for less complex apps.
@@ -208,12 +218,12 @@ PROS (+)
 CONS (+)
   * Small ecosystem: Maybe it can't have some integrations and libraries.
   * Has a great way to update the DOM, better than Virtual DOM, but not so performatic than Solid.js.
-```  
+```
 
 #### 5.4.3 React
 
 ```
-PROS (+) 
+PROS (+)
   * Because of its large number of clients has a mature ecosystem.
   * Very stable and enterprise acceptance.
 
@@ -225,7 +235,7 @@ CONS (+)
 #### 5.4.4 Next.js
 
 ```
-PROS (+) 
+PROS (+)
   * Based on React.js = almost the same community.
   * Great resources for complex scenarios around the full-stack development.
   * Strong ecosystem and enterprise adoption.
@@ -294,6 +304,7 @@ Drivers:
 ### 🌏 6. For each key major component
 
 What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
+
 ```
 6.1 - Class Diagram              : classic uml diagram with attributes and methods
 6.2 - Contract Documentation     : Operations, Inputs and Outputs
@@ -306,8 +317,7 @@ What is a majore component? A service, a lambda, a important ui, a generalized a
 #TODO - If there is any different data structure (a linked list, queue, or something else) to solve a specific use case, it must be added here.
 ```
 
-
-Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc... 
+Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc...
 
 Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-design-forgotten.html
 
@@ -315,18 +325,202 @@ Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-d
 
 No migration required in this project
 
-
 ### 🖹 8. Testing strategy
 
-Explain the techniques, principles, types of tests and will be performaned, and spesific details how to mock data, stress test it, spesific chaos goals and assumptions.
+#### 8.1 Unit Tests (Priority: High)
 
-- What kind of tests are we going to implement ?
-- What tests we should have more in our project ?
-- When tests are going to run?
-- Which tools are we going to use ?
-- What are we going to test ? Any KPIs to be defined ?
-- Which are the most important features ?
+Validate individual functions (vote validation, deduplication logic)
 
+##### 8.1.1 Tools
+
+- Frontend: [Solid testing library](https://testing-library.com/docs/solid-testing-library/intro/)
+- Backend: Rust's built-in testing tool
+
+##### 8.1.2 When Tests Run
+
+- In continuous integration pipelines;
+- Before code push;
+- During development;
+
+##### 8.1.3 KPIs and Thresholds
+
+| KPI            | Threshold | Rationale                      |
+| -------------- | --------- | ------------------------------ |
+| Test pass rate | 100%      | No broken tests merged to main |
+
+##### 8.1.4 Most Important Features
+
+- Unique voter enforcement - Each user votes only once
+- Vote count accuracy - No lost or duplicate votes
+
+#### 8.2 Integration Tests (Priority: High)
+
+Test PostgreSQL interactions, queue processing
+
+##### 8.2.1 Tools
+
+- Backend: [testcontainers-rs](https://github.com/testcontainers/testcontainers-rs) - Spin up real Redis and PostgreSQL instances in Docker for testing
+- Database: [sqlx](https://github.com/launchbadge/sqlx) with `#[sqlx::test]` macro for automatic test database setup and transaction rollback
+- HTTP: [axum-test](https://crates.io/crates/axum-test) or [actix-rt](https://crates.io/crates/actix-rt) test utilities for API endpoint testing
+
+##### 8.2.2 When Tests Run
+
+- In continuous integration pipelines (on every PR);
+- Before deployment to staging/production environments;
+- After infrastructure configuration changes;
+- Nightly scheduled runs for extended integration suites;
+
+##### 8.2.3 KPIs and Thresholds
+
+| KPI                        | Threshold | Rationale                                                       |
+| -------------------------- | --------- | --------------------------------------------------------------- |
+| Test pass rate             | 100%      | No broken integration tests merged to main                      |
+| Database transaction time  | < 100ms   | Ensures queries are optimized and indexes are properly used     |
+| Concurrent vote accuracy   | 100%      | Zero lost or duplicate votes under concurrent test scenarios    |
+
+##### 8.2.4 Most Important Features
+
+- Concurrent vote processing - Race condition handling
+- PostgreSQL transaction integrity - ACID compliance for vote persistence
+- Queue processing reliability - No vote loss during processor restarts
+
+#### 8.3 Load Tests (Priority: High)
+
+Verify 250k RPS handling
+
+##### 8.3.1 Tools
+
+- [k6](https://k6.io/) - Modern load testing tool with JavaScript scripting
+
+##### 8.3.2 When Tests Run
+
+- Before major releases to production;
+- After performance-related code changes;
+- Weekly scheduled runs in staging environment;
+- After infrastructure scaling changes;
+
+##### 8.3.3 KPIs and Thresholds
+
+| KPI                    | Threshold    | Rationale                                                    |
+| ---------------------- | ------------ | ------------------------------------------------------------ |
+| Throughput             | ≥ 250k RPS   | Must handle peak load requirement                            |
+| Response time (p50)    | < 50ms       | Median response must feel instant                            |
+| Response time (p95)    | < 200ms      | 95th percentile within acceptable latency                    |
+| Response time (p99)    | < 500ms      | Tail latency must not exceed half a second                   |
+| Error rate             | < 0.1%       | Less than 1 in 1000 requests should fail under load          |
+| CPU utilization        | < 80%        | Headroom for traffic spikes                                  |
+| Memory utilization     | < 85%        | Prevent OOM conditions during sustained load                 |
+
+##### 8.3.4 Most Important Features
+
+- System throughput under peak load
+- Response time percentiles (p50, p95, p99)
+- Vote submission endpoint under concurrent load
+- WebSocket connection scaling to 300M users
+- Database write throughput for vote persistence
+
+#### 8.4 Contract/API Tests (Priority: Medium)
+
+Validate HTTP endpoints, request/response schemas
+
+##### 8.4.1 Tools
+
+- [utoipa](https://github.com/juhaku/utoipa) - Auto-generate OpenAPI spec from Rust code
+- [Prism](https://stoplight.io/open-source/prism) - Stoplight's OpenAPI mock server and contract validator
+
+##### 8.4.2 When Tests Run
+
+- On every pull request affecting API endpoints;
+- Before deploying new API versions;
+- When API consumers update their contract expectations;
+- As part of CI pipeline for both provider and consumer services;
+
+##### 8.4.3 KPIs and Thresholds
+
+| KPI                          | Threshold | Rationale                                                    |
+| ---------------------------- | --------- | ------------------------------------------------------------ |
+| Contract test pass rate      | 100%      | All API contracts must be honored                            |
+| Schema validation coverage   | 100%      | All endpoints must have documented and validated schemas     |
+| Breaking change detection    | 0         | No unintentional breaking changes deployed                   |
+| API response time (contract) | < 100ms   | Contract tests should validate acceptable response times     |
+
+##### 8.4.4 Most Important Features
+
+- API input validation - Malformed requests rejected with proper error responses
+- Response schema compliance - All responses match documented OpenAPI spec
+- Vote submission contract - Request/response format for POST /polls/{id}/vote
+- Poll results contract - Real-time results endpoint schema validation
+- Error response consistency - Standardized error format across all endpoints
+- Authentication header validation - Proper handling of missing/invalid tokens
+
+#### 8.5 Chaos Engineering (Priority: Medium)
+
+Failure injection (Redis down, DB failover, network partitions)
+
+##### 8.5.1 Tools
+
+- [Chaos Monkey](https://netflix.github.io/chaosmonkey/) - Netflix's tool for randomly terminating instances in production to ensure resilience
+
+##### 8.5.2 When Tests Run
+
+- Weekly scheduled runs in staging environment;
+- Before major releases to production;
+- After significant infrastructure changes (scaling policies, new regions);
+
+##### 8.5.3 KPIs and Thresholds
+
+| KPI                              | Threshold   | Rationale                                                              |
+| -------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| Recovery Time Objective (RTO)    | < 30s       | System must recover from component failure within 30 seconds           |
+| Vote loss during failure         | 0           | No votes lost even during Redis/DB failures (queued and retried)       |
+| Error rate during degradation    | < 5%        | Graceful degradation must keep most requests successful                |
+| Fallback activation time         | < 5s        | In-memory fallback must activate quickly when Redis is unavailable     |
+| Data consistency after recovery  | 100%        | Vote counts must reconcile correctly after component recovery          |
+| WebSocket reconnection success   | > 99%       | Clients must automatically reconnect after network disruptions         |
+
+##### 8.5.4 Most Important Features
+
+- PostgreSQL RDS failover - Test Multi-AZ failover with zero vote data loss
+- Network partition handling - Ensure split-brain scenarios don't cause duplicate votes
+- Vote processor queue recovery - Validate in-flight votes are not lost during processor restart
+- In-memory fallback activation - Confirm system switches to memory store when Redis is unreachable
+- WebSocket connection resilience - Test client reconnection and state recovery after network drops
+- Cascading failure prevention - Ensure circuit breakers prevent total system collapse
+
+##### 8.5.5 Experiment Scenarios
+
+| Scenario                     | Injection Method                          | Expected Behavior                                      |
+| ---------------------------- | ----------------------------------------- | ------------------------------------------------------ |
+| Random instance termination  | Chaos Monkey: terminate random EC2/pod    | Auto-scaling replaces instance, no vote loss           |
+| Vote processor instance kill | Chaos Monkey: kill 50% of processor nodes | Remaining nodes handle load, auto-scaling kicks in     |
+| Full availability zone outage| Chaos Monkey: simulate AZ failure         | Traffic routes to healthy AZ, votes continue processing|
+
+#### 8.6 Property-Based Tests (Priority: Medium)
+
+Verify invariants (vote count = unique voters)
+
+##### 8.6.1 Tools
+
+- [proptest](https://github.com/proptest-rs/proptest) - Powerful property-based testing with automatic shrinking and custom strategies
+
+##### 8.6.2 When Tests Run
+
+- On every pull request affecting core voting logic;
+- Nightly extended runs with higher iteration counts;
+- Before major releases;
+
+##### 8.6.3 KPIs and Thresholds
+
+| KPI                     | Threshold | Rationale                                        |
+| ----------------------- | --------- | ------------------------------------------------ |
+| Property test pass rate | 100%      | All invariants must hold under randomized input  |
+| Iterations per property | ≥ 1,000   | Sufficient coverage of input space               |
+
+##### 8.6.4 Most Important Features
+
+- Vote count invariant - total votes equals count of unique voters
+- Idempotency - duplicate vote submissions don't change state
+- Vote uniqueness - each user can only vote once per poll
 
 ### 🖹 9. Observability strategy
 
@@ -765,23 +959,24 @@ Chosen Solid.js because it is the most performatic solution. Solid.js is a highl
 WebSockets are chosen because they are bidirectional, scalable, secure, reliable, and optimized for real-time systems - all critical requirements for a massive voting platform.
 
 WHY:
-  * Bidirecional communication: Clients must send votes, and the server must confirm them.
-  * SSE is one-way only (server -> client): WS support full two-way messaging.
-  * Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
-  * Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
+
+- Bidirecional communication: Clients must send votes, and the server must confirm them.
+- SSE is one-way only (server -> client): WS support full two-way messaging.
+- Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
+- Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
 
 ### 🖹 12. References
 
-* Architecture Anti-Patterns: https://architecture-antipatterns.tech/
-* EIP https://www.enterpriseintegrationpatterns.com/
-* SOA Patterns https://patterns.arcitura.com/soa-patterns
-* API Patterns https://microservice-api-patterns.org/
-* Anti-Patterns https://sourcemaking.com/antipatterns/software-development-antipatterns
-* Refactoring Patterns https://sourcemaking.com/refactoring/refactorings
-* Database Refactoring Patterns https://databaserefactoring.com/
-* Data Modelling Redis https://redis.com/blog/nosql-data-modeling/
-* Cloud Patterns https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/introduction.html
-* 12 Factors App https://12factor.net/
-* Relational DB Patterns https://www.geeksforgeeks.org/design-patterns-for-relational-databases/
-* Rendering Patterns https://www.patterns.dev/vanilla/rendering-patterns/
-* REST API Design https://blog.stoplight.io/api-design-patterns-for-rest-web-services
+- Architecture Anti-Patterns: https://architecture-antipatterns.tech/
+- EIP https://www.enterpriseintegrationpatterns.com/
+- SOA Patterns https://patterns.arcitura.com/soa-patterns
+- API Patterns https://microservice-api-patterns.org/
+- Anti-Patterns https://sourcemaking.com/antipatterns/software-development-antipatterns
+- Refactoring Patterns https://sourcemaking.com/refactoring/refactorings
+- Database Refactoring Patterns https://databaserefactoring.com/
+- Data Modelling Redis https://redis.com/blog/nosql-data-modeling/
+- Cloud Patterns https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/introduction.html
+- 12 Factors App https://12factor.net/
+- Relational DB Patterns https://www.geeksforgeeks.org/design-patterns-for-relational-databases/
+- Rendering Patterns https://www.patterns.dev/vanilla/rendering-patterns/
+- REST API Design https://blog.stoplight.io/api-design-patterns-for-rest-web-services
