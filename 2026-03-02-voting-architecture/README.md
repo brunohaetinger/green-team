@@ -394,6 +394,7 @@ Avro to publish on Kafka `user-voted` topic
     {
       "name": "event_id",
       "type": "string",
+      "logicalType": "uuid",
       "doc": "Unique identifier for idempotency"
     },
     {
@@ -407,18 +408,23 @@ Avro to publish on Kafka `user-voted` topic
     {
       "name": "user_id",
       "type": "string",
+      "logicalType": "uuid",
       "doc": "Identifier of the user who cast the vote"
     },
     {
       "name": "poll_id",
       "type": "string",
+      "logicalType": "uuid",
       "doc": "Identifier of the poll"
     },
     {
       "name": "option_ids",
       "type": {
         "type": "array",
-        "items": "string"
+        "items": {
+          "type": "string",
+          "logicalType": "uuid"
+        }
       },
       "doc": "List of option identifiers selected in the poll"
     }
@@ -426,7 +432,7 @@ Avro to publish on Kafka `user-voted` topic
 }
 ```
 
-#### 10.3 VotingInvestion Service
+#### 10.3 VotingInvestionService
 Avro to receive the event from Kafka `user-voted` topic
 ```
 Should use the same Avro defined in the VotingCastService
@@ -457,8 +463,10 @@ CREATE TABLE voted_poll (
 
 CREATE TABLE voted_option (
     voted_poll_id BIGINT NOT NULL REFERENCES voted_poll(id) ON DELETE CASCADE,
+    poll_id UUID NOT NULL,
+    user_id UUID NOT NULL,
     option_id UUID NOT NULL,
-    PRIMARY KEY (voted_poll_id, option_id)
+    PRIMARY KEY (user_id, poll_id, option_id)
 );
 
 CREATE INDEX idx_voted_poll_poll_id ON voted_poll(poll_id);
@@ -468,45 +476,81 @@ CREATE INDEX idx_voted_poll_option_option_id ON voted_option(option_id);
 
 #### 10.4 Apache Flink (Aggregation layer) - Using FLINK SQL
 ##### 10.4.1 Defining Kafka topics that Flink needs to connect (IN/OUT)
-Defining a continuous streaming pipeline SOURCE
+Defining a continuous streaming pipeline source
 ```sql
-CREATE TABLE votes (
+CREATE TABLE votes_raw (
+    event_id STRING,
+    user_id STRING,
     poll_id STRING,
-    option_id STRING,
+    option_ids ARRAY<STRING>,
     occurred_at TIMESTAMP(3),
-    WATERMARK FOR occurred_at AS occurred_at - INTERVAL '5' SECOND
-    /*
-      Flink waits 5 seconds for late events
-      The window closes only when watermark passes,
-      Flink believes no more events older than this time will arrive.
-     */
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'user-voted',
     'properties.bootstrap.servers' = '<connection_url>',
-    'format' = 'json',
+    'format' = 'avro',
     'scan.startup.mode' = 'group-offsets'
     /* group-offsets means, start reading from the offsets already committed for this consumer group or continue from where I left off. */
 );
+
+CREATE VIEW deduplicated_events AS
+SELECT *
+FROM (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY event_id
+            ORDER BY occurred_at ASC
+        ) AS row_num
+    FROM votes_raw
+)
+WHERE row_num = 1;
+
+CREATE VIEW exploded_votes AS
+SELECT
+    user_id,
+    poll_id,
+    option_id,
+    occurred_at
+FROM deduplicated_events
+CROSS JOIN UNNEST(option_ids) AS t(option_id);
+
+CREATE VIEW business_deduplicated_votes AS
+SELECT *
+FROM (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY user_id, poll_id, option_id
+            ORDER BY occurred_at ASC
+        ) AS row_num
+    FROM exploded_votes
+)
+WHERE row_num = 1;
 ```
 
-Defining a continuous streaming pipeline OUT
+Defining a continuous streaming pipeline sink
 ```sql
 CREATE TABLE vote_counts (
     poll_id STRING,
     option_id STRING,
     vote_count BIGINT,
-    window_start TIMESTAMP(3),
-    window_end TIMESTAMP(3)
+    updated_at TIMESTAMP(3),
+    PRIMARY KEY (poll_id, option_id) NOT ENFORCED
 ) WITH (
     'connector' = 'kafka',
-    'topic' = 'vote-computed',
+    'topic' = 'votes-computed',
     'properties.bootstrap.servers' = '<connection_url',
-    'format' = 'json'
+    'format' = 'avro'
 );
 ```
 
-#### 10.4.2 Defining Flink SQL aggression to count votes to be sent to the Kafka out topic.
+#### 10.4.2 Defining Flink SQL aggression to count votes to be sent to the Kafka sink topic.
+Configuration to process bath in 1 minute
+```sql
+SET 'table.exec.mini-batch.enabled' = 'true';
+SET 'table.exec.mini-batch.allow-latency' = '1 min';
+SET 'table.exec.mini-batch.size' = '5000';
+```
+
 Starts a continuous streaming job, the job runs forever (until you stop it).
 ```sql
 INSERT INTO vote_counts
@@ -514,12 +558,105 @@ SELECT
     poll_id,
     option_id,
     COUNT(*) AS vote_count,
-    window_start,
-    window_end
-FROM TABLE(
-    TUMBLE(TABLE votes, DESCRIPTOR(occurred_at), INTERVAL '1' MINUTE) 
-    /* created a 1-minute tumbling window. */
-)
+    CURRENT_TIMESTAMP AS updated_at
+FROM business_deduplicated_votes
+GROUP BY
+    poll_id,
+    option_id;
+```
+
+#### 10.4.3 VotingScoreService 
+Avro to receive the event from Kafka `votes-computed` topic
+```json
+{
+  "type": "record",
+  "name": "VoteCountComputedEvent",
+  "namespace": "<project_namespace>.voting",
+  "doc": "Aggregated vote count per option for a poll within a time window",
+  "fields": [
+    {
+      "name": "poll_id",
+      "type": "string",
+      "doc": "Identifier of the poll",
+      "logicalType": "uuid"
+    },
+    {
+      "name": "option_id",
+      "type": "string",
+      "doc": "Identifier of the option",
+      "logicalType": "uuid"
+    },
+    {
+      "name": "vote_count",
+      "type": "long",
+      "doc": "Number of votes for this option within the window"
+    },
+    {
+      "name": "updated_at",
+      "type": { 
+        "type": "long", 
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last time that the count was updated"
+    }
+  ]
+}
+```
+
+Table to save into `VotingScoreBD` PostgreSQLDB
+```sql
+CREATE TABLE poll_option_score (
+    poll_id UUID NOT NULL,
+    option_id UUID NOT NULL,
+    vote_count BIGINT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (poll_id, option_id)
+);
+
+CREATE INDEX idx_poll_option_score_poll_id ON poll_option_score(poll_id);
+CREATE INDEX idx_poll_option_score_option_id ON poll_option_score(opttion_id);
+```
+
+Domain to use to save into DB
+```rust
+pub struct PollOptionScore {
+    pub poll_id: String,
+    pub option_id: String,
+    pub vote_count: i64,
+    pub updated_at: i64,
+}
+```
+
+Select to create DTO to response WS
+```sql
+SELECT option_id, vote_count, updated_at
+FROM poll_option_score
+WHERE poll_id = $1;
+```
+
+DTO to response WS
+```rust
+pub struct PollScoreResponseDTO {
+    pub poll_id: String,
+    pub total_votes: i64,
+    pub options: Vec<OptionScoreDTO>,
+    pub updated_at: i64,
+}
+
+pub struct OptionScoreDTO {
+    pub option_id: String,
+    pub vote_count: i64
+}
+```
+
+UPSERT to save into DB
+```sql
+INSERT INTO poll_option_score (poll_id, option_id, vote_count, updated_at)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (poll_id, option_id)
+DO UPDATE SET
+    vote_count = EXCLUDED.vote_count,
+    updated_at = EXCLUDED.updated_at;
 ```
 
 ### 🖹 11. Technology Stack
