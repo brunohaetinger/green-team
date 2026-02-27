@@ -355,12 +355,11 @@ Validate individual functions (vote validation, deduplication logic)
 
 #### 8.2 Integration Tests (Priority: High)
 
-Test Redis/PostgreSQL interactions, queue processing
+Test PostgreSQL interactions, queue processing
 
 ##### 8.2.1 Tools
 
 - Backend: [testcontainers-rs](https://github.com/testcontainers/testcontainers-rs) - Spin up real Redis and PostgreSQL instances in Docker for testing
-- Redis: [redis-rs](https://github.com/redis-rs/redis-rs) with `tokio` async runtime for Redis integration tests
 - Database: [sqlx](https://github.com/launchbadge/sqlx) with `#[sqlx::test]` macro for automatic test database setup and transaction rollback
 - HTTP: [axum-test](https://crates.io/crates/axum-test) or [actix-rt](https://crates.io/crates/actix-rt) test utilities for API endpoint testing
 
@@ -376,18 +375,14 @@ Test Redis/PostgreSQL interactions, queue processing
 | KPI                        | Threshold | Rationale                                                       |
 | -------------------------- | --------- | --------------------------------------------------------------- |
 | Test pass rate             | 100%      | No broken integration tests merged to main                      |
-| Redis operation latency    | < 10ms    | Cache operations must remain fast under test conditions         |
 | Database transaction time  | < 100ms   | Ensures queries are optimized and indexes are properly used     |
 | Concurrent vote accuracy   | 100%      | Zero lost or duplicate votes under concurrent test scenarios    |
 
 ##### 8.2.4 Most Important Features
 
 - Concurrent vote processing - Race condition handling
-- Redis failover behavior - Fallback to in-memory
 - PostgreSQL transaction integrity - ACID compliance for vote persistence
-- Redis-to-database consistency - Cached counts match persisted data after sync
 - Queue processing reliability - No vote loss during processor restarts
-- Lua script atomicity - Verify `USER_ALREADY_VOTED` check prevents duplicates under load
 
 #### 8.3 Load Tests (Priority: High)
 
@@ -422,7 +417,6 @@ Verify 250k RPS handling
 - Response time percentiles (p50, p95, p99)
 - Vote submission endpoint under concurrent load
 - WebSocket connection scaling to 300M users
-- Redis atomic operations performance under contention
 - Database write throughput for vote persistence
 
 #### 8.4 Contract/API Tests (Priority: Medium)
@@ -486,7 +480,6 @@ Failure injection (Redis down, DB failover, network partitions)
 
 ##### 8.5.4 Most Important Features
 
-- Redis cluster failover - Verify automatic failover to replica and vote processing continuity
 - PostgreSQL RDS failover - Test Multi-AZ failover with zero vote data loss
 - Network partition handling - Ensure split-brain scenarios don't cause duplicate votes
 - Vote processor queue recovery - Validate in-flight votes are not lost during processor restart
@@ -499,7 +492,6 @@ Failure injection (Redis down, DB failover, network partitions)
 | Scenario                     | Injection Method                          | Expected Behavior                                      |
 | ---------------------------- | ----------------------------------------- | ------------------------------------------------------ |
 | Random instance termination  | Chaos Monkey: terminate random EC2/pod    | Auto-scaling replaces instance, no vote loss           |
-| Redis primary failure        | Chaos Monkey: terminate Redis primary     | Automatic failover to replica, < 30s recovery          |
 | Vote processor instance kill | Chaos Monkey: kill 50% of processor nodes | Remaining nodes handle load, auto-scaling kicks in     |
 | Full availability zone outage| Chaos Monkey: simulate AZ failure         | Traffic routes to healthy AZ, votes continue processing|
 
