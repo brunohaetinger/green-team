@@ -193,43 +193,6 @@ CONS (+)
   * Scales poorly (many clients -> many HTTP requests).
 ```
 
-### 5.3 Cache layer
-
-#### 5.3.1 Redis
-
-```
-PROS (+)
-
-- Rich Data Structures: Redis supports hashes, sets, sorted sets, bitmaps, and atomic counters, enabling complex real-time operations such as vote counting and user uniqueness checks.
-- Atomic Operations: Operations like INCR, HINCRBY, SETNX, and Lua scripts guarantee correctness under high concurrency, which is essential for voting systems.
-- Persistence Options: Redis offers RDB and AOF persistence, ensuring data durability during crashes.
-- Pub/Sub Support: Redis can push real-time updates through Pub/Sub, enabling instant updates for dashboards and WebSocket-based clients.
-- Replication & Clustering: Redis Cluster provides automatic sharding and replication for high availability and horizontal scalability.
-
-CONS (–)
-  * Higher Resource Usage: Rich data structures and persistence add memory overhead and CPU use, making Redis more expensive to operate at scale.
-  * More Operational Complexity: Redis clustering, failover, and persistence tuning require deeper operational knowledge.
-  * Single-Threaded per Shard: Although extremely fast, operations are serialized per shard, which may limit throughput for some workloads.
-  * Overkill for Simple Cache: If you only need GET/SET caching with no atomicity or structures, Redis provides features you don’t need and increases overhead.
-```
-
-#### 5.3.2 Memcached
-
-```
-PROS (+)
-
-- Extremely Lightweight: Memcached is optimized for pure in-memory key-value caching with very low overhead, giving it high throughput for simple GET/SET.
-- Simple Horizontal Scaling: Memcached nodes are stateless and client-side sharded, making scaling out trivial.
-- Lower Cost: Since it uses less memory overhead and no persistence, Memcached is cheaper to run at large scale.
-- Ideal for Simple Cache Layer: Perfect for caching HTML fragments, sessions, or API responses where atomicity and structure are not needed.
-
-CONS (–)
-  * No Persistence: Data is lost on restart or failure, making Memcached unsuitable for scenarios where counts or state must survive crashes.
-  * No Complex Data Types: Only supports raw key-value pairs, preventing efficient server-side counters, sets, or hash operations.
-  * No Pub/Sub or Streaming: Cannot support real-time update features, forcing additional components for push-based dashboards.
-  * No Replication Built-In: Failures mean immediate data loss unless handled at the application layer.
-```
-
 ### 5.4 Frontend:
 
 #### 5.4.1 Solid.js
@@ -569,23 +532,114 @@ Verify invariants (vote count = unique voters)
 
 ### 🖹 9. Observability strategy
 
-Explain the techniques, principles,types of observability that will be used, key metrics, what would be logged and how to design proper dashboards and alerts.
+The goal is to know what the system is doing at all times: how fast, how many errors, where it's slow, and why. We split this into four areas: metrics, logs, traces, and profiling.
 
-#### 9.1 Metrics collection and Dashboards
+**Stack**
+**Metrics**: Prometheus for time-series metrics collection.
+**Visualization**: Grafana for dashboards and alerting UI.
+**Logs**: Loki for log aggregation with native Grafana integration.
+**Tracing**: Tempo for distributed tracing with S3 storage.
+**Profiling**: Grafana Pyroscope for continuous performance analysis.
+**Instrumentation**: OpenTelemetry SDK on every service
 
-- What metrics to collect ?
-- What dashboards to use? which metrics to display ?
+#### 9.1 Principles
 
-#### 9.2 Logging
+- Every service exposes metrics, logs, and traces. No exceptions.
+- Logs always include `trace_id` and `span_id` so you can jump from a log line straight to the full trace.
+- Never put `user_id`, `session_id`, or any high-cardinality field as a Prometheus label — it kills performance at this scale. Those go into logs and trace attributes instead.
+- Vote counts are pre-aggregated before hitting Prometheus (one counter increment per batch, not per vote).
 
-- What is important to log ?
-- How to make it easy to keep track of logs ?
+#### 9.2 Key Metrics
 
-#### 9.3 Alerting and Incident Response
+**Voting pipeline**
+- `votes_cast_total` by status: `success`, `duplicate`, `fraud_rejected`
+- `vote_processing_duration_seconds` — p50, p95, p99
+- `kafka_consumer_lag` on the vote-events topic
+- `flink_job_processing_latency_seconds` — end-to-end latency through Flink aggregation jobs
 
-- What will trigger alerts ? What are the boundaries to evaluate ?
+**WebSocket / Realtime**
+- `websocket_connections_active` — total live connections
+- `realtime_update_lag_seconds` — time from vote accepted to result broadcasted (target: p99 < 200ms)
+- `websocket_disconnects_total` by reason
 
-#### 9.4 Distributed Tracing
+**Infrastructure**
+- Kafka Streams: consumer lag per partition, state store size, stream thread utilization
+- Apache Flink: checkpoint duration, restart count, backpressure ratio per operator
+- PostgreSQL: active connections, replication lag, slow query count
+- Kafka: consumer lag per partition, under-replicated partitions
+
+**Traffic**
+- Requests per second per service
+- Error rate per service
+- HTTP latency p95/p99 per route
+
+#### 9.3 Logging
+
+All services log structured JSON to stdout. The OTel Collector ships them to Loki.
+
+- Vote accepted
+- Duplicate vote rejected
+- Fraud signal triggered
+- Kafka or Flink error
+- WebSocket connect / disconnect
+- Auth failure
+
+**Never log:** raw `user_id` in the log body, raw IP addresses, vote content beyond `option_id`, secrets or tokens.
+
+**Retention:** 7 days in Loki (hot), 30 days in S3 (cold). Security/fraud logs: 1 year.
+
+#### 9.4 Dashboards
+
+Four dashboards, each focused on a specific audience:
+
+**System Overview**
+- Current RPS vs. 250k capacity limit
+- Error rate per service (last 5 min)
+- Kafka consumer lag
+- Active WebSocket connections
+- Top-line vote success rate
+
+**Voting Pipeline**
+- Votes/sec over time
+- Success vs. duplicate vs. fraud breakdown (stacked)
+- Flink aggregation job latency p99
+- Kafka Streams consumer lag on vote-events
+- DB write latency with a 50ms warning line
+
+**Infrastructure**
+- Kafka Streams: consumer lag, state store size, thread utilization
+- Apache Flink: checkpoint duration, operator backpressure, job restarts
+- PostgreSQL connections, replication lag, slow queries
+- Kafka broker health, under-replicated partitions
+
+**War Room**
+- 15-second auto-refresh
+- Current RPS, error rate (last 60s), Kafka lag, Flink job status, WebSocket connections
+- Last 10 alerts fired
+
+#### 9.5 Alerts
+
+Two levels: **Warning** (something is degrading) and **Critical** (SLO breach, wake someone up).
+
+- Vote success rate < 99.9% for 5m / Vote success rate < 99.5% for 2m
+- Kafka consumer lag > 10k for 5m / Kafka consumer lag > 50k for 3m
+- result_propagation p99 > 200ms for 5m / result_propagation p99 > 500ms for 3m
+- Flink checkpoint duration > 30s / Flink job restarts > 3 in 10m
+- Kafka Streams backpressure ratio > 50% for 5m
+- PostgreSQL replication lag > 10s
+- Inbound RPS drops > 80% vs. baseline
+
+Rules:
+- No alert fires in under 2 minutes — avoids noise from transient spikes.
+- Every alert has a runbook rule pointing to what to do.
+- Schedule silence windows for planned maintenance.
+- Unanswered critical alerts auto-escalate after 10 minutes.
+
+#### 9.6 Distributed Tracing
+
+We sample 1% of normal successful requests. We capture 100% of requests that hit an error or exceed the p99 latency threshold.
+
+Trace covers the full path: `API Gateway → Voting Service → Kafka → Kafka Streams → Apache Flink → Result Aggregator → WebSocket broadcast`.
 
 ### 🖹 10. Data Store Designs
 
@@ -595,158 +649,307 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 - Partitioning ?
 - Caching ?
 
-##### 10.1 Redis
+#### 10.1 VotingCastService
+DTO (Data transfer object) received by Service from WS
+```rust
+impl PollId {
+    pub fn new(value: String) -> Result<Self, &'static str> {
+        if value.trim().is_empty() {
+            return Err("poll_id cannot be empty");
+        }
+        Ok(Self(value))
+    }
+}
 
-###### 10.1.1 Creating the real-time vote counter
+impl OptionId {
+    pub fn new(value: String) -> Result<Self, &'static str> {
+        if value.trim().is_empty() {
+            return Err("option_id cannot be empty");
+        }
+        Ok(Self(value))
+    }
+}
 
-```bash
-# HINCRBY is atomic: safe for concurrent voting.
-# Key: poll:<poll_id>:counts
-# Type: HASH
-# Fields:
-#  <option_id>:<count>
-
-# to create vote list
-HSET poll:<POLL_ID>:counts <OPTION_ID> <OPTION_VALUE> <OPTION_ID> <OPTION_VALUE> <OPTION_ID> <OPTION_VALUE>
-
-# to increment int othe vote list
-HINCRBY poll:<POLL_ID>:counts <OPTION_ID> <VALUE>
-
-# to get all options and values
-HGETALL poll:<POLL_ID>:counts
-
-# to get a value from specific vote option
-HGET poll:<POLL_ID>:counts <OPTION_ID>
-
-# Ensuring unique Votes
-# HINCRBY is atomic: safe for concurrent voting
-# Key: poll:<POLL_ID>:voters
-# Type: SET
-# Value: <USER_ID>
-
-# to create
-SADD poll:<POLL_ID>:voters <USER_ID>
-
-# To verify if the value exists, it means, it the user already voted
-SISMEMBER poll:<POLL_ID>:voters <USER_ID>
-```
-
-###### 10.1.3 Redis stream for batch Result Updates
-
-Execution Plan
-
-- Set batch size: Decide how many votes should trigger a batch update
-- Increment temporary batch hash: Every vote increments the option count in `poll:<POLL_ID>:batch_counts`
-- Check batch threshold: Sum all votes in the batch; if total >= batch size, continue
-- Publish batch to stream: Send accumulated counts to `poll:<POLL_ID>:updates` in a single XADD
-- Reset temporary batch hash: Clear counts for the next batch
-- Consumer reads stream: Process batch updates in real-time, without one event per vote
-
-operations
-
-```bash
-# Channel: poll:<poll_id>:updates
-# Type: STREAM
-
-# Set the number of votes per batch
-SET poll:<POLL_ID>:batch 100
-
-# Increment vote counts for each option in a temporary hash
-HINCRBY poll:<POLL_ID>:batch_counts "A" 1
-HINCRBY poll:<POLL_ID>:batch_counts "B" 1
-HINCRBY poll:<POLL_ID>:batch_counts "C" 1
-
-# Sum all values in the temporary batch hash
-# If total votes >= batch, proceed to publish
-HVALS poll:<POLL_ID>:batch_counts
-
-# Add the accumulated batch counts to the stream
-XADD poll:<POLL_ID>:updates * \
-    A <count_A> \
-    B <count_B> \
-    C <count_C>
-
-# Clear the temporary batch hash for next batch
-DEL poll:<POLL_ID>:batch_counts
-
-# Consumer reads new batch updates from the stream
-XREAD COUNT 1 BLOCK 0 STREAMS poll:<POLL_ID>:updates $
-```
-
-###### To ensure atomicity, we use Lua script.
-
-```lua
-local pollID      = ARGV[1]
-local userID      = ARGV[2]
-local optionID    = ARGV[3]
-
--- define all keys internally based on <POLL_ID>
-local votersSetKey    = "poll:" .. pollID .. ":voters"
-local countsHashKey   = "poll:" .. pollID .. ":counts"
-local batchCountsHash = "poll:" .. pollID .. ":batch_counts"
-local batchStreamKey  = "poll:" .. pollID .. ":updates"
-local batchSizeKey    = "poll:" .. pollID .. ":batch"
-
--- check if user already voted
-if redis.call("SISMEMBER", votersSetKey, userID) == 1 then
-    return {err="USER_ALREADY_VOTED"}
-end
-
--- add user to voters set
-redis.call("SADD", votersSetKey, userID)
-
--- increment total votes
-redis.call("HINCRBY", countsHashKey, optionID, 1)
-
--- increment batch count
-redis.call("HINCRBY", batchCountsHash, optionID, 1)
-
--- calculate total votes in batch
-local totalBatchVotes = 0
-local batchValues = redis.call("HVALS", batchCountsHash)
-for i=1, #batchValues do
-    totalBatchVotes = totalBatchVotes + tonumber(batchValues[i])
-end
-
--- get batch size
-local batchSize = tonumber(redis.call("GET", batchSizeKey))
-
--- if batch reached, push to stream and reset batch_counts
-if totalBatchVotes >= batchSize then
-    local batchData = redis.call("HGETALL", batchCountsHash)
-    redis.call("XADD", batchStreamKey, "*", unpack(batchData))
-    redis.call("DEL", batchCountsHash)
-    return {"BATCH_PUBLISHED", batchData}
-end
-
-return {"VOTE_ADDED"}
-```
-
-usage example in golang
-
-```go
-argv := []interface{}{<POLL_ID>, <USER_ID>, <OPTION_ID>}
-
-res, err := rdb.Eval(ctx, <LUA_SCRIPT>, nil, argv...).Result()
-if err != nil {
-    fmt.Println("Error voting:", err)
-} else {
-    fmt.Printf("Vote result for %s: %v\n", userID, res)
+pub struct VoteRequestDTO {
+    pub poll_id: PollId,
+    pub option_ids: Vec<OptionId>,
 }
 ```
 
-usage example in rust
+Avro to publish on Kafka `user-voted` topic
+```json
+{
+  "type": "record",
+  "name": "VoteCastEvent",
+  "namespace": "<project_namespace>.voting",
+  "doc": "Event emitted when a user casts a vote in a poll",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "logicalType": "uuid",
+      "doc": "Unique identifier for idempotency"
+    },
+    {
+      "name": "occurred_at",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Event timestamp in milliseconds"
+    },
+    {
+      "name": "user_id",
+      "type": "string",
+      "logicalType": "uuid",
+      "doc": "Identifier of the user who cast the vote"
+    },
+    {
+      "name": "poll_id",
+      "type": "string",
+      "logicalType": "uuid",
+      "doc": "Identifier of the poll"
+    },
+    {
+      "name": "option_ids",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "logicalType": "uuid"
+        }
+      },
+      "doc": "List of option identifiers selected in the poll"
+    }
+  ]
+}
+```
 
+#### 10.3 VotingInvestionService
+Avro to receive the event from Kafka `user-voted` topic
+```
+Should use the same Avro defined in the VotingCastService
+```
+
+Convert the Avro to Domain
 ```rust
-let result: redis::Value = redis::Script::new(<LUA_SCRIPT>)
-    .key("")
-    .arg(<POOL_ID>)
-    .arg(<USER_ID>)
-    .arg(<OPTION_ID>)
-    .invoke_async(&mut con)
-    .await?;
+pub struct Vote {
+    pub user_id: String,
+    pub poll_id: String,
+    pub option_ids: Vec<String>,
+    pub event_id: String,
+    pub occurred_at: i64,
+    pub created_at: i64,
+}
+```
 
-println!("Vote result: {:?}", result);
+Save the domain into the `VotingDB` PostgreSQL database
+```sql
+CREATE TABLE voted_poll (
+    id BIGSERIAL PRIMARY KEY,
+    event_id UUID NOT NULL UNIQUE,
+    user_id UUID NOT NULL,
+    poll_id UUID NOT NULL,
+    occurred_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE voted_option (
+    voted_poll_id BIGINT NOT NULL REFERENCES voted_poll(id) ON DELETE CASCADE,
+    poll_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    option_id UUID NOT NULL,
+    PRIMARY KEY (user_id, poll_id, option_id)
+);
+
+CREATE INDEX idx_voted_poll_poll_id ON voted_poll(poll_id);
+CREATE INDEX idx_voted_poll_occurred_at ON voted_poll(occurred_at);
+CREATE INDEX idx_voted_poll_option_option_id ON voted_option(option_id);
+```
+
+#### 10.4 Apache Flink (Aggregation layer) - Using FLINK SQL
+##### 10.4.1 Defining Kafka topics that Flink needs to connect (source/sink)
+Defining a continuous streaming pipeline source
+```sql
+CREATE TABLE votes_raw (
+    event_id STRING,
+    user_id STRING,
+    poll_id STRING,
+    option_ids ARRAY<STRING>,
+    occurred_at TIMESTAMP(3),
+) WITH (
+    'connector' = 'kafka',
+    'topic' = 'user-voted',
+    'properties.bootstrap.servers' = '<connection_url>',
+    'format' = 'avro',
+    'scan.startup.mode' = 'group-offsets'
+    /* group-offsets means, start reading from the offsets already committed for this consumer group or continue from where I left off. */
+);
+
+CREATE VIEW deduplicated_events AS
+SELECT *
+FROM (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY event_id
+            ORDER BY occurred_at ASC
+        ) AS row_num
+    FROM votes_raw
+)
+WHERE row_num = 1;
+
+CREATE VIEW exploded_votes AS
+SELECT
+    user_id,
+    poll_id,
+    option_id,
+    occurred_at
+FROM deduplicated_events
+CROSS JOIN UNNEST(option_ids) AS t(option_id);
+
+CREATE VIEW business_deduplicated_votes AS
+SELECT *
+FROM (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY user_id, poll_id, option_id
+            ORDER BY occurred_at ASC
+        ) AS row_num
+    FROM exploded_votes
+)
+WHERE row_num = 1;
+```
+
+Defining a continuous streaming pipeline sink
+```sql
+CREATE TABLE vote_counts (
+    poll_id STRING,
+    option_id STRING,
+    vote_count BIGINT,
+    updated_at TIMESTAMP(3),
+    PRIMARY KEY (poll_id, option_id) NOT ENFORCED
+) WITH (
+    'connector' = 'kafka',
+    'topic' = 'votes-computed',
+    'properties.bootstrap.servers' = '<connection_url',
+    'format' = 'avro'
+);
+```
+
+#### 10.4.2 Defining Flink SQL aggression to count votes to be sent to the Kafka sink topic.
+Configuration to process bath in 1 minute
+```sql
+SET 'table.exec.mini-batch.enabled' = 'true';
+SET 'table.exec.mini-batch.allow-latency' = '1 min';
+SET 'table.exec.mini-batch.size' = '5000';
+```
+
+Starts a continuous streaming job, the job runs forever (until you stop it).
+```sql
+INSERT INTO vote_counts
+SELECT
+    poll_id,
+    option_id,
+    COUNT(*) AS vote_count,
+    CURRENT_TIMESTAMP AS updated_at
+FROM business_deduplicated_votes
+GROUP BY
+    poll_id,
+    option_id;
+```
+
+#### 10.4.3 VotingScoreService 
+Avro to receive the event from Kafka `votes-computed` topic
+```json
+{
+  "type": "record",
+  "name": "VoteCountComputedEvent",
+  "namespace": "<project_namespace>.voting",
+  "doc": "Aggregated vote count per option for a poll within a time window",
+  "fields": [
+    {
+      "name": "poll_id",
+      "type": "string",
+      "doc": "Identifier of the poll",
+      "logicalType": "uuid"
+    },
+    {
+      "name": "option_id",
+      "type": "string",
+      "doc": "Identifier of the option",
+      "logicalType": "uuid"
+    },
+    {
+      "name": "vote_count",
+      "type": "long",
+      "doc": "Number of votes for this option within the window"
+    },
+    {
+      "name": "updated_at",
+      "type": { 
+        "type": "long", 
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Last time that the count was updated"
+    }
+  ]
+}
+```
+
+Table to save into `VotingScoreBD` PostgreSQLDB
+```sql
+CREATE TABLE poll_option_score (
+    poll_id UUID NOT NULL,
+    option_id UUID NOT NULL,
+    vote_count BIGINT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (poll_id, option_id)
+);
+
+CREATE INDEX idx_poll_option_score_poll_id ON poll_option_score(poll_id);
+CREATE INDEX idx_poll_option_score_option_id ON poll_option_score(opttion_id);
+```
+
+Domain to use to save into DB
+```rust
+pub struct PollOptionScore {
+    pub poll_id: String,
+    pub option_id: String,
+    pub vote_count: i64,
+    pub updated_at: i64,
+}
+```
+
+Select to create DTO to response WS
+```sql
+SELECT option_id, vote_count, updated_at
+FROM poll_option_score
+WHERE poll_id = $1;
+```
+
+DTO to response WS
+```rust
+pub struct PollScoreResponseDTO {
+    pub poll_id: String,
+    pub total_votes: i64,
+    pub options: Vec<OptionScoreDTO>,
+    pub updated_at: i64,
+}
+
+pub struct OptionScoreDTO {
+    pub option_id: String,
+    pub vote_count: i64
+}
+```
+
+UPSERT to save into DB
+```sql
+INSERT INTO poll_option_score (poll_id, option_id, vote_count, updated_at)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (poll_id, option_id)
+DO UPDATE SET
+    vote_count = EXCLUDED.vote_count,
+    updated_at = EXCLUDED.updated_at;
 ```
 
 ### 🖹 11. Technology Stack
@@ -788,12 +991,6 @@ WHY:
 - SSE is one-way only (server -> client): WS support full two-way messaging.
 - Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
 - Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
-
-##### 11.5 Redis
-
-We chose Redis as the caching layer for the voting system due to its strong support for atomic operations, which are essential to guarantee correctness under high concurrency.  
-Redis provides native atomic commands, such as `INCR`, `HSET`, and `HINCRBY`, which ensure that vote increments and state transitions occur safely even when millions of users interact simultaneously.
-And also because we can use Redis Stream, which is important for updating frontend subscribers to rerender your screen in realtime.
 
 ### 🖹 12. References
 
