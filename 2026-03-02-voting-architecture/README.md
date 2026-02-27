@@ -475,7 +475,7 @@ CREATE INDEX idx_voted_poll_option_option_id ON voted_option(option_id);
 ```
 
 #### 10.4 Apache Flink (Aggregation layer) - Using FLINK SQL
-##### 10.4.1 Defining Kafka topics that Flink needs to connect (IN/OUT)
+##### 10.4.1 Defining Kafka topics that Flink needs to connect (source/sink)
 Defining a continuous streaming pipeline source
 ```sql
 CREATE TABLE votes_raw (
