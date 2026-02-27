@@ -371,7 +371,7 @@ Validate individual functions (vote validation, deduplication logic)
 ##### 8.1.1 Tools
 
 - Frontend: [Solid testing library](https://testing-library.com/docs/solid-testing-library/intro/)
-- Backend: TO-DO
+- Backend: Rust's built-in testing tool
 
 ##### 8.1.2 When Tests Run
 
@@ -396,10 +396,10 @@ Test Redis/PostgreSQL interactions, queue processing
 
 ##### 8.2.1 Tools
 
-- Backend: [Testcontainers-go](https://golang.testcontainers.org/) - Spin up real Redis and PostgreSQL instances in Docker for testing
-- Redis: [miniredis](https://github.com/alicebob/miniredis) - In-memory Redis server for fast integration tests
-- Database: [pgx](https://github.com/jackc/pgx) test utilities with transaction rollback pattern
-- HTTP: Go's `net/http/httptest` for API endpoint testing
+- Backend: [testcontainers-rs](https://github.com/testcontainers/testcontainers-rs) - Spin up real Redis and PostgreSQL instances in Docker for testing
+- Redis: [redis-rs](https://github.com/redis-rs/redis-rs) with `tokio` async runtime for Redis integration tests
+- Database: [sqlx](https://github.com/launchbadge/sqlx) with `#[sqlx::test]` macro for automatic test database setup and transaction rollback
+- HTTP: [axum-test](https://crates.io/crates/axum-test) or [actix-rt](https://crates.io/crates/actix-rt) test utilities for API endpoint testing
 
 ##### 8.2.2 When Tests Run
 
@@ -468,9 +468,8 @@ Validate HTTP endpoints, request/response schemas
 
 ##### 8.4.1 Tools
 
-- [OpenAPI/Swagger](https://swagger.io/specification/) - API specification defining the contract (YAML/JSON)
-- [kin-openapi](https://github.com/getkin/kin-openapi) - Go library to validate requests/responses against OpenAPI spec
-- Go's `net/http/httptest` - Built-in HTTP testing for endpoint validation
+- [utoipa](https://github.com/juhaku/utoipa) - Auto-generate OpenAPI spec from Rust code
+- [Prism](https://stoplight.io/open-source/prism) - Stoplight's OpenAPI mock server and contract validator
 
 ##### 8.4.2 When Tests Run
 
@@ -547,7 +546,7 @@ Verify invariants (vote count = unique voters)
 
 ##### 8.6.1 Tools
 
-- [testing/quick](https://pkg.go.dev/testing/quick) - Go standard library for randomized testing (no external dependencies)
+- [proptest](https://github.com/proptest-rs/proptest) - Powerful property-based testing with automatic shrinking and custom strategies
 
 ##### 8.6.2 When Tests Run
 
