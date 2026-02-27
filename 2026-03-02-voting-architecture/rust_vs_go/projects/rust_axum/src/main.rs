@@ -19,7 +19,7 @@ use tokio::sync::{broadcast, RwLock};
 
 use voting_system::{
     AppState, VoteRequest, Poll, PollId,
-    ApiError, CreatePollRequest, OptionItem,
+    ApiError, CreatePollRequest, OptionItem, processor::VoteProcessor,
 };
 
 // ENDPOINTS
@@ -29,53 +29,47 @@ pub async fn vote(
     State(state): State<AppState>, 
     Json(payload): Json<VoteRequest>
 ) -> (StatusCode, Json<ApiError>) {
+    // Quick validation - check if poll and option exist
+    {
+        let polls = state.polls.read().await;
+        
+        let Some(poll) = polls.get(&payload.poll_id) else {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ApiError { message: "Poll não encontrada".into() })
+            );
+        };
 
-    let mut polls = state.polls.write().await;
+        if !poll.is_open {
+            return (
+                StatusCode::FORBIDDEN,
+                Json(ApiError { message: "A votação está encerrada".into() })
+            );
+        }
 
-    let Some(poll) = polls.get_mut(&payload.poll_id) else {
-        // poll NOT FOUND
+        // Check if option exists
+        if !poll.options.iter().any(|opt| opt.id == payload.option_id) {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiError { message: "Opção não encontrada nessa poll".into() })
+            );
+        }
+    }
+
+    // Enqueue the vote for async processing
+    if !state.processor.enqueue(payload) {
+        eprintln!("! Failed to enqueue vote");
         return (
-            StatusCode::NOT_FOUND,
-            Json(ApiError { message: "Poll não encontrada".into() })
-        );
-    };
-
-    if !poll.is_open {
-        // poll closed
-        return (
-            StatusCode::FORBIDDEN,
-            Json(ApiError { message: "A votação está encerrada".into() })
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ApiError { message: "Fila de votos cheia, tente novamente".into() })
         );
     }
 
-    // has this voter already voted in this poll?
-    if poll.voters.contains(&payload.voter_id) {
-        // User has already voted
-        return (
-            StatusCode::CONFLICT,
-            Json(ApiError { message: "Usuário já votou nessa poll".into() })
-        );
-    }
-
-    // Find the option and increment its vote count
-    if let Some(option) = poll.options.iter_mut().find(|opt| opt.id == payload.option_id) {
-        option.votes += 1;
-        poll.voters.insert(payload.voter_id);
-
-        // Notify via WebSocket
-        let _ = state.ws_tx.send(poll.clone());
-
-        return (
-            StatusCode::CREATED,
-            Json(ApiError { message: "Voto registrado com sucesso".into() })
-        );
-    }
-        // option not found
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(ApiError { message: "Opção não encontrada nessa poll".into() })
-        );
-    
+    // Return 202 Accepted immediately (like Go implementation)
+    (
+        StatusCode::ACCEPTED,
+        Json(ApiError { message: "Voto registrado na fila".into() })
+    )
 }
 
 // GET /polls -> list all polls
@@ -168,6 +162,47 @@ async fn create_poll(
     )
 }
 
+// GET /stats -> get processor stats
+async fn get_stats(
+    State(state): State<AppState>,
+) -> Json<serde_json::Value> {
+    let processed = state.processor.processed_count.load(std::sync::atomic::Ordering::Relaxed);
+    Json(serde_json::json!({
+        "votes_processed": processed,
+    }))
+}
+
+// POST /options -> add option to an existing poll
+async fn create_option(
+    State(state): State<AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    // Try to parse poll_id as either number or string
+    let poll_id: u32 = match payload["poll_id"].as_u64() {
+        Some(id) => id as u32,
+        None => match payload["poll_id"].as_str() {
+            Some(s) => s.parse().unwrap_or(0),
+            None => 0,
+        }
+    };
+    
+    let label = payload["label"].as_str().unwrap_or("").to_string();
+    
+    let mut polls = state.polls.write().await;
+    
+    if let Some(poll) = polls.get_mut(&poll_id) {
+        let next_option_id = poll.options.iter().map(|o| o.id).max().unwrap_or(0) + 1;
+        poll.options.push(OptionItem {
+            id: next_option_id,
+            label: label.clone(),
+            votes: 0,
+        });
+        (StatusCode::CREATED, Json(serde_json::json!({ "id": next_option_id })))
+    } else {
+        (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "poll not found" })))
+    }
+}
+
 // MAIN
 #[tokio::main]
 async fn main() {
@@ -182,36 +217,44 @@ async fn main() {
     // WebSocket broadcast channel
     let (ws_tx, _ws_rx) = broadcast::channel(100);
 
-    //
     let next_poll_id = Arc::new(AtomicU32::new(2));
     
-    // application state
-    let state = AppState { polls, ws_tx, next_poll_id };
+    // Create a placeholder processor (will be replaced immediately)
+    let initial_state = AppState { 
+        polls: polls.clone(), 
+        ws_tx: ws_tx.clone(), 
+        next_poll_id: next_poll_id.clone(),
+        processor: Arc::new(VoteProcessor::new_empty()), 
+    };
+    
+    // Initialize vote processor with async workers
+    let processor = Arc::new(VoteProcessor::new(initial_state, 0)); // 0 = auto-calculated workers
+    
+    // Final application state with processor
+    let state = AppState { 
+        polls, 
+        ws_tx, 
+        next_poll_id,
+        processor,
+    };
 
     // build app with routes
     let app = Router::new()
         .route("/vote", post(vote))
         .route("/polls", get(list_polls))
         .route("/polls/:poll_id", get(get_poll))
-        .route("/ws", get(ws_handler)) 
         .route("/polls", post(create_poll))
+        .route("/options", post(create_option))
+        .route("/ws", get(ws_handler)) 
+        .route("/stats", get(get_stats))
         .with_state(state.clone());
 
     // start server
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
-    println!("🚀 Server running on http://{}", addr);
+    println!("Server running on http://{}", addr);
 
     // create TCP listener
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
-
-    //Adding poll for testing
-    /*let _ = create_poll(
-        State(state.clone()), 
-        Json(CreatePollRequest {
-            question: "Which language is your favorite?".into(),
-            options: vec!["Rust".into(), "Go".into(), "Python".into()],
-        })
-    ).await;*/
     
 }

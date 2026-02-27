@@ -317,6 +317,25 @@ Both solutions provides
 - Reset password flows
 
 
+### Authentication Flow
+
+The user clicks the authentication button and is redirected to the login screen managed by Keycloak.
+
+After Keycloak authenticates the user, an access_token containing the user’s roles will be sent to a callback URL.
+
+Every request made by the frontend will pass through the API Gateway, which will validate the JWT. To do this, it will query the IdP to retrieve the public key, and with it validate the token and its signature. Once authorization is completed, the request will be forwarded to the target service.
+The target service will have a filter/middleware that intercepts requests, extracts the access_token from the headers, queries Keycloak’s public key, and validates the token. For performance reasons, the public key may be cached locally for a short period of time.
+
+![](images/authentication-flow.png)
+
+Drivers:
+
+- We need to have a simple authorization system, so roles will be sufficient.
+- Token validation at the edge level will protect us from receiving requests that are not authenticated.
+- Token validation in the target service is important because it prevents any kind of bypass and reinforces that the service will only process authorized users.
+- Frequent retrieval of the public key from Keycloak is a challenge; to address this, we will add a local cache in the target service.
+- In the API Gateway, we will use the JWT Authorizer, which will integrate with the IdP, and we will use a 5-minute cache for the public key.
+
   
 
 ### 🌏 6. For each key major component
@@ -733,9 +752,7 @@ println!("Vote result: {:?}", result);
 
 ### 🖹 11. Technology Stack
 
-Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
-
-- Backend:
+#### 11.1 Backend:
 
 **Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
 
@@ -751,8 +768,9 @@ Why popular frameworks like React and Next was not chosen?
 
 React and Next.js offer a strong ecosystem support, but their features introduce unnecessary overhead for a CSR-only, WebSocket-driven real-time voting system.
 
-- Infrastructure:
-- Data:
+<!-- Remove ? -->
+<!-- - Infrastructure:
+- Data: -->
 
 #### 11.3 - UI Bot prevention
 
