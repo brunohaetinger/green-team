@@ -84,17 +84,6 @@ Design principles we want to follow:
 
 List the tradeoffs analysis, comparing pros and cons for each major decision.
 Before you need list all your major decisions, them run tradeoffs on than.
-example:
-
-#TODO - Add all the decisions we made
-
-Major Decisions:
-
-```
-
-```
-
-Tradeoffs:
 
 ```
 1. React Native vs (Flutter and Native)
