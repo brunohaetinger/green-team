@@ -727,7 +727,7 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 - Partitioning ?
 - Caching ?
 
-#### 10.1 VotingCastService
+#### 10.1 VotingService
 DTO (Data transfer object) received by Service from WS
 ```rust
 impl PollId {
@@ -806,7 +806,7 @@ Avro to publish on Kafka `user-voted` topic
 #### 10.3 VotingInvestionService
 Avro to receive the event from Kafka `user-voted` topic
 ```
-Should use the same Avro defined in the VotingCastService
+Should use the same Avro defined in the VotingService
 ```
 
 Convert the Avro to Domain
