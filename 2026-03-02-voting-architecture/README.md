@@ -110,7 +110,7 @@ Tradeoffs:
 PROS (+)
   * Fast execution and compilation, simple and efficient concurrency through goroutines and channels, mature ecosystem with extensive libraries, easy deployment via compiled binaries, excellent tooling and IDE support.
 
-CONS (+)
+CONS (-)
   * Garbage collector can introduce occasional microsecond-level pauses under heavy load.
 ```
 
@@ -120,7 +120,7 @@ CONS (+)
 PROS (+)
   * Maximum performance with zero-cost abstractions, memory safety without garbage collection, deterministic performance for ultra-low-latency requirements, strong type system catches errors at compile time, no runtime overhead.
 
-CONS (+)
+CONS (-)
   * Longer compile times compared to Go. Smaller ecosystem compared to established languages.
 ```
 
@@ -130,7 +130,7 @@ CONS (+)
 PROS (+)
   * Mature ecosystem, gret integration for Kafka Streams (unmatched for stateful stream processing), robust JVM with advanced JIT compilation, Spring framework for quick development.
 
-CONS (+)
+CONS (-)
   * GC tuning complexity at scale, higher memory footprint, slower startup times, unpredictable latency spikes during GC pauses, which is unacceptable for real-time voting where every millisecond matters.
 ```
 
@@ -148,7 +148,7 @@ PROS (+)
 - High throughput, good for chat apps, multiplayer games, collaborative editors.
 - Works well for many messages per second.
 
-CONS (+)
+CONS (-)
   * More complex to implement than other.
   * Not ideal for simple one-way updates.
   * Not supported by older proxies without WebSocket upgrades.
@@ -167,7 +167,7 @@ PROS (+)
 - Uses regular HTTP-proxy-friendly.
 - Lightweight for one-direction real-time feeds.
 
-CONS (+)
+CONS (-)
   * Not bidirectional.
   * Not ideal for very high-frequency updates.
   * Limited browser support on some older/embedded environments.
@@ -185,7 +185,7 @@ PROS (+)
 - Works everywhere, no special protocols.
 - Good for low-frequency or low-priority updates.
 
-CONS (+)
+CONS (-)
   * Inefficient: many requests with no data = waste.
   * Higher latency between updates (depends on poll interval).
   * Scales poorly (many clients -> many HTTP requests).
@@ -201,7 +201,7 @@ PROS (+)
   * Very low runtime overhead: Solid uses almost no framework code in the browser.
   * Very recommended for high-frequency updates.
 
-CONS (+)
+CONS (-)
   * Small ecosystem: Maybe it can't have some integrations and libraries.
 ```
 
@@ -213,7 +213,7 @@ PROS (+)
   * Built-in reactivity: The UI automatically updates when data changes. Without state libraries.
   * Smaller bundle size, specially for less complex apps.
 
-CONS (+)
+CONS (-)
   * Small ecosystem: Maybe it can't have some integrations and libraries.
   * Has a great way to update the DOM, better than Virtual DOM, but not so performatic than Solid.js.
 ```
@@ -225,7 +225,7 @@ PROS (+)
   * Because of its large number of clients has a mature ecosystem.
   * Very stable and enterprise acceptance.
 
-CONS (+)
+CONS (-)
   * Uses Virtual DOM, which adds overhead on every update.
   * Has a bundle size bigger than the others.
 ```
@@ -238,7 +238,7 @@ PROS (+)
   * Great resources for complex scenarios around the full-stack development.
   * Strong ecosystem and enterprise adoption.
 
-CONS (+)
+CONS (-)
   * For not complex projects, it may be not necessary because its native resources that won't be used.
   * Bundle size bigger than the others.
   * It is default SSR, which is not required for our scenario.
@@ -576,12 +576,26 @@ Verify invariants (vote count = unique voters)
 The goal is to know what the system is doing at all times: how fast, how many errors, where it's slow, and why. We split this into four areas: metrics, logs, traces, and profiling.
 
 **Stack**
-**Metrics**: Prometheus for time-series metrics collection.
-**Visualization**: Grafana for dashboards and alerting UI.
-**Logs**: Loki for log aggregation with native Grafana integration.
-**Tracing**: Tempo for distributed tracing with S3 storage.
-**Profiling**: Grafana Pyroscope for continuous performance analysis.
-**Instrumentation**: OpenTelemetry SDK on every service
+
+**Metrics**: **Prometheus** for time-series metrics collection.
+
+**Visualization**: **Grafana** for dashboards and alerting UI.
+
+**Logs**: **Loki** for log aggregation with native Grafana integration.
+
+**Tracing**: **Tempo** for distributed tracing with S3 storage.
+
+**Profiling**: Grafana **Pyroscope** for continuous performance analysis.
+
+**Instrumentation**: **OpenTelemetry** SDK on every service
+
+**AWS Passthrough**: **CloudWatch** as a passthrough for AWS infrastructure metrics and logs.
+
+```
+Services  → OTel Collector → Prometheus + Loki + Tempo
+AWS infra → CloudWatch     → CloudWatch Exporter → Prometheus → Loki
+Everything                 → Grafana
+```
 
 #### 9.1 Principles
 
@@ -608,6 +622,7 @@ The goal is to know what the system is doing at all times: how fast, how many er
 - Apache Flink: checkpoint duration, restart count, backpressure ratio per operator
 - PostgreSQL: active connections, replication lag, slow query count
 - Kafka: consumer lag per partition, under-replicated partitions
+- AWS infra (EKS, RDS, MSK, ElastiCache, ALB) — sourced from CloudWatch via the CloudWatch Metrics Exporter and surfaced in Grafana
 
 **Traffic**
 - Requests per second per service
@@ -616,7 +631,7 @@ The goal is to know what the system is doing at all times: how fast, how many er
 
 #### 9.3 Logging
 
-All services log structured JSON to stdout. The OTel Collector ships them to Loki.
+All services log structured JSON to stdout. The OTel Collector ships them to Loki. Native AWS service logs (RDS, VPC Flow Logs, ALB) are forwarded from CloudWatch Logs to Loki via Firehose.
 
 - Vote accepted
 - Duplicate vote rejected
@@ -997,7 +1012,7 @@ DO UPDATE SET
 
 #### 11.1 Backend:
 
-**Go** has a lightweight concurrency model, powered by goroutines and channels, that enables massive parallel request handling without the overhead of traditional threading models, serving as a perfect choice for our distributed system. This choice will grant lower latency and smaller memory footprint, which is critical for high-RPS microservices. It also provides excellent built-in networking libraries, simplifying the development of HTTP, WebSocket, and gRPC services. The compiler produces single, statically linked binaries that streamline deployment and enable quick startup times for horizontal scaling. Go also benefits from a mature ecosystem with robust support for distributed systems technologies like Kafka, Redis, CockroachDB, PostgreSQL, and various distributed caches.
+**Rust** was chosen for its maximum performance, memory safety without garbage collection, and deterministic low-latency behavior. It also integrates well with Kafka, Redis, and PostgreSQL through its ecosystem (tokio, axum, sqlx).
 
 #### 11.2 Frontend:
 
