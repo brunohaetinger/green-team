@@ -84,22 +84,11 @@ Design principles we want to follow:
 
 List the tradeoffs analysis, comparing pros and cons for each major decision.
 Before you need list all your major decisions, them run tradeoffs on than.
-example:
-
-#TODO - Add all the decisions we made
-
-Major Decisions:
-
-```
-
-```
-
-Tradeoffs:
 
 ```
 1. React Native vs (Flutter and Native)
 2. Serverless vs Microservices
-3. Redis vs Enbeded Caches
+3. Apache Flink vs Apache Spark
 ```
 
 ### 5.1 Backend
@@ -189,6 +178,45 @@ CONS (-)
   * Inefficient: many requests with no data = waste.
   * Higher latency between updates (depends on poll interval).
   * Scales poorly (many clients -> many HTTP requests).
+```
+
+### 5.3 Data processing
+
+#### 5.3.1 Apache Flink
+
+```
+PROS (+)
+  * True streaming (event-at-a-time processing) with sub-second latency, critical for real-time vote aggregation.
+  * Exactly-once semantics guarantee with state management: no duplicate counts or lost votes in the aggregation pipeline.
+  * Lower latency for stateful operations like deduplication and vote counting; sub-100ms end-to-end processing is achievable.
+  * Flexible windowing: tumbling, sliding, session windows for flexible aggregation strategies.
+  * Excellent Kafka integration: native source/sink connectors with fine-grained control over consumer groups and checkpointing.
+  * SQL API (Flink SQL) enables complex operations (deduplication, windowed aggregations) without Java/Scala coding.
+
+CONS (-)
+  * Steeper learning curve compared to Spark; stateful programming requires deeper understanding of streaming semantics.
+  * Operational complexity: managing checkpointing, savepoints, and recovery requires careful tuning.
+  * Resource overhead for maintaining distributed state; requires careful RocksDB configuration at scale.
+```
+
+#### 5.3.2 Apache Spark
+
+```
+PROS (+)
+  * Mature, battle-tested distributed computing framework with massive production deployments.
+  * Easier to learn and adopt; familiar SQL API similar to traditional databases.
+  * Rich ecosystem: MLlib, GraphX, Structured Streaming, extensive interoperability with Python, Scala, Java.
+  * Better support for batch-to-stream unification through Spark Structured Streaming.
+  * Excellent for ad-hoc analytics and backfill scenarios alongside streaming logic.
+  * Strong ML integration if future requirements include predictive fraud detection or user behavior analysis.
+
+CONS (-)
+  * Micro-batch processing model (100ms+ minimum latency): inadequate for sub-50ms latency requirements on vote results.
+  * Higher memory footprint per executor; more expensive at 250k RPS scale with millions of concurrent connections.
+  * Exactly-once guarantees require extra work and external coordination; not built-in like Flink.
+  * Stateful operations (deduplication, windowed aggregations) less optimized than Flink; slower for high-throughput streaming.
+  * Overkill for the voting use case: brings tools (MLlib, GraphX) not required, increasing operational complexity and deployment size.
+  * JVM tuning complexity at scale; garbage collection pauses can cause tail latency spikes (unacceptable for real-time voting).
 ```
 
 ### 5.4 Frontend:
@@ -408,7 +436,7 @@ Test PostgreSQL interactions, queue processing
 
 ##### 8.2.1 Tools
 
-- Backend: [testcontainers-rs](https://github.com/testcontainers/testcontainers-rs) - Spin up real Redis and PostgreSQL instances in Docker for testing
+- Backend: [testcontainers-rs](https://github.com/testcontainers/testcontainers-rs) - Spin up real Kafka, Apache Flink, and PostgreSQL instances in Docker for testing
 - Database: [sqlx](https://github.com/launchbadge/sqlx) with `#[sqlx::test]` macro for automatic test database setup and transaction rollback
 - HTTP: [axum-test](https://crates.io/crates/axum-test) or [actix-rt](https://crates.io/crates/actix-rt) test utilities for API endpoint testing
 
@@ -504,7 +532,7 @@ Validate HTTP endpoints, request/response schemas
 
 #### 8.5 Chaos Engineering (Priority: Medium)
 
-Failure injection (Redis down, DB failover, network partitions)
+Failure injection (Kafka down, Apache Flink, DB failover, network partitions)
 
 ##### 8.5.1 Tools
 
@@ -521,9 +549,8 @@ Failure injection (Redis down, DB failover, network partitions)
 | KPI                              | Threshold   | Rationale                                                              |
 | -------------------------------- | ----------- | ---------------------------------------------------------------------- |
 | Recovery Time Objective (RTO)    | < 30s       | System must recover from component failure within 30 seconds           |
-| Vote loss during failure         | 0           | No votes lost even during Redis/DB failures (queued and retried)       |
+| Vote loss during failure         | 0           | No votes lost even during Kafka/Apache Flink/DB failures (queued and retried)       |
 | Error rate during degradation    | < 5%        | Graceful degradation must keep most requests successful                |
-| Fallback activation time         | < 5s        | In-memory fallback must activate quickly when Redis is unavailable     |
 | Data consistency after recovery  | 100%        | Vote counts must reconcile correctly after component recovery          |
 | WebSocket reconnection success   | > 99%       | Clients must automatically reconnect after network disruptions         |
 
@@ -532,7 +559,6 @@ Failure injection (Redis down, DB failover, network partitions)
 - PostgreSQL RDS failover - Test Multi-AZ failover with zero vote data loss
 - Network partition handling - Ensure split-brain scenarios don't cause duplicate votes
 - Vote processor queue recovery - Validate in-flight votes are not lost during processor restart
-- In-memory fallback activation - Confirm system switches to memory store when Redis is unreachable
 - WebSocket connection resilience - Test client reconnection and state recovery after network drops
 - Cascading failure prevention - Ensure circuit breakers prevent total system collapse
 
@@ -705,7 +731,7 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 - Partitioning ?
 - Caching ?
 
-#### 10.1 VotingCastService
+#### 10.1 VotingService
 DTO (Data transfer object) received by Service from WS
 ```rust
 impl PollId {
@@ -784,7 +810,7 @@ Avro to publish on Kafka `user-voted` topic
 #### 10.3 VotingInvestionService
 Avro to receive the event from Kafka `user-voted` topic
 ```
-Should use the same Avro defined in the VotingCastService
+Should use the same Avro defined in the VotingService
 ```
 
 Convert the Avro to Domain
@@ -1029,6 +1055,24 @@ WHY:
 - Scalablity: We need to support 300M users and 250k RPS, SSE uses heavy HTTP connections and does not scale well to millions, Websockets are optimized for millions of concurrent connections.
 - Lower latency and better performance: WS have lighter frames, less overhead, and better throughput, SSE becomes inefficient at very hight RPS.
 
+#### 11.4 Data Processing (Apache Flink)
+
+Apache Flink is chosen as the stream processing engine for vote aggregation and deduplication due to its true event-at-a-time processing model, which guarantees sub-second latency and exactly-once semantics.
+
+WHY:
+
+- **Real-time latency requirement**: Flink's true streaming (event-at-a-time) achieves <100ms end-to-end latency for vote count propagation. Spark's micro-batch model (100ms+ minimum) is inadequate for a real-time voting system where latency perception matters to users.
+
+- **Exactly-once vote counting guarantee**: Flink provides built-in exactly-once semantics with state management, ensuring no duplicate vote counts or lost votes in the aggregation pipeline. In contrast, Spark requires external coordination for the same guarantee, adding operational complexity.
+
+- **Stateful deduplication at scale**: The voting system must deduplicate votes by (user_id, poll_id) at high throughput. Flink's optimized state backends (e.g., RocksDB) are purpose-built for stateful operations, while Spark's approach to state is less efficient at 250k RPS scale.
+
+- **Kafka integration**: Flink offers native, tight integration with Kafka including fine-grained consumer group management and checkpoint alignment. This ensures our Kafka→Flink→Kafka pipeline operates with minimal complexity and maximum reliability.
+
+- **SQL for vote aggregation**: Flink SQL allows us to express deduplication and windowed vote counting (e.g., GROUP BY poll_id, option_id OVER 1-minute windows) without writing stateful Java/Scala code. This keeps the pipeline maintainable and auditable.
+
+- **Operational simplicity for this use case**: Spark brings unnecessary overhead (MLlib, GraphX, batch unification) not required for voting. Flink is purpose-built for streaming and requires fewer tuning knobs..
+
 ### 🖹 12. References
 
 - Architecture Anti-Patterns: https://architecture-antipatterns.tech/
@@ -1038,7 +1082,6 @@ WHY:
 - Anti-Patterns https://sourcemaking.com/antipatterns/software-development-antipatterns
 - Refactoring Patterns https://sourcemaking.com/refactoring/refactorings
 - Database Refactoring Patterns https://databaserefactoring.com/
-- Data Modelling Redis https://redis.com/blog/nosql-data-modeling/
 - Cloud Patterns https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/introduction.html
 - 12 Factors App https://12factor.net/
 - Relational DB Patterns https://www.geeksforgeeks.org/design-patterns-for-relational-databases/
