@@ -370,13 +370,11 @@ Drivers:
 **Success Response body:**
 | Field | Type | Description |
 |-------|------|-------------|
-| isSuccessful | bool | Either the vote was successfully casted |
 | message | string | Success/Failure message |
 | voteId | string | Unique vote operation ID |
 
 ````JSON
 {
-  "isSuccessful": true,
   "message": "Vote registered successfully",
   "voteId": "21142055-d8b1-4ef0-855e-efe36e90f4e4"
 }
@@ -391,7 +389,7 @@ Drivers:
 }
 ````
 
-##### Websocket Service
+##### Voting Score Service
 
 **1. Subscribe to poll results**
 - Subscribes a client for results of a given poll
