@@ -333,9 +333,13 @@ Drivers:
 
 #### Class Diagram
 
-![UML Diagram](voting-service-class-diagram.drawio.png)
+![Voting Service Diagram](voting-service-class-diagram.drawio.png)
+![Websocket Service Diagram](websocket-service-class-diagram.drawio.png)
+
 
 #### Contract Documentation
+
+##### Voting Service
 
 **1. Cast Vote**
 - Casts an individual vote from a user
@@ -346,23 +350,17 @@ Drivers:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | pollId | string | Yes | Unique poll ID |
-| userId | string | Yes | Unique user ID |
-| optionId | string | Yes | Selected option ID |
-| timestamp | Timestamp | Yes | Vote timestamp |
-| ipAddress | string | Yes | Client IP Address |
+| optionIds | string[] | Yes | Selected option IDs |
 
 ````JSON
 {
   "pollId": "6c7d6b39-6150-4f90-bb9a-a41d8671e6eb",
-  "userId": "dd3b71c0-88e1-496c-a183-0810ca5d5260",
-  "optionId": "41b4d1cb-5fbb-487d-95ff-9c51122b8008",
-  "timestamp": "2026-01-01T14:30:00Z",
-  "ipAddress": "192.168.1.100"
+  "optionIds": ["41b4d1cb-5fbb-487d-95ff-9c51122b8008"]
 }
 ````
 
 
-**Response body:**
+**Success Response body:**
 | Field | Type | Description |
 |-------|------|-------------|
 | isSuccessful | bool | Either the vote was successfully casted |
@@ -374,6 +372,79 @@ Drivers:
   "isSuccessful": true,
   "message": "Vote registered successfully",
   "voteId": "21142055-d8b1-4ef0-855e-efe36e90f4e4"
+}
+````
+
+**Error Response body:**
+````JSON
+{
+  "error": "DUPLICATE_VOTE",
+  "message": "User has already voted in this poll",
+  "traceId": "abc-123-xyz"
+}
+````
+
+##### Websocket Service
+
+**1. Subscribe to poll results**
+- Subscribes a client for results of a given poll
+- Path: `WS /api/v1/voting/results`
+
+**Subscribe message(client -> server):**
+| Field | Type | Description |
+|-------|------|-------------|
+| pollId | string | Poll to subscribe to |
+| clientId | string | Unique client identifier |
+
+````JSON
+{
+  "pollId": "6c7d6b39-6150-4f90-bb9a-a41d8671e6eb",
+  "clientId": "client-abc-123"
+}
+````
+
+**Subscribe acknowledge(server -> client):**
+| Field | Type | Description |
+|-------|------|-------------|
+| isSuccessful | bool | If the connection was accepted |
+| subscriptionId | string | Identifier of the connection |
+| pollId | string | Poll subscribed to |
+| readyState | enum | CONNECTING, OPEN, CLOSING, CLOSED |
+| message | string | Confirmation message |
+
+````JSON
+{
+  "isSuccessful": false,
+  "subscriptionId": "21142055-d8b1-4ef0-855e-efe36e90f4e4",
+  "pollId": "6c7d6b39-6150-4f90-bb9a-a41d8671e6eb",
+  "readyState": "OPEN",
+  "message": "Poll not found or is no longer active"
+}
+````
+
+**Real-time results(server -> client):**
+| Field | Type | Description |
+|-------|------|-------------|
+| pollId | string | Poll subscribed to |
+| totalVotes | int | All votes count |
+| updatedAt | Timestamp | Last time results were computed |
+| counts | map<optionId, Option> | Votes per option |
+
+````JSON
+{
+  "pollId": "6c7d6b39-6150-4f90-bb9a-a41d8671e6eb",
+  "totalVotes": 142300,
+  "updatedAt": "2026-01-01T14:30:05Z",
+  "counts": {
+    "41b4d1cb-5fbb-487d-95ff-9c51122b8008": {
+      "name": "Option A",
+      "count": 3221
+    },
+    "52c5e2dc-6gcc-598e-a294-1921db6e6371": {
+      "name": "Option B",
+      "count": 8673
+    },
+  }
 }
 ````
 
