@@ -76,9 +76,16 @@ Design principles we want to follow:
 ```
 
 ### 🏗️ 4. Overall Diagrams
-* 🗂️ 4.1 ![Overall](./images/arch.drawio.png) architecture: Show the big picture, relationship between macro components.  
-* 🗂️ 4.2 ![Infrastructure diagram](./images/voting_infrastructure.drawio.png): Show the infra in a big picture.
 
+### 4.1 Archicture
+
+![Overall](./images/arch-solution-2-cqrs.png):Show the overall architecture and the relationship between the components.
+
+Check the complete tradeoff analysis [tradeoff analysis](./tradeoff-archicture-analysis.md)!
+
+### 4.2 Infrastructure
+
+![Infrastructure diagram](./images/voting_infrastructure.drawio.png): Show the infra in a big picture.
 
 ### 🧭 5. Trade-offs
 
