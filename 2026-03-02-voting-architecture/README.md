@@ -341,7 +341,7 @@ Drivers:
 
 #### Contract Documentation
 
-##### Voting Service
+#### Voting Service
 
 **1. Cast Vote**
 - Casts an individual vote from a user
@@ -366,25 +366,22 @@ Drivers:
 | Field | Type | Description |
 |-------|------|-------------|
 | message | string | Success/Failure message |
-| voteId | string | Unique vote operation ID |
 
 ````JSON
 {
   "message": "Vote registered successfully",
-  "voteId": "21142055-d8b1-4ef0-855e-efe36e90f4e4"
 }
 ````
 
 **Error Response body:**
 ````JSON
 {
-  "error": "DUPLICATE_VOTE",
-  "message": "User has already voted in this poll",
-  "traceId": "abc-123-xyz"
+  "error": "DOWNSTREAM_ERROR",
+  "message": "There was an error processing this vote",
 }
 ````
 
-##### Voting Score Service
+#### Voting Score Service
 
 **1. Subscribe to poll results**
 - Subscribes a client for results of a given poll
