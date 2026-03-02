@@ -119,7 +119,7 @@ CONS (-)
 
 ```
 PROS (+)
-  * Mature ecosystem, gret integration for Kafka Streams (unmatched for stateful stream processing), robust JVM with advanced JIT compilation, Spring framework for quick development.
+  * Mature ecosystem, great integration for Kafka, robust JVM with advanced JIT compilation, Spring framework for quick development.
 
 CONS (-)
   * GC tuning complexity at scale, higher memory footprint, slower startup times, unpredictable latency spikes during GC pauses, which is unacceptable for real-time voting where every millisecond matters.
@@ -695,11 +695,10 @@ Everything                 → Grafana
 - `websocket_disconnects_total` by reason
 
 **Infrastructure**
-- Kafka Streams: consumer lag per partition, state store size, stream thread utilization
 - Apache Flink: checkpoint duration, restart count, backpressure ratio per operator
 - PostgreSQL: active connections, replication lag, slow query count
 - Kafka: consumer lag per partition, under-replicated partitions
-- AWS infra (EKS, RDS, MSK, ElastiCache, ALB) — sourced from CloudWatch via the CloudWatch Metrics Exporter and surfaced in Grafana
+- AWS infra: sourced from CloudWatch via the CloudWatch Metrics Exporter and surfaced in Grafana
 
 **Traffic**
 - Requests per second per service
@@ -736,14 +735,13 @@ Four dashboards, each focused on a specific audience:
 - Votes/sec over time
 - Success vs. duplicate vs. fraud breakdown (stacked)
 - Flink aggregation job latency p99
-- Kafka Streams consumer lag on vote-events
+- Kafka consumer lag on vote-events, throughput
 - DB write latency with a 50ms warning line
 
 **Infrastructure**
-- Kafka Streams: consumer lag, state store size, thread utilization
 - Apache Flink: checkpoint duration, operator backpressure, job restarts
 - PostgreSQL connections, replication lag, slow queries
-- Kafka broker health, under-replicated partitions
+- Kafka broker health, under-replicated partitions, latency
 
 **War Room**
 - 15-second auto-refresh
@@ -758,7 +756,6 @@ Two levels: **Warning** (something is degrading) and **Critical** (SLO breach, w
 - Kafka consumer lag > 10k for 5m / Kafka consumer lag > 50k for 3m
 - result_propagation p99 > 200ms for 5m / result_propagation p99 > 500ms for 3m
 - Flink checkpoint duration > 30s / Flink job restarts > 3 in 10m
-- Kafka Streams backpressure ratio > 50% for 5m
 - PostgreSQL replication lag > 10s
 - Inbound RPS drops > 80% vs. baseline
 
@@ -772,7 +769,7 @@ Rules:
 
 We sample 1% of normal successful requests. We capture 100% of requests that hit an error or exceed the p99 latency threshold.
 
-Trace covers the full path: `API Gateway → Voting Service → Kafka → Kafka Streams → Apache Flink → Result Aggregator → WebSocket broadcast`.
+Trace covers the full path: `API Gateway → Voting Service → Kafka → Apache Flink → Result Aggregator → WebSocket broadcast`.
 
 ### 🖹 10. Data Store Designs
 
