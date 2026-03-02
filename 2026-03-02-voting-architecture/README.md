@@ -79,13 +79,13 @@ Design principles we want to follow:
 
 ### 4.1 Archicture
 
-![Overall](./images/arch-event-driven-CQRS.drawio.png):Show the overall architecture and the relationship between the components.
+![Overall](./images/arch-solution-2-cqrs.png):Show the overall architecture and the relationship between the components.
 
+Check the complete tradeoff analisys [tradeoff analisys](./tradeoff-archicture-analysis.md)!
 
 ### 4.2 Infrastructure
 
 ![Infrastructure diagram](./images/voting_infrastructure.drawio.png): Show the infra in a big picture.
-
 
 ### 🧭 5. Trade-offs
 
