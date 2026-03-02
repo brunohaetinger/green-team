@@ -92,11 +92,6 @@ Check the complete tradeoff analysis [tradeoff analysis](./tradeoff-archicture-a
 List the tradeoffs analysis, comparing pros and cons for each major decision.
 Before you need list all your major decisions, them run tradeoffs on than.
 
-```
-1. React Native vs (Flutter and Native)
-2. Serverless vs Microservices
-3. Apache Flink vs Apache Spark
-```
 
 ### 5.1 Backend
 
@@ -458,23 +453,6 @@ Drivers:
 
 -----------------------------------------------------------
 
-What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
-
-```
-6.1 - Class Diagram              : classic uml diagram with attributes and methods
-6.2 - Contract Documentation     : Operations, Inputs and Outputs
-#TODO - Define the api contract
-6.3 - Persistence Model          : Diagrams, Table structure, partiotioning, main queries.
-#TODO - Define the tables, fields, and interactions between tables; also define some queries (e.g., votes for a given election, results, votes cast by a specific user).
-
-
-6.4 - Algorithms/Data Structures : Specific algos that need to be used, along size with spesific data structures.
-#TODO - If there is any different data structure (a linked list, queue, or something else) to solve a specific use case, it must be added here.
-```
-
-Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc...
-
-Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-design-forgotten.html
 
 ### 🖹 7. Migrations
 
