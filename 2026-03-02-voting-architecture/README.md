@@ -81,7 +81,7 @@ Design principles we want to follow:
 
 ![Overall](./images/arch-solution-2-cqrs.png):Show the overall architecture and the relationship between the components.
 
-Check the complete tradeoff analisys [tradeoff analisys](./tradeoff-archicture-analysis.md)!
+Check the complete tradeoff analysis [tradeoff analysis](./tradeoff-archicture-analysis.md)!
 
 ### 4.2 Infrastructure
 
