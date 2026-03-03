@@ -32,7 +32,7 @@ cargo new hello-rust
 3. Build/install dependencies
 
 ```
-cargo build
+cargo build --release
 ```
 
 
@@ -87,7 +87,7 @@ cargo test
 1. Inside the folder of K6
 2. run command below:
 ```
-k6 run poll_ramp_10k.js
+k6 run poll_ramp_10k.js --env POLL_ID=5 --env OPTION_ID=1
 ```
 
 
