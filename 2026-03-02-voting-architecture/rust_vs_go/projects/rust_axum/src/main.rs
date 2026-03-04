@@ -19,7 +19,7 @@ use tokio::sync::{broadcast, RwLock};
 
 use voting_system::{
     AppState, VoteRequest, Poll, PollId,
-    ApiError, CreatePollRequest, OptionItem, processor::VoteProcessor,
+    CreatePollRequest, OptionItem, processor::VoteProcessor,
 };
 
 // ENDPOINTS
@@ -28,48 +28,31 @@ use voting_system::{
 pub async fn vote(
     State(state): State<AppState>, 
     Json(payload): Json<VoteRequest>
-) -> (StatusCode, Json<ApiError>) {
+) -> StatusCode {
     // Quick validation - check if poll and option exist
     {
         let polls = state.polls.read().await;
         
         let Some(poll) = polls.get(&payload.poll_id) else {
-            return (
-                StatusCode::NOT_FOUND,
-                Json(ApiError { message: "Poll não encontrada".into() })
-            );
+            return StatusCode::NOT_FOUND;
         };
 
         if !poll.is_open {
-            return (
-                StatusCode::FORBIDDEN,
-                Json(ApiError { message: "A votação está encerrada".into() })
-            );
+            return StatusCode::FORBIDDEN;
         }
 
         // Check if option exists
         if !poll.options.iter().any(|opt| opt.id == payload.option_id) {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(ApiError { message: "Opção não encontrada nessa poll".into() })
-            );
+            return StatusCode::BAD_REQUEST;
         }
     }
 
     // Enqueue the vote for async processing
-    if !state.processor.enqueue(payload) {
-        eprintln!("! Failed to enqueue vote");
-        return (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(ApiError { message: "Fila de votos cheia, tente novamente".into() })
-        );
+    if state.processor.enqueue(payload) {
+        StatusCode::ACCEPTED
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
     }
-
-    // Return 202 Accepted immediately (like Go implementation)
-    (
-        StatusCode::ACCEPTED,
-        Json(ApiError { message: "Voto registrado na fila".into() })
-    )
 }
 
 // GET /polls -> list all polls
