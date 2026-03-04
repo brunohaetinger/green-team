@@ -1,0 +1,121 @@
+#Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: go-performance-test-ns
+---
+
+#GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: go-performance-test-gateway
+spec:
+  controllerName: projectcontour.io/gateway-controller
+---
+
+#Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: go-performance-test-gateway
+  namespace: go-performance-test-ns
+spec:
+  gatewayClassName: contour
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+
+#HTTPRoute - Go
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: go-performance-test-route
+  namespace: go-performance-test-ns
+spec:
+  parentRefs:
+    - name: go-performance-test-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: go-performance-test-service
+          port: 8080
+          weight: 100
+---
+
+#Service - Go Performance Test
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-performance-test-service
+  namespace: go-performance-test-ns
+spec:
+  type: ClusterIP
+  selector:
+    app: go-performance-test
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+
+#Deployment - Go Performance Test
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-performance-test
+  namespace: go-performance-test-ns
+spec:
+  selector:
+    matchLabels:
+      app: go-performance-test
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: go-performance-test
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - go-performance-test
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: go-performance-test
+          image: jefoso/voting-kata:go-api
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: STORE_BACKEND
+              value: "memory"
+            - name: DB_URL
+              value: ""
+            - name: REDIS_URL
+              value: ""
+            - name: REDIS_QUEUE_NAME
+              value: "votes"
+            - name: ENABLE_REUSEPORT
+              value: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: "6Gi"
+            requests:
+              cpu: "4"
+              memory: "6Gi"

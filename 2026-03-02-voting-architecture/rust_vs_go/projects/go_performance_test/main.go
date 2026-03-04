@@ -15,23 +15,23 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-	}
+    if err := godotenv.Load(); err != nil {
+    }
 
-	srv := api.NewServer()
-	srv.Routes()
+    srv := api.NewServer()
 
-	addr := ":8080"
-	if v := os.Getenv("PORT"); strings.TrimSpace(v) != "" {
-		addr = ":" + strings.TrimSpace(v)
-	}
-	s := &http.Server{
-		Addr:              addr,
-		ReadTimeout:       15 * time.Second,
-		ReadHeaderTimeout: 15 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       60 * time.Second,
-	}
+    addr := ":8080"
+    if v := os.Getenv("PORT"); strings.TrimSpace(v) != "" {
+        addr = ":" + strings.TrimSpace(v)
+    }
+    s := &http.Server{
+        Addr:              addr,
+        Handler:           srv.Handler(),
+        ReadTimeout:       15 * time.Second,
+        ReadHeaderTimeout: 15 * time.Second,
+        WriteTimeout:      30 * time.Second,
+        IdleTimeout:       60 * time.Second,
+    }
 	log.Printf("poll service starting on %s", addr)
 
 	useReuse := strings.TrimSpace(os.Getenv("ENABLE_REUSEPORT")) == "1"
