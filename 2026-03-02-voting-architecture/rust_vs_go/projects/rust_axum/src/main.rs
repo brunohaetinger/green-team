@@ -8,7 +8,6 @@ use axum::{
 };
 use axum::extract::ws::{WebSocket, Message};
 use futures::{StreamExt};
-use serde::Deserialize;
 
 use std::{
     collections::{HashMap,HashSet},
@@ -20,11 +19,7 @@ use tokio::sync::{broadcast, RwLock};
 
 use voting_system::{
     AppState, VoteRequest, Poll, PollId,
-<<<<<<< 2026-03-02-rust-vs-go
-    ApiError, OptionItem,
-=======
-    ApiError, CreatePollRequest, OptionItem, processor::VoteProcessor,
->>>>>>> main
+    CreatePollRequest, OptionItem, processor::VoteProcessor,
 };
 
 // ENDPOINTS
@@ -33,119 +28,36 @@ use voting_system::{
 pub async fn vote(
     State(state): State<AppState>, 
     Json(payload): Json<VoteRequest>
-) -> (StatusCode, Json<ApiError>) {
-<<<<<<< 2026-03-02-rust-vs-go
-    eprintln!("[VOTE] Incoming vote - poll_id: {}, option_id: {}, voter_id: {}", 
-             payload.poll_id, payload.option_id, payload.voter_id);
-
-    let mut polls = state.polls.write().await;
-
-    let Some(poll) = polls.get_mut(&payload.poll_id) else {
-        // poll NOT FOUND
-        eprintln!("[VOTE] ERROR: Poll {} not found", payload.poll_id);
-        return (
-            StatusCode::NOT_FOUND,
-            Json(ApiError { message: "Poll não encontrada".into() })
-        );
-    };
-
-    if !poll.is_open {
-        // poll closed
-        eprintln!("[VOTE] ERROR: Poll {} is closed", payload.poll_id);
-        return (
-            StatusCode::FORBIDDEN,
-            Json(ApiError { message: "A votação está encerrada".into() })
-        );
-    }
-
-    // has this voter already voted in this poll?
-    if poll.voters.contains(&payload.voter_id) {
-        // User has already voted
-        eprintln!("[VOTE] ERROR: Voter {} already voted in poll {}", payload.voter_id, payload.poll_id);
-=======
+) -> StatusCode {
     // Quick validation - check if poll and option exist
     {
         let polls = state.polls.read().await;
         
         let Some(poll) = polls.get(&payload.poll_id) else {
-            return (
-                StatusCode::NOT_FOUND,
-                Json(ApiError { message: "Poll não encontrada".into() })
-            );
+            return StatusCode::NOT_FOUND;
         };
 
         if !poll.is_open {
-            return (
-                StatusCode::FORBIDDEN,
-                Json(ApiError { message: "A votação está encerrada".into() })
-            );
+            return StatusCode::FORBIDDEN;
         }
 
         // Check if option exists
         if !poll.options.iter().any(|opt| opt.id == payload.option_id) {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(ApiError { message: "Opção não encontrada nessa poll".into() })
-            );
+            return StatusCode::BAD_REQUEST;
         }
     }
 
     // Enqueue the vote for async processing
-    if !state.processor.enqueue(payload) {
-        eprintln!("! Failed to enqueue vote");
->>>>>>> main
-        return (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(ApiError { message: "Fila de votos cheia, tente novamente".into() })
-        );
+    if state.processor.enqueue(payload) {
+        StatusCode::ACCEPTED
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
     }
-
-<<<<<<< 2026-03-02-rust-vs-go
-    // Find the option and increment its vote count
-    if let Some(option) = poll.options.iter_mut().find(|opt| opt.id == payload.option_id) {
-        option.votes += 1;
-        let option_votes = option.votes;
-        
-        poll.voters.insert(payload.voter_id.clone());
-        let total_voters = poll.voters.len();
-
-        // Clone poll while holding the lock
-        let poll_to_send = poll.clone();
-
-        // Release the write lock by dropping it
-        drop(polls);
-
-        // Notify via WebSocket OUTSIDE the lock
-        let _ = state.ws_tx.send(poll_to_send);
-
-        eprintln!("[VOTE] SUCCESS: Vote registered for poll {} - total voters: {}, option {} votes: {}", 
-                 payload.poll_id, total_voters, payload.option_id, option_votes);
-
-        return (
-            StatusCode::ACCEPTED,
-            Json(ApiError { message: "Voto registrado com sucesso".into() })
-        );
-    }
-        // option not found
-        eprintln!("[VOTE] ERROR: Option {} not found in poll {}", payload.option_id, payload.poll_id);
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(ApiError { message: "Opção não encontrada nessa poll".into() })
-        );
-    
-=======
-    // Return 202 Accepted immediately (like Go implementation)
-    (
-        StatusCode::ACCEPTED,
-        Json(ApiError { message: "Voto registrado na fila".into() })
-    )
->>>>>>> main
 }
 
 // GET /polls -> list all polls
 async fn list_polls(State(state): State<AppState>) -> Json<HashMap<PollId, Poll>> {
     let polls = state.polls.read().await;
-    eprintln!("[LIST_POLLS] Retrieved {} polls", polls.len());
     Json(polls.clone())
 }
 
@@ -156,10 +68,8 @@ async fn get_poll(
 ) -> Result<Json<Poll>, StatusCode> {
     let polls = state.polls.read().await; 
     if let Some(poll) = polls.get(&poll_id) {
-        eprintln!("[GET_POLL] Retrieved poll {} - voters: {}", poll_id, poll.voters.len());
         Ok(Json(poll.clone()))
     } else {
-        eprintln!("[GET_POLL] ERROR: Poll {} not found", poll_id);
         Err(StatusCode::NOT_FOUND)
     }
 }
@@ -196,40 +106,17 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
 }
 
 // POST /polls -> create a new poll
-#[derive(Debug, Deserialize)]
-pub struct CreatePollInput {
-    pub id: Option<PollId>,
-    pub question: String,
-    pub is_open: Option<bool>,
-    pub options: Option<Vec<String>>,
-}
-
 async fn create_poll(
     State(state): State<AppState>,
-    Json(payload): Json<CreatePollInput>,
-) -> (StatusCode, Json<serde_json::Value>) {
-    eprintln!("[CREATE_POLL] Creating poll: question='{}', options={}", payload.question, payload.options.as_ref().map(|o| o.len()).unwrap_or(0));
+    Json(payload): Json<CreatePollRequest>,
+) -> (StatusCode, Json<Poll>) {
     
+    let poll_id = state.next_poll_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     let mut polls = state.polls.write().await;
-    
-    let poll_id = match payload.id {
-        Some(id) => {
-            if polls.contains_key(&id) {
-                eprintln!("[CREATE_POLL] ERROR: Poll {} already exists", id);
-                return (
-                    StatusCode::CONFLICT,
-                    Json(serde_json::json!({ "message": "Poll already exists" }))
-                );
-            }
-            id
-        },
-        None => state.next_poll_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
-    };
-
     let mut next_option_id: u32 = 1;
+
     let options: Vec<OptionItem> = payload
         .options
-        .unwrap_or_default()
         .into_iter()
         .map(|label| {
             let id = next_option_id;
@@ -245,56 +132,17 @@ async fn create_poll(
     let new_poll = Poll {
         id: poll_id,
         question: payload.question,
-        is_open: payload.is_open.unwrap_or(true),
+        is_open: true,
         options,
         voters: HashSet::new(),
     };
 
-    eprintln!("[CREATE_POLL] SUCCESS: Poll {} created with {} options", poll_id, new_poll.options.len());
-
     polls.insert(poll_id, new_poll.clone());
 
-    (StatusCode::CREATED, Json(serde_json::to_value(new_poll).unwrap()))
-}
-
-#[derive(Debug, Deserialize)]
-pub struct AddOptionRequest {
-    pub id: u32,
-    pub poll_id: u32,
-    pub label: String,
-}
-
-async fn add_option(
-    State(state): State<AppState>,
-    Json(payload): Json<AddOptionRequest>,
-) -> (StatusCode, Json<serde_json::Value>) {
-    eprintln!("[ADD_OPTION] Adding option {} to poll {} - label: '{}'", payload.id, payload.poll_id, payload.label);
-    
-    let mut polls = state.polls.write().await;
-    if let Some(poll) = polls.get_mut(&payload.poll_id) {
-        if poll.options.iter().any(|o| o.id == payload.id) {
-            eprintln!("[ADD_OPTION] ERROR: Option {} already exists in poll {}", payload.id, payload.poll_id);
-             return (
-                StatusCode::CONFLICT,
-                Json(serde_json::json!({ "message": "Option already exists" }))
-            );
-        }
-        poll.options.push(OptionItem {
-            id: payload.id,
-            label: payload.label,
-            votes: 0,
-        });
-        eprintln!("[ADD_OPTION] SUCCESS: Option {} added to poll {}", payload.id, payload.poll_id);
-        return (StatusCode::CREATED, Json(serde_json::json!({ "message": "Option added" })));
-    }
-    eprintln!("[ADD_OPTION] ERROR: Poll {} not found", payload.poll_id);
-    (StatusCode::NOT_FOUND, Json(serde_json::json!({ "message": "Poll not found" })))
-}
-
-// GET /health -> health check
-async fn health_check() -> StatusCode {
-    eprintln!("[HEALTH] Health check requested");
-    StatusCode::OK
+    return(
+         StatusCode::CREATED,
+         Json(new_poll)
+    )
 }
 
 // GET /stats -> get processor stats
@@ -341,7 +189,7 @@ async fn create_option(
 // MAIN
 #[tokio::main]
 async fn main() {
-    eprintln!("Starting server......");
+    println!("Starting server......");
 
     // Initialize polls store
     let polls_map: HashMap<PollId, Poll> = HashMap::new();
@@ -375,19 +223,10 @@ async fn main() {
 
     // build app with routes
     let app = Router::new()
-        .route("/health", get(health_check))
         .route("/vote", post(vote))
         .route("/polls", get(list_polls))
         .route("/polls/:poll_id", get(get_poll))
         .route("/polls", post(create_poll))
-<<<<<<< 2026-03-02-rust-vs-go
-        .route("/options", post(add_option))
-        .with_state(state.clone());
-
-    // start server
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    eprintln!("🚀 Server running on http://{}", addr);
-=======
         .route("/options", post(create_option))
         .route("/ws", get(ws_handler)) 
         .route("/stats", get(get_stats))
@@ -396,7 +235,6 @@ async fn main() {
     // start server
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     println!("Server running on http://{}", addr);
->>>>>>> main
 
     // create TCP listener
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();

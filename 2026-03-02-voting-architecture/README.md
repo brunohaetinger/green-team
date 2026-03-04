@@ -92,11 +92,6 @@ Check the complete tradeoff analysis [tradeoff analysis](./tradeoff-archicture-a
 List the tradeoffs analysis, comparing pros and cons for each major decision.
 Before you need list all your major decisions, them run tradeoffs on than.
 
-```
-1. React Native vs (Flutter and Native)
-2. Serverless vs Microservices
-3. Apache Flink vs Apache Spark
-```
 
 ### 5.1 Backend
 
@@ -124,7 +119,7 @@ CONS (-)
 
 ```
 PROS (+)
-  * Mature ecosystem, gret integration for Kafka Streams (unmatched for stateful stream processing), robust JVM with advanced JIT compilation, Spring framework for quick development.
+  * Mature ecosystem, great integration for Kafka, robust JVM with advanced JIT compilation, Spring framework for quick development.
 
 CONS (-)
   * GC tuning complexity at scale, higher memory footprint, slower startup times, unpredictable latency spikes during GC pauses, which is unacceptable for real-time voting where every millisecond matters.
@@ -346,7 +341,7 @@ Drivers:
 
 #### Contract Documentation
 
-##### Voting Service
+#### Voting Service
 
 **1. Cast Vote**
 - Casts an individual vote from a user
@@ -370,28 +365,23 @@ Drivers:
 **Success Response body:**
 | Field | Type | Description |
 |-------|------|-------------|
-| isSuccessful | bool | Either the vote was successfully casted |
 | message | string | Success/Failure message |
-| voteId | string | Unique vote operation ID |
 
 ````JSON
 {
-  "isSuccessful": true,
   "message": "Vote registered successfully",
-  "voteId": "21142055-d8b1-4ef0-855e-efe36e90f4e4"
 }
 ````
 
 **Error Response body:**
 ````JSON
 {
-  "error": "DUPLICATE_VOTE",
-  "message": "User has already voted in this poll",
-  "traceId": "abc-123-xyz"
+  "error": "DOWNSTREAM_ERROR",
+  "message": "There was an error processing this vote",
 }
 ````
 
-##### Websocket Service
+#### Voting Score Service
 
 **1. Subscribe to poll results**
 - Subscribes a client for results of a given poll
@@ -458,23 +448,6 @@ Drivers:
 
 -----------------------------------------------------------
 
-What is a majore component? A service, a lambda, a important ui, a generalized approach for all uis, a generazid approach for computing a workload, etc...
-
-```
-6.1 - Class Diagram              : classic uml diagram with attributes and methods
-6.2 - Contract Documentation     : Operations, Inputs and Outputs
-#TODO - Define the api contract
-6.3 - Persistence Model          : Diagrams, Table structure, partiotioning, main queries.
-#TODO - Define the tables, fields, and interactions between tables; also define some queries (e.g., votes for a given election, results, votes cast by a specific user).
-
-
-6.4 - Algorithms/Data Structures : Specific algos that need to be used, along size with spesific data structures.
-#TODO - If there is any different data structure (a linked list, queue, or something else) to solve a specific use case, it must be added here.
-```
-
-Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc...
-
-Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-design-forgotten.html
 
 ### 🖹 7. Migrations
 
@@ -722,11 +695,10 @@ Everything                 → Grafana
 - `websocket_disconnects_total` by reason
 
 **Infrastructure**
-- Kafka Streams: consumer lag per partition, state store size, stream thread utilization
 - Apache Flink: checkpoint duration, restart count, backpressure ratio per operator
 - PostgreSQL: active connections, replication lag, slow query count
 - Kafka: consumer lag per partition, under-replicated partitions
-- AWS infra (EKS, RDS, MSK, ElastiCache, ALB) — sourced from CloudWatch via the CloudWatch Metrics Exporter and surfaced in Grafana
+- AWS infra: sourced from CloudWatch via the CloudWatch Metrics Exporter and surfaced in Grafana
 
 **Traffic**
 - Requests per second per service
@@ -763,14 +735,13 @@ Four dashboards, each focused on a specific audience:
 - Votes/sec over time
 - Success vs. duplicate vs. fraud breakdown (stacked)
 - Flink aggregation job latency p99
-- Kafka Streams consumer lag on vote-events
+- Kafka consumer lag on vote-events, throughput
 - DB write latency with a 50ms warning line
 
 **Infrastructure**
-- Kafka Streams: consumer lag, state store size, thread utilization
 - Apache Flink: checkpoint duration, operator backpressure, job restarts
 - PostgreSQL connections, replication lag, slow queries
-- Kafka broker health, under-replicated partitions
+- Kafka broker health, under-replicated partitions, latency
 
 **War Room**
 - 15-second auto-refresh
@@ -785,7 +756,6 @@ Two levels: **Warning** (something is degrading) and **Critical** (SLO breach, w
 - Kafka consumer lag > 10k for 5m / Kafka consumer lag > 50k for 3m
 - result_propagation p99 > 200ms for 5m / result_propagation p99 > 500ms for 3m
 - Flink checkpoint duration > 30s / Flink job restarts > 3 in 10m
-- Kafka Streams backpressure ratio > 50% for 5m
 - PostgreSQL replication lag > 10s
 - Inbound RPS drops > 80% vs. baseline
 
@@ -799,7 +769,7 @@ Rules:
 
 We sample 1% of normal successful requests. We capture 100% of requests that hit an error or exceed the p99 latency threshold.
 
-Trace covers the full path: `API Gateway → Voting Service → Kafka → Kafka Streams → Apache Flink → Result Aggregator → WebSocket broadcast`.
+Trace covers the full path: `API Gateway → Voting Service → Kafka → Apache Flink → Result Aggregator → WebSocket broadcast`.
 
 ### 🖹 10. Data Store Designs
 

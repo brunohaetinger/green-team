@@ -3,12 +3,12 @@ import { check, sleep } from 'k6';
 import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
-const USE_SETUP = (__ENV.USE_SETUP || '') !== '' && __ENV.USE_SETUP !== '0' ? true : false;
-const SLEEP_MS = (__ENV.SLEEP_MS ? parseInt(__ENV.SLEEP_MS, 10) : 0) || 0;
-const TARGET_VUS = (__ENV.TARGET_VUS ? parseInt(__ENV.TARGET_VUS, 10) : 10000) || 10000;
+const USE_SETUP = (__ENV.USE_SETUP || '') !== '' && __ENV.USE_SETUP !== '0';
+const SLEEP_MS = (__ENV.SLEEP_MS ? parseInt(__ENV.SLEEP_MS, 10) : 0);
+const TARGET_VUS = (__ENV.TARGET_VUS ? parseInt(__ENV.TARGET_VUS, 10) : 10000);
 
-let POLL_ID = __ENV.POLL_ID || '11111111-1111-1111-1111-111111111111';
-let OPTION_ID = __ENV.OPTION_ID || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+let POLL_ID = __ENV.POLL_ID ? parseInt(__ENV.POLL_ID, 10) : 1;
+let OPTION_ID = __ENV.OPTION_ID ? parseInt(__ENV.OPTION_ID, 10) : 1;
 
 export const options = {
   discardResponseBodies: true,
@@ -36,48 +36,35 @@ export function setup() {
     return { pollID: POLL_ID, optionID: OPTION_ID };
   }
 
-  const pollID = __ENV.POLL_ID || 'loadtest-poll-0001';
-  const optionID = __ENV.OPTION_ID || 'loadtest-opt-0001';
-  const urlPolls = `${BASE_URL}/polls`;
-  const urlOptions = `${BASE_URL}/options`;
-
-  let res = http.post(urlPolls, JSON.stringify({ id: pollID, question: 'Load test poll', is_open: true }), {
-    headers: { 'Content-Type': 'application/json' },
-    tags: { endpoint: 'polls_create' },
-  });
-  if (!(res.status === 201 || res.status === 409)) {
-    throw new Error(`failed to create poll: status=${res.status}`);
-  }
-
-  res = http.post(urlOptions, JSON.stringify({ id: optionID, poll_id: pollID, label: 'Option LT' }), {
-    headers: { 'Content-Type': 'application/json' },
-    tags: { endpoint: 'options_create' },
-  });
-  if (!(res.status === 201 || res.status === 409)) {
-    throw new Error(`failed to create option: status=${res.status}`);
-  }
+  // create a poll and grab the numeric IDs from the response
+  let res = http.post(
+    `${BASE_URL}/polls`,
+    JSON.stringify({ question: 'Load test poll', options: ['Option LT'] }),
+    { headers: { 'Content-Type': 'application/json' }, tags: { endpoint: 'polls_create' } }
+  );
+  check(res, { 'created poll (201)': (r) => r.status === 201 });
+  const body = res.json();
+  const pollID = body.id;
+  const optionID = body.options[0].id;
 
   return { pollID, optionID };
 }
 
 export default function (data) {
-  const pollID = data?.pollID || POLL_ID;
-  const optionID = data?.optionID || OPTION_ID;
+  const pollID = data.pollID;
+  const optionID = data.optionID;
   const url = `${BASE_URL}/vote`;
 
   const voterID = `vu${__VU}-it${__ITER}-${Date.now()}`;
-// {
-    // "poll_id": 2,
-    // "option_id": 3,
-    // "voter_id": "7559d194-a50f-45e5-8048-c9ff8d139d7c"
-// }
-  const payload = JSON.stringify({ poll_id: pollID, option_id: optionID, voter_id: voterID });
+  const payload = JSON.stringify({
+    poll_id: pollID,
+    option_id: optionID,
+    voter_id: voterID,
+  });
   const params = { headers: { 'Content-Type': 'application/json' }, tags: { endpoint: 'vote' } };
   const res = http.post(url, payload, params);
 
-  check(res, {
-    'vote accepted (202)': (r) => r.status === 202,
-  });
+  check(res, { 'vote accepted (202)': (r) => r.status === 202 });
 
   if (SLEEP_MS > 0) {
     sleep(SLEEP_MS / 1000);

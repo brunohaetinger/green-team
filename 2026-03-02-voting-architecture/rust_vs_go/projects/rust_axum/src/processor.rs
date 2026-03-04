@@ -19,12 +19,12 @@ impl VoteProcessor {
 
     /// Create a new vote processor with async workers
     pub fn new(state: AppState, num_workers: usize) -> Self {
-        // Use broadcast for efficient fan-out to multiple workers
-        let (tx, _) = broadcast::channel::<VoteRequest>(10000); // smaller buffer for broadcast
+        // Use broadcast for vote processing
+        let (tx, _) = broadcast::channel::<VoteRequest>(512); // aggressive buffer reduction
         let processed_count = Arc::new(AtomicU64::new(0));
         
         let workers = if num_workers == 0 {
-            (num_cpus::get() * 2).min(128).max(16)  // More conservative: CPU*2
+            num_cpus::get().min(32)  // Max CPU cores, no multiplier
         } else {
             num_workers
         };
@@ -82,12 +82,7 @@ async fn process_vote(state: &AppState, vote: VoteRequest) {
         return;
     };
 
-    if !poll.is_open {
-        return;
-    }
-
-    // has this voter already voted?
-    if poll.voters.contains(&vote.voter_id) {
+    if !poll.is_open || poll.voters.contains(&vote.voter_id) {
         return;
     }
 
