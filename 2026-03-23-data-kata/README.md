@@ -1,5 +1,7 @@
 # Modern Processing
 
+![blueprint-arch](./blueprint-arch.png)
+
 ## [Apache Spark](https://spark.apache.org/) x [Apache Flink](https://flink.apache.org/) x [Kafka Streams](https://kafka.apache.org/documentation/streams/)
 
 | Category | Apache Spark | Apache Flink | Kafka Streams |
