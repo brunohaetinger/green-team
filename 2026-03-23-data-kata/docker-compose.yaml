@@ -13,6 +13,9 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: datakata
+    command: ['postgres', '-c', 'wal_level=logical']
+    volumes:
+      - ./scripts/database/init.sql:/docker-entrypoint-initdb.d/init.sql      
     ports:
       - "5432:5432"
 
