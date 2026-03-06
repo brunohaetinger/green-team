@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,10 +31,11 @@ public class SalesCdcProcessor {
     }
 
     @KafkaListener(topics = "${kafka.topics.input}", groupId = "${spring.kafka.consumer.group-id}")
-    public void consume(String message) {
+    public void consume(String message, Acknowledgment ack) {
         try {
             DebeziumMessage debeziumMessage = objectMapper.readValue(message, DebeziumMessage.class);
             process(debeziumMessage);
+            ack.acknowledge();
         } catch (Exception e) {
             log.error("Failed to process message: {}", message, e);
         }
