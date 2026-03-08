@@ -1,5 +1,6 @@
-CREATE TABLE person (
+CREATE TABLE sales (
     id serial PRIMARY KEY,
-    name VARCHAR (50) NOT NULL,
-    lastname VARCHAR(50) NOT NULL
+    salesman_id INT NOT NULL,
+    store_id INT NOT NULL,
+    total INT
 );
