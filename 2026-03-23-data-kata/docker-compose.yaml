@@ -79,9 +79,7 @@ services:
       OFFSET_STORAGE_TOPIC: connect_offsets
       KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
       VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      ENABLE_DEBEZIUM_SCRIPTING: 'true'         
-
-
+      ENABLE_DEBEZIUM_SCRIPTING: 'true'    
 
   web-server:
     build: ./web-server
