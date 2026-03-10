@@ -1,5 +1,20 @@
 # Data Kata - Mar 23th, 2026
 
+## How to run
+
+```
+docker compose up
+```
+
+```
+cd scripts/connector
+```
+
+```
+./setup.sh
+```
+
+
 ## Glossary
 
 - WAL (Write-Ahead Logging): improves significantly the performance and concurrency due to writting changes into a separate file (-wal) before applying these on the main database. This permits simultaneous reads and writes.
