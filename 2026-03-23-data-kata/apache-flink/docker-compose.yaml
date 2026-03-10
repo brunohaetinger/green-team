@@ -1,0 +1,52 @@
+services:
+  jobmanager:
+    image: flink:2.2.0-scala_2.12-java21
+    hostname: jobmanager
+    container_name: flink-jobmanager
+    ports:
+      - "8082:8081"
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        parallelism.default: 2
+        taskmanager.numberOfTaskSlots: 2
+    volumes:
+      - flink-data:/tmp
+      - ./jobs/jar:/opt/flink/jobs
+    networks:
+      - flink-network
+      - kafka-network  # connect to Kafka network
+
+  taskmanager:
+    image: flink:2.2.0-scala_2.12-java21
+    hostname: taskmanager
+    container_name: flink-taskmanager
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+        parallelism.default: 2
+    volumes:
+      - flink-data:/tmp
+      - ./jobs/jar:/opt/flink/jobs
+    networks:
+      - flink-network
+      - kafka-network  # connect to Kafka network
+
+volumes:
+  flink-data:
+    driver: local
+
+networks:
+  flink-network:
+    driver: bridge
+  kafka-network:
+    external: true
+    name: kafka_kafka-network
