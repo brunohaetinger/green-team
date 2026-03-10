@@ -1,0 +1,21 @@
+{
+  "name": "total-sales-postgres-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "tasks.max": "1",
+    "topics": "total-sales",
+    "connection.url": "jdbc:postgresql://host.docker.internal:5432/sales_db",
+    "connection.user": "postgres",
+    "connection.password": "postgres",
+    "dialect.name": "PostgreSqlDatabaseDialect",
+    "table.name.format": "total_sales",
+    "insert.mode": "insert",
+    "pk.mode": "none",
+    "auto.create": "false",
+    "auto.evolve": "false",
+    "delete.enabled": "false",
+    "errors.tolerance": "all",
+    "errors.log.enable": "true",
+    "errors.log.include.messages": "true"
+  }
+}
