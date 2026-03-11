@@ -13,10 +13,11 @@ public record DebeziumMessage(
             @JsonProperty("after") RecordData after
     ) {}
 
-    //TODO review datacd
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record RecordData(
             @JsonProperty("id") Long id,
-            @JsonProperty("name") String name
+            @JsonProperty("salesman_id") Integer salesmanId,
+            @JsonProperty("product_id") Integer productId,
+            @JsonProperty("quantity") Integer quantity
     ) {}
 }

@@ -15,7 +15,7 @@
     <artifactId>sales-cdc-processor</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>sales-cdc-processor</name>
-    <description>Debezium CDC processor: sales-cdc -> sales-data</description>
+    <description>Debezium CDC processor: sales-db -> sales-events</description>
 
     <properties>
         <java.version>25</java.version>
@@ -48,6 +48,7 @@
             <artifactId>spring-kafka-test</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
