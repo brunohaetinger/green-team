@@ -1,5 +1,6 @@
 include:
   - ./postgres/docker-compose.yaml
+  - ./apache-flink/docker-compose.yaml
   - ./web-server/docker-compose.yaml
 
 services:
