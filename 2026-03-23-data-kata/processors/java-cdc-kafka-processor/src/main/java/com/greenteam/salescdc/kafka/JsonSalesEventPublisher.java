@@ -5,12 +5,10 @@ import com.greenteam.salescdc.model.SalesData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("!avro")
 public class JsonSalesEventPublisher implements SalesEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(JsonSalesEventPublisher.class);
