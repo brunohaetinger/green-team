@@ -17,6 +17,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - data-kata-net
 
 volumes:
   postgres_data:
+
+networks:
+  data-kata-net:
+    name: data-kata-net
