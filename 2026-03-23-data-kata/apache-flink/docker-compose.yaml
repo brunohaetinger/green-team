@@ -17,7 +17,7 @@ services:
       - ./jobs/jar:/opt/flink/jobs
     networks:
       - flink-network
-      - kafka-network  # connect to Kafka network
+      - data-kata-net
 
   taskmanager:
     image: flink:2.2.0-scala_2.12-java21
@@ -38,7 +38,7 @@ services:
       - ./jobs/jar:/opt/flink/jobs
     networks:
       - flink-network
-      - kafka-network  # connect to Kafka network
+      - data-kata-net
 
 volumes:
   flink-data:
@@ -46,7 +46,6 @@ volumes:
 
 networks:
   flink-network:
-    driver: bridge
-  kafka-network:
-    external: true
-    name: kafka_kafka-network
+      driver: bridge
+  data-kata-net:
+    name: data-kata-net
