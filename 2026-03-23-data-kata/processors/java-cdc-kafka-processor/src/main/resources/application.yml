@@ -15,5 +15,5 @@ spring:
 
 kafka:
   topics:
-    input: sales-cdc
-    output: sales-data
+    input: sales-db
+    output: sales-events
