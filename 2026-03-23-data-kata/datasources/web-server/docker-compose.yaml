@@ -8,6 +8,10 @@ services:
       - data-kata-net
 
   web-server:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure  
     build: .
     ports:
       - "8080:8080"

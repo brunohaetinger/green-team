@@ -1,0 +1,35 @@
+services:
+# Data sources
+  source-fs:
+    build: datasources/filesystem
+    container_name: source-fs
+    hostname: source-fs
+    volumes:
+    - ./data:/data
+
+# Connectors
+## Filesystem
+  fs-connector:
+    build: connectors/filesystem
+    container_name: fs-connector
+    depends_on:
+      - kafka
+    networks:
+      - kafka-net
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./data:/data
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: connect-cluster
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_PLUGIN_PATH: "/usr/share/confluent-hub-components"

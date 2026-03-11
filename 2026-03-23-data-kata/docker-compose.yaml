@@ -2,10 +2,8 @@ include:
   - ./postgres/docker-compose.yaml
   - ./apache-flink/docker-compose.yaml
   - ./web-server/docker-compose.yaml
+  - ./kafka/docker-compose.yaml
+  - ./datasources/filesystem/docker-compose.yaml
+  - ./datasources/api/docker-compose.yaml
+  - ./datasources/database/docker-compose.yaml
 
-services:
-  web-server:
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: on-failure
