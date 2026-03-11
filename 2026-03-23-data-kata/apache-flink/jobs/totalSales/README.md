@@ -1,13 +1,11 @@
 ## Building the Project
 
-```bash
-mvn clean package
-```
-
 **Run**:
 ```bash
-mvn clean package
-docker cp build/libs/totalSales-1.0-SNAPSHOT-fat.jar flink-jobmanager:/opt/flink/jobs/
+./gradlew clean build
+cp build/libs/totalSales-1.0-SNAPSHOT-fat.jar \
+  ../jar/
+
 docker exec -it flink-jobmanager flink run \
   -p 2 \
   --class com.greenteam.TotalSales \
