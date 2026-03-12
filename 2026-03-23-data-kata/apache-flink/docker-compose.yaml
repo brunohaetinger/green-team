@@ -12,9 +12,15 @@ services:
         jobmanager.rpc.address: jobmanager
         parallelism.default: 2
         taskmanager.numberOfTaskSlots: 2
+        openlineage.transport.type: http
+        openlineage.transport.url: http://marquez-api:5000
+        openlineage.transport.endpoint: /api/v1/lineage
+        openlineage.namespace: green-team-data-kata
+        openlineage.job.name.prefix: flink-
     volumes:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
+      - ./jobs/jar/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
     networks:
       - flink-network
       - data-kata-net
@@ -33,9 +39,15 @@ services:
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
         parallelism.default: 2
+        openlineage.transport.type: http
+        openlineage.transport.url: http://marquez-api:5000
+        openlineage.transport.endpoint: /api/v1/lineage
+        openlineage.namespace: green-team-data-kata
+        openlineage.job.name.prefix: flink-
     volumes:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
+      - ./jobs/jar/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
     networks:
       - flink-network
       - data-kata-net

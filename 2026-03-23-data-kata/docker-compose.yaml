@@ -10,7 +10,8 @@ include:
   - ./apache-flink/docker-compose.yaml
   # Kafka
   - ./kafka/docker-compose.yaml
-
+  # Data Lineage
+  - ./data-lineage/docker-compose.yaml
 
 # Docker setup
 networks:
