@@ -1,13 +1,27 @@
-CREATE TABLE IF NOT EXISTS sales (
-    id SERIAL PRIMARY KEY,
-    salesman_id INTEGER NOT NULL,
-    product_id INTEGER NOT NULL,
-    quantity INTEGER NOT NULL
+CREATE TABLE IF NOT EXISTS total_sales (
+    schema_version TEXT,
+    aggregation_type TEXT,
+    city_id TEXT,
+    country_id TEXT,
+    window_start TIMESTAMPTZ,
+    window_end TIMESTAMPTZ,
+    total_amount NUMERIC(18, 2),
+    total_units BIGINT,
+    total_orders BIGINT,
+    event_count BIGINT,
+    processed_at TIMESTAMPTZ
 );
 
-INSERT INTO sales (salesman_id, product_id, quantity)
-SELECT 
-    floor(random() * 20 + 1)::int as salesman_id,
-    floor(random() * 201 + 100)::int as product_id,
-    floor(random() * 100 + 1)::int as quantity
-FROM generate_series(1, 500);
+CREATE TABLE IF NOT EXISTS top_salesman (
+    schema_version TEXT,
+    aggregation_type TEXT,
+    salesman_id TEXT,
+    country_id TEXT,
+    window_start TIMESTAMPTZ,
+    window_end TIMESTAMPTZ,
+    total_amount NUMERIC(18, 2),
+    total_units BIGINT,
+    total_orders BIGINT,
+    event_count BIGINT,
+    processed_at TIMESTAMPTZ
+);

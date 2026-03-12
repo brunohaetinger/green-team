@@ -2,9 +2,9 @@ package com.greenteam.model;
 
 import java.math.BigDecimal;
 
-public class CitySalesResult {
+public class TopSalesmanResult {
 
-    public final String cityId;
+    public final String salesmanId;
     public final String countryId;
     public final String windowStart;
     public final String windowEnd;
@@ -14,8 +14,8 @@ public class CitySalesResult {
     public final long eventCount;
     public final String processedAt;
 
-    public CitySalesResult(
-        String cityId,
+    public TopSalesmanResult(
+        String salesmanId,
         String countryId,
         String windowStart,
         String windowEnd,
@@ -25,7 +25,7 @@ public class CitySalesResult {
         long eventCount,
         String processedAt
     ) {
-        this.cityId = cityId;
+        this.salesmanId = salesmanId;
         this.countryId = countryId;
         this.windowStart = windowStart;
         this.windowEnd = windowEnd;
@@ -38,12 +38,11 @@ public class CitySalesResult {
 
     @Override
     public String toString() {
-        return "CitySalesResult{" +
-            "cityId='" + cityId + '\'' +
+        return "TopSalesmanResult{" +
+            "salesmanId='" + salesmanId + '\'' +
             ", windowEnd='" + windowEnd + '\'' +
             ", totalAmount=" + totalAmount +
             ", totalUnits=" + totalUnits +
             '}';
     }
 }
-

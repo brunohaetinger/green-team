@@ -4,35 +4,35 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.greenteam.config.JobConfig;
-import com.greenteam.model.CitySalesResult;
+import com.greenteam.model.TopSalesmanResult;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.nio.charset.StandardCharsets;
 
-public class CitySalesResultSerializer implements KafkaRecordSerializationSchema<CitySalesResult> {
+public class TopSalesmanResultSerializer implements KafkaRecordSerializationSchema<TopSalesmanResult> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public ProducerRecord<byte[], byte[]> serialize(
-        CitySalesResult element,
+        TopSalesmanResult element,
         KafkaSinkContext context,
         Long timestamp
     ) {
-        byte[] key = (element.cityId + "|" + element.windowEnd).getBytes(StandardCharsets.UTF_8);
+        byte[] key = (element.salesmanId + "|" + element.windowEnd).getBytes(StandardCharsets.UTF_8);
         byte[] value = buildValue(element).getBytes(StandardCharsets.UTF_8);
         return new ProducerRecord<>(JobConfig.OUTPUT_TOPIC, key, value);
     }
 
-    private static String buildValue(CitySalesResult element) {
+    private static String buildValue(TopSalesmanResult element) {
         ObjectNode root = objectMapper.createObjectNode();
         root.set("schema", buildSchema());
 
         ObjectNode payload = objectMapper.createObjectNode();
         payload.put("schema_version", "1.0");
-        payload.put("aggregation_type", "city_sales");
-        payload.put("city_id", element.cityId);
+        payload.put("aggregation_type", "top_salesman");
+        payload.put("salesman_id", element.salesmanId);
 
         if (element.countryId == null) {
             payload.putNull("country_id");
@@ -56,12 +56,12 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         ObjectNode schema = objectMapper.createObjectNode();
         schema.put("type", "struct");
         schema.put("optional", false);
-        schema.put("name", "com.greenteam.total_sales.Value");
+        schema.put("name", "com.greenteam.top_salesman.Value");
 
         ArrayNode fields = objectMapper.createArrayNode();
         fields.add(requiredField("schema_version", "string"));
         fields.add(requiredField("aggregation_type", "string"));
-        fields.add(requiredField("city_id", "string"));
+        fields.add(requiredField("salesman_id", "string"));
         fields.add(optionalField("country_id", "string"));
         fields.add(requiredField("window_start", "string"));
         fields.add(requiredField("window_end", "string"));
@@ -71,7 +71,6 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         fields.add(requiredField("event_count", "int64"));
         fields.add(requiredField("processed_at", "string"));
         schema.set("fields", fields);
-
         return schema;
     }
 
@@ -89,4 +88,3 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         return field;
     }
 }
-
