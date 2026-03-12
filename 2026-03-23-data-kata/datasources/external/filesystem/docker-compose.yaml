@@ -1,0 +1,10 @@
+services:
+  source-fs:
+    image: alpine
+    container_name: source-fs
+    hostname: source-fs
+    volumes:
+    - ../../data:/data
+    command: tail -f /dev/null
+    networks:
+      - data-kata-net
