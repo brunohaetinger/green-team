@@ -10,7 +10,7 @@ services:
     ports:
       - "5431:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - source_db_webserver_postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql  
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d webserver_db"]
@@ -33,7 +33,7 @@ services:
       DB_USER: user
       DB_PASSWORD: password
       DB_HOST: source-db-webserver-postgres
-      DB_PORT: 5431
+      DB_PORT: 5432
       DB_NAME: webserver_db
     networks:
       - data-kata-net
