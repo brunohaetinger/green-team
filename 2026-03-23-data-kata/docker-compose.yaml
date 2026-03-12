@@ -1,11 +1,18 @@
 include:
-  - ./postgres/docker-compose.yaml
+  # Data sources
+  - ./datasources/external/database/docker-compose.yaml
+  - ./datasources/external/filesystem/docker-compose.yaml
+  - ./datasources/external/web-server/docker-compose.yaml
+  - ./datasources/internal/report-api/docker-compose.yaml
+  # Connectors
+  - ./connectors/source-connectors/database-connector/docker-compose.yaml
+  - ./connectors/source-connectors/filesystem-connector/docker-compose.yaml
+  - ./connectors/source-connectors/webserver-connector/docker-compose.yaml
+  - ./connectors/sink-connectors/total-sales-connector/docker-compose.yaml
+  # Flink
   - ./apache-flink/docker-compose.yaml
-  - ./web-server/docker-compose.yaml
+  # Kafka
   - ./kafka/docker-compose.yaml
-  - ./datasources/filesystem/docker-compose.yaml
-  - ./datasources/api/docker-compose.yaml
-  - ./datasources/database/docker-compose.yaml
 
 
 # Docker setup
