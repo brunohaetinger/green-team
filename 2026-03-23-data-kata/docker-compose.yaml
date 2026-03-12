@@ -1,11 +1,16 @@
 include:
   - ./postgres/docker-compose.yaml
   - ./apache-flink/docker-compose.yaml
-  - ./web-server/docker-compose.yaml
+  # - ./web-server/docker-compose.yaml
 
-services:
-  web-server:
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: on-failure
+# services:
+#   web-server:
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     restart: on-failure
+
+networks:
+  data-kata-net:
+    driver: bridge
+    name: data-kata-net

@@ -46,6 +46,4 @@ volumes:
 
 networks:
   flink-network:
-      driver: bridge
-  data-kata-net:
-    name: data-kata-net
+    driver: bridge

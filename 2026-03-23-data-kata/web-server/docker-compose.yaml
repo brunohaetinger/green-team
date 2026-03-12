@@ -19,7 +19,3 @@ services:
       DB_NAME: sales_db
     networks:
       - data-kata-net
-
-networks:
-  data-kata-net:
-    name: data-kata-net
