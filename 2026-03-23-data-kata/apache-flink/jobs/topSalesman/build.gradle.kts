@@ -30,6 +30,7 @@ dependencies {
     
     // Kafka Clients
     implementation("org.apache.kafka:kafka-clients:3.6.1")
+    implementation("org.apache.kafka:connect-api:3.6.1")
     
     // JSON Processing
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")

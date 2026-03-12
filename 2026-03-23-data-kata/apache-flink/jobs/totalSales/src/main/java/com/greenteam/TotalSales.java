@@ -1,87 +1,70 @@
 package com.greenteam;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.greenteam.config.JobConfig;
+import com.greenteam.model.CitySalesResult;
+import com.greenteam.operator.CitySalesAggregate;
+import com.greenteam.operator.CitySalesWindowFormatter;
+import com.greenteam.operator.ParseSalesEvent;
+import com.greenteam.serde.CitySalesResultSerializer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.base.DeliveryGuarantee;
-import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 
+import java.time.Duration;
 import java.util.Properties;
 
 public class TotalSales {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
     public static void main(String[] args) throws Exception {
-        // 1. Create execution environment
+
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        // 2. Configure Kafka source
+        // --- Source ---
         KafkaSource<String> source = KafkaSource.<String>builder()
-            .setBootstrapServers("kafka:29092")
-            .setTopics("sales-events")
-            .setGroupId("flink-pipeline-sales-events") // group id means that if you restart the job, it will continue from where it left off, it is important for exactly-once processing
-            .setStartingOffsets(OffsetsInitializer.earliest()) // start from the earliest offset, so we process all existing data in the topic when the job starts
-            .setValueOnlyDeserializer(new SimpleStringSchema()) // we only care about the value of the Kafka message, and it is a string, so we use SimpleStringSchema
+            .setBootstrapServers(JobConfig.BOOTSTRAP_SERVERS)
+            .setTopics(JobConfig.INPUT_TOPIC)
+            .setGroupId(JobConfig.CONSUMER_GROUP_ID)
+            .setStartingOffsets(OffsetsInitializer.earliest())
+            .setValueOnlyDeserializer(new SimpleStringSchema())
             .build();
 
-        // 3. Create input stream
         DataStream<String> inputStream = env.fromSource(
             source,
-            WatermarkStrategy.noWatermarks(), // we are not doing any time-based processing, so we don't need watermarks, this is a simple pass-through job
-            "Kafka Flink Sales Events Source" // name of the source operator, useful for debugging and monitoring,m source operator is the component that reads data from Kafka and creates a stream of data in Flink
+            WatermarkStrategy.noWatermarks(),
+            "source: " + JobConfig.INPUT_TOPIC
         );
 
-        // 4. Transform the data
-        DataStream<String> processedStream = inputStream
-            .map(message -> {
-                // Try to parse as JSON
-                JsonNode jsonNode = objectMapper.readTree(message);
-                ObjectNode outputNode = objectMapper.createObjectNode();
-                
-                // Copy original fields
-                outputNode.setAll((ObjectNode) jsonNode);
-                
-                // Add processing metadata
-                outputNode.put("processed", true);
-                outputNode.put("processedAt", System.currentTimeMillis());
-                
-                return objectMapper.writeValueAsString(outputNode);
-            })
-            .name("Transform Flink Sales Events"); // name of the map operator, useful for debugging and monitoring, map operator is the component that transforms the data, in this case we are parsing the JSON and adding some metadata
+        // --- Pipeline ---
+        DataStream<CitySalesResult> aggregatedStream = inputStream
+            .flatMap(new ParseSalesEvent())
+            .name("operator: parse sales-events")
+            .keyBy(event -> event.cityId)
+            .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
+            .aggregate(new CitySalesAggregate(), new CitySalesWindowFormatter())
+            .name("operator: aggregate total sales per city");
 
-        // Also print for debugging
-        processedStream.print("Processed");
+        aggregatedStream.print("sink: stdout");
 
-        // Keep transaction timeout under the broker's max timeout.
-        Properties kafkaProducerConfig = new Properties();
-        kafkaProducerConfig.setProperty("transaction.timeout.ms", "600000");
+        // --- Sink ---
+        Properties producerConfig = new Properties();
+        producerConfig.setProperty("transaction.timeout.ms", JobConfig.TRANSACTION_TIMEOUT_MS);
 
-        // 5. Configure Kafka sink
-        KafkaSink<String> sink = KafkaSink.<String>builder()
-            .setBootstrapServers("kafka:29092")
-            .setRecordSerializer(
-                KafkaRecordSerializationSchema.builder()
-                    .setTopic("total-sales")
-                    .setValueSerializationSchema(new SimpleStringSchema())
-                    .build()
-            )
-            .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE) // ensure that each message is processed and written to Kafka exactly once, even in case of failures, this is important for data integrity
-            .setTransactionalIdPrefix("total-sales-") // required for EXACTLY_ONCE to provide unique transaction IDs
-            .setKafkaProducerConfig(kafkaProducerConfig)
+        KafkaSink<CitySalesResult> sink = KafkaSink.<CitySalesResult>builder()
+            .setBootstrapServers(JobConfig.BOOTSTRAP_SERVERS)
+            .setRecordSerializer(new CitySalesResultSerializer())
+            .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+            .setTransactionalIdPrefix(JobConfig.TRANSACTIONAL_ID_PREFIX)
+            .setKafkaProducerConfig(producerConfig)
             .build();
 
-        // 6. Write to Kafka
-        processedStream.sinkTo(sink).name("Kafka Flink Total Sales Sink"); // name of the sink operator, useful for debugging and monitoring, sink operator is the component that writes data to Kafka
+        aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
-        // 7. Execute the job
-        env.execute("Total Sales Pipeline");
+        env.execute("totalSales: aggregate sales-events by city");
     }
 }

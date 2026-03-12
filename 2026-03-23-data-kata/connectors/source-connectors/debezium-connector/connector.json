@@ -1,0 +1,30 @@
+{
+  "name": "debezium-connector-to-external-db",
+  "config": {
+    "name": "debezium-connector-to-external-db",
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+
+    "database.dbname": "external_db",
+    "database.history.kafka.bootstrap.servers": "kafka:9092",
+    "database.history.kafka.topic": "schema-changes.sales-db",
+    "database.hostname": "external-db-postgres",
+    "database.password": "password",
+    "database.port": "5432",
+    "database.user": "user",
+
+    "plugin.name": "pgoutput",
+    "table.include.list": "public.sales",
+    "tasks.max": "1",
+
+    "topic.prefix": "cdc",
+
+    "transforms": "unwrap,route",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "true",
+    "transforms.unwrap.delete.handling.mode": "drop",
+    "transforms.unwrap.add.fields": "op,table,lsn",
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": ".*",
+    "transforms.route.replacement": "sales-db"
+  }
+}

@@ -1,19 +1,19 @@
 services:
   source-db-webserver-postgres:
     image: postgres:18-alpine
-    container_name: data-kata-postgres
+    container_name: source-db-webserver-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: sales_db
+      POSTGRES_DB: webserver_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "5431:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - source_db_webserver_postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql  
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d sales_db"]
+      test: ["CMD-SHELL", "pg_isready -U user -d webserver_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,19 +21,20 @@ services:
       - data-kata-net
 
   web-server:
+    container_name: web-server
     depends_on:
       source-db-webserver-postgres:
         condition: service_healthy
     restart: on-failure  
     build: .
     ports:
-      - "8080:8080"
+      - "8089:8080"
     environment:
       DB_USER: user
       DB_PASSWORD: password
-      DB_HOST: postgres
+      DB_HOST: source-db-webserver-postgres
       DB_PORT: 5432
-      DB_NAME: sales_db
+      DB_NAME: webserver_db
     networks:
       - data-kata-net
 
