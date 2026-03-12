@@ -60,7 +60,10 @@ services:
   #     KAFKA_CLUSTERS_0_NAME: local
   #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
   kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.8.7
+    build:
+      context: .
+      dockerfile: kafka-connect.Dockerfile
+    image: greenteam/kafka-connect:7.8.7
     hostname: kafka-connect
     container_name: kafka-connect
     restart: on-failure
@@ -69,6 +72,12 @@ services:
         condition: service_healthy
     ports:
       - "8083:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/connectors > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     environment:
       CONNECT_BOOTSTRAP_SERVERS: 'kafka:29092'
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect

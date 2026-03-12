@@ -1,11 +1,11 @@
 include:
   # Data sources
   - ./datasources/external/database/docker-compose.yaml
-  - ./datasources/external/filesystem/docker-compose.yaml
-  - ./datasources/external/web-server/docker-compose.yaml
+  # - ./datasources/external/filesystem/docker-compose.yaml
+  # - ./datasources/external/web-server/docker-compose.yaml
   - ./datasources/internal/report-api/docker-compose.yaml
   # Connectors
-  # - ./connectors/source-connectors/filesystem-connector/docker-compose.yaml
+  - ./connectors/docker-compose.yaml
   # Flink
   - ./apache-flink/docker-compose.yaml
   # Kafka

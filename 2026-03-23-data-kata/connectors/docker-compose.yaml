@@ -1,0 +1,17 @@
+services:
+  kafka-connect-install-connectors:
+    image: curlimages/curl:8.12.1
+    container_name: install-kafka-connectors
+    depends_on:
+      kafka-connect:
+        condition: service_healthy
+      report-api-database-postgres:
+        condition: service_healthy
+      external-db-postgres:
+        condition: service_healthy
+    volumes:
+      - ./:/connectors:ro
+      - ./register-connectors.sh:/register-connectors.sh:ro
+    entrypoint: ["/bin/sh", "/register-connectors.sh"]
+    networks:
+      - data-kata-net
