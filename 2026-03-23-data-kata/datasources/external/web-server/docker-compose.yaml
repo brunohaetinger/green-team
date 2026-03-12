@@ -21,6 +21,7 @@ services:
       - data-kata-net
 
   web-server:
+    container_name: web-server
     depends_on:
       source-db-webserver-postgres:
         condition: service_healthy
