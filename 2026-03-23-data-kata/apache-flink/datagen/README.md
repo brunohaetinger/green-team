@@ -2,7 +2,7 @@
 
 Use Kafka Connect Datagen to continuously publish fake messages to `sales-events`.
 
-### 1) Prerequisites
+### Prerequisites
 
 - Kafka broker reachable (examples below use `localhost:9092`)
 - Kafka Connect running (REST API at `http://localhost:8083`)
@@ -15,7 +15,7 @@ docker restart kafka-connect
 docker exec kafka-connect find /usr/share/confluent-hub-components -name "kafka-connect-datagen-*.jar"
 ```
 
-### 2) (Optional) Regenerate `connector.json` after schema changes
+### Generate `connector.json`
 
 Generate the connector payload based on `sales-events-schema.avsc`
 
@@ -39,7 +39,7 @@ cat > sales-events-connector.json <<EOF
 EOF
 ```
 
-### 3) Create the Datagen connector
+### Create the Datagen connector
 
 ```bash
 curl -X POST "http://localhost:8083/connectors" \
@@ -47,7 +47,7 @@ curl -X POST "http://localhost:8083/connectors" \
   -d @sales-events-connector.json
 ```
 
-### 4) Check connector status
+### Check connector status
 
 ```bash
 curl "http://localhost:8083/connectors/sales-events-datagen/status"
