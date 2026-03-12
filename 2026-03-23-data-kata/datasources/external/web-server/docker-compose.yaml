@@ -1,5 +1,5 @@
 services:
-  postgres:
+  source-db-webserver-postgres:
     image: postgres:18-alpine
     container_name: data-kata-postgres
     restart: unless-stopped
@@ -20,9 +20,23 @@ services:
     networks:
       - data-kata-net
 
-volumes:
-  postgres_data:
+  web-server:
+    depends_on:
+      source-db-webserver-postgres:
+        condition: service_healthy
+    restart: on-failure  
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sales_db
+    networks:
+      - data-kata-net
 
-networks:
-  data-kata-net:
-    name: data-kata-net
+
+volumes:
+  source_db_webserver_postgres_data:

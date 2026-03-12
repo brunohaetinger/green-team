@@ -1,14 +1,5 @@
-services:
-# Data sources
-  source-fs:
-    build: datasources/filesystem
-    container_name: source-fs
-    hostname: source-fs
-    volumes:
-    - ./data:/data
-
-# Connectors
 ## Filesystem
+services:
   fs-connector:
     build: connectors/filesystem
     container_name: fs-connector

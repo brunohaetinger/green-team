@@ -1,7 +1,7 @@
 services:
-  sales-cdc-processor:
+  sales-cdc-transformer:
     build:
-      context: ./java-cdc-kafka-processor
+      context: ./java-cdc-kafka-transformer
       dockerfile: Dockerfile
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}

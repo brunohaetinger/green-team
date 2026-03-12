@@ -35,9 +35,11 @@ services:
       "
       echo 'Waiting for Kafka...'
       sleep 10
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic dbsource.sales --partitions 1 --replication-factor 1
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic fssource.sales --partitions 1 --replication-factor 1
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic apisource.sales --partitions 1 --replication-factor 1
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic sales-db --partitions 1 --replication-factor 1
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic sales-fs --partitions 1 --replication-factor 1
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic sales-api --partitions 1 --replication-factor 1
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic sales-events --partitions 1 --replication-factor 1
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic total-results --partitions 1 --replication-factor 1
       "
   kafka-ui:
     image: provectuslabs/kafka-ui:latest

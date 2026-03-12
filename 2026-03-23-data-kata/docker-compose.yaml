@@ -7,3 +7,8 @@ include:
   - ./datasources/api/docker-compose.yaml
   - ./datasources/database/docker-compose.yaml
 
+
+# Docker setup
+networks:
+  data-kata-net:
+    name: data-kata-net
