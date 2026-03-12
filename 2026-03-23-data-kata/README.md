@@ -14,6 +14,11 @@
     b. Red-Shift
     c. Hadoop
 
+## Archicture
+
+![](docs/Kata%20-%20Data%20Architecture.drawio.png)
+
+
 ## How to run
 
 ```
@@ -27,7 +32,6 @@ cd scripts/connector
 ```
 ./setup.sh
 ```
-
 
 ## Glossary
 
