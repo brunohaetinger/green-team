@@ -1,0 +1,23 @@
+{
+  "name": "top-salesman-postgres-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "tasks.max": "1",
+    "topics": "top-salesman",
+    "connection.url": "jdbc:postgresql://report-api-database-postgres:5432/sales_db",
+    "connection.user": "user",
+    "connection.password": "password",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "true",
+    "dialect.name": "PostgreSqlDatabaseDialect",
+    "table.name.format": "top_salesman",
+    "insert.mode": "insert",
+    "pk.mode": "none",
+    "auto.create": "false",
+    "auto.evolve": "false",
+    "delete.enabled": "false",
+    "errors.tolerance": "all",
+    "errors.log.enable": "true",
+    "errors.log.include.messages": "true"
+  }
+}

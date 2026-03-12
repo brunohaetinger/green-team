@@ -1,0 +1,32 @@
+const http = require('http');
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+});
+
+const requestListener = async function (req, res) {
+  if (req.url === '/sales' && req.method === 'GET') {
+    try {
+      const result = await pool.query('SELECT id, salesman_id, product_id, quantity FROM sales');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result.rows));
+    } catch (err) {
+      console.error(err);
+      res.writeHead(500);
+      res.end('Error fetching sales');
+    }
+  } else {
+    res.writeHead(404);
+    res.end('Not Found');
+  }
+}
+
+const server = http.createServer(requestListener);
+server.listen(8080, () => {
+    console.log('Server is running on port 8080');
+});
