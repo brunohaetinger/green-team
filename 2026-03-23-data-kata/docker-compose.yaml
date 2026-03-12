@@ -5,10 +5,7 @@ include:
   - ./datasources/external/web-server/docker-compose.yaml
   - ./datasources/internal/report-api/docker-compose.yaml
   # Connectors
-  - ./connectors/source-connectors/database-connector/docker-compose.yaml
-  - ./connectors/source-connectors/filesystem-connector/docker-compose.yaml
-  - ./connectors/source-connectors/webserver-connector/docker-compose.yaml
-  - ./connectors/sink-connectors/total-sales-connector/docker-compose.yaml
+  # - ./connectors/source-connectors/filesystem-connector/docker-compose.yaml
   # Flink
   - ./apache-flink/docker-compose.yaml
   # Kafka
