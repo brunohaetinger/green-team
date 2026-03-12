@@ -6,13 +6,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.greenteam.config.JobConfig;
 import com.greenteam.model.CitySalesResult;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
+import org.apache.kafka.connect.data.Decimal;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.Timestamp;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Base64;
 
 public class CitySalesResultSerializer implements KafkaRecordSerializationSchema<CitySalesResult> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Schema DECIMAL_SCHEMA = Decimal.schema(2);
 
     @Override
     public ProducerRecord<byte[], byte[]> serialize(
@@ -40,13 +46,13 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
             payload.put("country_id", element.countryId);
         }
 
-        payload.put("window_start", element.windowStart);
-        payload.put("window_end", element.windowEnd);
-        payload.put("total_amount", element.totalAmount.doubleValue());
+        payload.put("window_start", toEpochMillis(element.windowStart));
+        payload.put("window_end", toEpochMillis(element.windowEnd));
+        payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount)));
         payload.put("total_units", element.totalUnits);
         payload.put("total_orders", element.totalOrders);
         payload.put("event_count", element.eventCount);
-        payload.put("processed_at", element.processedAt);
+        payload.put("processed_at", toEpochMillis(element.processedAt));
 
         root.set("payload", payload);
         return root.toString();
@@ -63,13 +69,13 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         fields.add(requiredField("aggregation_type", "string"));
         fields.add(requiredField("city_id", "string"));
         fields.add(optionalField("country_id", "string"));
-        fields.add(requiredField("window_start", "string"));
-        fields.add(requiredField("window_end", "string"));
-        fields.add(requiredField("total_amount", "float64"));
+        fields.add(timestampField("window_start"));
+        fields.add(timestampField("window_end"));
+        fields.add(decimalField("total_amount", 2));
         fields.add(requiredField("total_units", "int64"));
         fields.add(requiredField("total_orders", "int64"));
         fields.add(requiredField("event_count", "int64"));
-        fields.add(requiredField("processed_at", "string"));
+        fields.add(timestampField("processed_at"));
         schema.set("fields", fields);
 
         return schema;
@@ -87,6 +93,28 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         ObjectNode field = requiredField(fieldName, type);
         field.put("optional", true);
         return field;
+    }
+
+    private static ObjectNode decimalField(String fieldName, int scale) {
+        ObjectNode field = requiredField(fieldName, "bytes");
+        field.put("name", Decimal.LOGICAL_NAME);
+        field.put("version", 1);
+
+        ObjectNode parameters = objectMapper.createObjectNode();
+        parameters.put(Decimal.SCALE_FIELD, Integer.toString(scale));
+        field.set("parameters", parameters);
+        return field;
+    }
+
+    private static ObjectNode timestampField(String fieldName) {
+        ObjectNode field = requiredField(fieldName, "int64");
+        field.put("name", Timestamp.LOGICAL_NAME);
+        field.put("version", 1);
+        return field;
+    }
+
+    private static long toEpochMillis(String isoInstant) {
+        return Instant.parse(isoInstant).toEpochMilli();
     }
 }
 
