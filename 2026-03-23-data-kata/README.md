@@ -248,3 +248,95 @@ Accumulated reporting table maintained by trigger in Postgres.
 | `total_amount` | `NUMERIC(18, 2)` |
 | `total_units` | `BIGINT` |
 | `updated_at` | `TIMESTAMPTZ` |
+
+### Reporting API
+
+REST API that serves the final aggregated rankings from the reporting database.
+
+Base URL: `http://localhost:8080/api/v1`
+
+---
+
+#### `GET /sales/rankings/top-sales`
+
+Returns the top city/store sales records from `total_sales_by_city`, with optional grouping and sorting.
+
+**Query parameters**
+
+| Parameter | Type | Required | Default | Allowed values |
+|---|---|---|---|---|
+| `groupBy` | string | No | `cityName` | `cityName`, `countryName`, `storeId`, `storeName`, `saleDate` |
+| `sortBy` | string | No | `totalAmount` | `totalAmount`, `totalSales`, `totalUnits` |
+| `page` | integer | No | `0` | any non-negative integer |
+| `size` | integer | No | `50` | any positive integer |
+
+> `totalSales` = number of distinct sale transactions aggregated in that group.
+
+**Response `200 OK`**
+
+```json
+{
+  "content": [
+    {
+      "cityName": "Sao Paulo",
+      "countryName": "Brazil",
+      "storeId": 7,
+      "storeName": "Store-SP-001",
+      "saleDate": "2026-03-11",
+      "totalAmount": 9876.50,
+      "totalUnits": 143,
+      "totalSales": 47
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 50
+  },
+  "totalElements": 320,
+  "totalPages": 7,
+  "last": false
+}
+```
+
+---
+
+#### `GET /sales/rankings/top-salesman`
+
+Returns the top salesman records from `top_salesman`, enriched with city and country, with optional grouping and sorting.
+
+**Query parameters**
+
+| Parameter | Type | Required | Default | Allowed values |
+|---|---|---|---|---|
+| `groupBy` | string | No | `salesmanId` | `salesmanId`, `salesmanName`, `cityName`, `countryName`, `saleDate` |
+| `sortBy` | string | No | `totalAmount` | `totalAmount`, `totalSales`, `totalUnits` |
+| `page` | integer | No | `0` | any non-negative integer |
+| `size` | integer | No | `50` | any positive integer |
+
+> `totalSales` = number of distinct sale transactions aggregated in that group.
+
+**Response `200 OK`**
+
+```json
+{
+  "content": [
+    {
+      "salesmanId": 12,
+      "salesmanName": "Amanda Souza",
+      "cityName": "Sao Paulo",
+      "countryName": "Brazil",
+      "saleDate": "2026-03-11",
+      "totalAmount": 12500.40,
+      "totalUnits": 188,
+      "totalSales": 63
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 50
+  },
+  "totalElements": 85,
+  "totalPages": 2,
+  "last": false
+}
+```
