@@ -1,4 +1,4 @@
-# totalSales
+# topSalesByCity
 
 Apache Flink job that consumes raw sale events from Kafka, aggregates total sales by city and store per day over 1-minute tumbling windows, and publishes the results back to Kafka.
 
@@ -7,7 +7,7 @@ Apache Flink job that consumes raw sale events from Kafka, aggregates total sale
 ```
 com.greenteam/
 │
-├── TotalSalesByCity.java               ← Entry point. Wires the full pipeline.
+├── TopSalesByCity.java                 ← Entry point. Wires the full pipeline.
 │
 ├── config/
 │   └── JobConfig.java                  ← All constants: topics, window size, Kafka config.
@@ -91,7 +91,7 @@ Kafka record key: `city_name|store_name|sale_date|window_end`
 ./gradlew clean build
 ```
 
-Output fat jar: `build/libs/totalSales-1.0-SNAPSHOT-fat.jar`
+Output fat jar: `build/libs/topSalesByCity-1.0-SNAPSHOT-fat.jar`
 
 ---
 
@@ -100,7 +100,7 @@ Output fat jar: `build/libs/totalSales-1.0-SNAPSHOT-fat.jar`
 ### Copy jar to shared volume
 
 ```bash
-cp build/libs/totalSales-1.0-SNAPSHOT-fat.jar ../jar/
+cp build/libs/topSalesByCity-1.0-SNAPSHOT-fat.jar ../jar/
 ```
 
 ### Submit to Flink cluster
@@ -108,12 +108,12 @@ cp build/libs/totalSales-1.0-SNAPSHOT-fat.jar ../jar/
 ```bash
 docker exec -it flink-jobmanager flink run \
   -p 2 \
-  --class com.greenteam.TotalSalesByCity \
-  /opt/flink/jobs/totalSales-1.0-SNAPSHOT-fat.jar
+  --class com.greenteam.TopSalesByCity \
+  /opt/flink/jobs/topSalesByCity-1.0-SNAPSHOT-fat.jar
 ```
 
 | Flag | Value | Description |
 |---|---|---|
-| `--class` | `com.greenteam.TotalSalesByCity` | Entry point |
+| `--class` | `com.greenteam.TopSalesByCity` | Entry point |
 | `-p` | `2` | Parallelism (task slots to use) |
 

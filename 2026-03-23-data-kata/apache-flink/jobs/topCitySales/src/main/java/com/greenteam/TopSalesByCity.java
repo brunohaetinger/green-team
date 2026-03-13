@@ -19,7 +19,7 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTime
 import java.time.Duration;
 import java.util.Properties;
 
-public class TotalSalesByCity {
+public class TopSalesByCity {
 
     public static void main(String[] args) throws Exception {
 
@@ -65,6 +65,6 @@ public class TotalSalesByCity {
 
         aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
-        env.execute("total sales by city");
+        env.execute("top sales by city");
     }
 }
