@@ -6,7 +6,7 @@
 
     "database.dbname": "external_db",
     "database.history.kafka.bootstrap.servers": "kafka:9092",
-    "database.history.kafka.topic": "schema-changes.sales-db",
+    "database.history.kafka.topic": "schema-changes.sales",
     "database.hostname": "external-db-postgres",
     "database.password": "password",
     "database.port": "5432",
@@ -25,6 +25,6 @@
     "transforms.unwrap.add.fields": "op,table,lsn",
     "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
     "transforms.route.regex": ".*",
-    "transforms.route.replacement": "sales-db"
+    "transforms.route.replacement": "sales"
   }
 }

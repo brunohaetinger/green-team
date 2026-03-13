@@ -4,43 +4,33 @@ import java.math.BigDecimal;
 
 public class TopSalesmanResult {
 
-    public final String salesmanId;
-    public final String countryId;
-    public final String windowStart;
-    public final String windowEnd;
+    public final int salesmanId;
+    public final String salesmanName;
+    public final String saleDate;
     public final BigDecimal totalAmount;
     public final long totalUnits;
-    public final long totalOrders;
-    public final long eventCount;
-    public final String processedAt;
 
     public TopSalesmanResult(
-        String salesmanId,
-        String countryId,
-        String windowStart,
-        String windowEnd,
+        int salesmanId,
+        String salesmanName,
+        String saleDate,
         BigDecimal totalAmount,
-        long totalUnits,
-        long totalOrders,
-        long eventCount,
-        String processedAt
+        long totalUnits
     ) {
         this.salesmanId = salesmanId;
-        this.countryId = countryId;
-        this.windowStart = windowStart;
-        this.windowEnd = windowEnd;
+        this.salesmanName = salesmanName;
+        this.saleDate = saleDate;
         this.totalAmount = totalAmount;
         this.totalUnits = totalUnits;
-        this.totalOrders = totalOrders;
-        this.eventCount = eventCount;
-        this.processedAt = processedAt;
     }
 
     @Override
     public String toString() {
         return "TopSalesmanResult{" +
-            "salesmanId='" + salesmanId + '\'' +
-            ", windowEnd='" + windowEnd + '\'' +
+            "salesmanId=" + salesmanId +
+            ", " +
+            "salesmanName='" + salesmanName + '\'' +
+            ", saleDate='" + saleDate + '\'' +
             ", totalAmount=" + totalAmount +
             ", totalUnits=" + totalUnits +
             '}';

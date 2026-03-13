@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 
 public class CitySalesResult {
 
-    public final String cityId;
-    public final String countryId;
+    public final String cityName;
+    public final int storeId;
+    public final String storeName;
+    public final String saleDate;
     public final String windowStart;
     public final String windowEnd;
     public final BigDecimal totalAmount;
@@ -15,8 +17,10 @@ public class CitySalesResult {
     public final String processedAt;
 
     public CitySalesResult(
-        String cityId,
-        String countryId,
+        String cityName,
+        int storeId,
+        String storeName,
+        String saleDate,
         String windowStart,
         String windowEnd,
         BigDecimal totalAmount,
@@ -25,8 +29,10 @@ public class CitySalesResult {
         long eventCount,
         String processedAt
     ) {
-        this.cityId = cityId;
-        this.countryId = countryId;
+        this.cityName = cityName;
+        this.storeId = storeId;
+        this.storeName = storeName;
+        this.saleDate = saleDate;
         this.windowStart = windowStart;
         this.windowEnd = windowEnd;
         this.totalAmount = totalAmount;
@@ -39,7 +45,10 @@ public class CitySalesResult {
     @Override
     public String toString() {
         return "CitySalesResult{" +
-            "cityId='" + cityId + '\'' +
+            "cityName='" + cityName + '\'' +
+            ", storeId=" + storeId +
+            ", storeName='" + storeName + '\'' +
+            ", saleDate='" + saleDate + '\'' +
             ", windowEnd='" + windowEnd + '\'' +
             ", totalAmount=" + totalAmount +
             ", totalUnits=" + totalUnits +

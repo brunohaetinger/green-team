@@ -1,5 +1,7 @@
 ## Building the Project
 
+This job consumes `sales-enriched` and emits the top salesman for each `sale_date` inside the configured window.
+
 **Run**:
 ```bash
 ./gradlew clean build

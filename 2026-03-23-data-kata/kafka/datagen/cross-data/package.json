@@ -2,7 +2,7 @@
   "name": "data-kata-cross-topic-datagen",
   "version": "1.0.0",
   "private": true,
-  "description": "Simple fake data generator with cross-topic consistency for sales-fs, sales-api and sales-db",
+  "description": "Simple fake data generator with cross-topic consistency for stores, salesmans and sales",
   "main": "cross-data-generator.js",
   "type": "commonjs",
   "scripts": {

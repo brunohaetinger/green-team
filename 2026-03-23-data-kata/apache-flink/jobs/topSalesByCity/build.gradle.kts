@@ -43,16 +43,16 @@ dependencies {
 tasks {
     shadowJar {
         archiveClassifier.set("")
-        archiveFileName.set("${project.name}-${project.version}-fat.jar")
+        archiveFileName.set("topSalesByCity-${project.version}-fat.jar")
         
         manifest {
-            attributes["Main-Class"] = "com.greenteam.TotalSales"
+            attributes["Main-Class"] = "com.greenteam.TopSalesByCity"
         }
     }
     
     register<JavaExec>("run") {
         group = "verification"
-        mainClass.set("com.greenteam.TotalSales")
+        mainClass.set("com.greenteam.TopSalesByCity")
         classpath = sourceSets["main"].runtimeClasspath
     }
 }

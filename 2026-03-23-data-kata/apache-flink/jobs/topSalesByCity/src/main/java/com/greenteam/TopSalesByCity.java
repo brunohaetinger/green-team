@@ -19,7 +19,7 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTime
 import java.time.Duration;
 import java.util.Properties;
 
-public class TotalSales {
+public class TopSalesByCity {
 
     public static void main(String[] args) throws Exception {
 
@@ -43,11 +43,11 @@ public class TotalSales {
         // --- Pipeline ---
         DataStream<CitySalesResult> aggregatedStream = inputStream
             .flatMap(new ParseSalesEvent())
-            .name("operator: parse sales-events")
-            .keyBy(event -> event.cityId)
+            .name("operator: parse sales-enriched")
+            .keyBy(event -> event.storeId + "|" + event.saleDate)
             .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
             .aggregate(new CitySalesAggregate(), new CitySalesWindowFormatter())
-            .name("operator: aggregate total sales per city");
+            .name("operator: aggregate total sales by city");
 
         aggregatedStream.print("sink: stdout");
 
@@ -65,6 +65,6 @@ public class TotalSales {
 
         aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
-        env.execute("totalSales: aggregate sales-events by city");
+        env.execute("top sales by city");
     }
 }
