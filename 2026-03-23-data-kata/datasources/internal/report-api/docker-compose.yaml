@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - report_api_postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql  
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d sales_db"]
@@ -21,4 +21,4 @@ services:
       - data-kata-net
 
 volumes:
-  postgres_data:
+  report_api_postgres_data:
