@@ -36,3 +36,54 @@ cd scripts/connector
 - Kafka Sink Connector: it's a component that streams data from Kafka topics to external destination systems. (sink is refered as the "target system")
 - Apache Flink: Distributed processing engine for stream processing and batch.
 - Amazon S3 (Amazon Simple Store Service): AWS cloud service to store files/objects into buckets;
+
+## Payloads used by datasources
+### PostgreSQL
+```json
+// Table name SALE
+{
+    "id"
+    "salesman_id"
+    "store_id"
+    "amount"
+    "sale_date"
+    "product_id"
+    "quantity"
+}
+```
+
+### File System
+```json
+// STORE
+{
+    "id"
+    "name"
+    "city"
+    "state"
+    "country"
+}
+```
+
+### API
+```json
+// SALESMAN
+{
+    "id"
+    "name"
+    "store_id"
+}
+```
+
+## Payload that sales-events needs to receive
+```json
+{
+  "salesman_id": "8e95c9ef-9f63-4c8b-9f2e-46a0a1a7d2c1",
+  "salesman_name": "Name",
+  "sale_id":     "51d6c8f8-b9f0-4f3d-9db6-8df2412db5b8",
+  "quantity":    3,
+  "product_id":  "f5884206-8361-4c6e-9bb0-6a9d8ca4a404",
+  "city_id":     "2a2a4ef3-b69b-4fd1-9f27-f3c5e6eb31b8",
+  "country_id":  "4b38fc9f-5f1c-46af-858f-5d9f9bb49a67",
+  "amount":      "29.90"
+}
+```
