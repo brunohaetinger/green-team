@@ -1,4 +1,4 @@
-# topSalesByCity
+# Top Sales By City
 
 Apache Flink job that consumes raw sale events from Kafka, aggregates total sales by city and store per day over 1-minute tumbling windows, and publishes the results back to Kafka.
 
