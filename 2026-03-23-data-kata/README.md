@@ -16,7 +16,7 @@
 
 ## Archicture
 
-![](docs/Kata%20-%20Data%20Architecture.drawio.png)
+![](docs/Kata%20-%20Data%20Architecture.png)
 
 
 ## How to run
