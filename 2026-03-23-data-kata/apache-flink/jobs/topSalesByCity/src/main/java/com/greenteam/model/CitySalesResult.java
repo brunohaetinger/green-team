@@ -7,7 +7,6 @@ public class CitySalesResult {
     public final String cityName;
     public final String storeName;
     public final String saleDate;
-    public final String countryId;
     public final String windowStart;
     public final String windowEnd;
     public final BigDecimal totalAmount;
@@ -20,7 +19,6 @@ public class CitySalesResult {
         String cityName,
         String storeName,
         String saleDate,
-        String countryId,
         String windowStart,
         String windowEnd,
         BigDecimal totalAmount,
@@ -32,7 +30,6 @@ public class CitySalesResult {
         this.cityName = cityName;
         this.storeName = storeName;
         this.saleDate = saleDate;
-        this.countryId = countryId;
         this.windowStart = windowStart;
         this.windowEnd = windowEnd;
         this.totalAmount = totalAmount;

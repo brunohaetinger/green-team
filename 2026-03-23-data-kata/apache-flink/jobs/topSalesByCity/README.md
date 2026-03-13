@@ -37,26 +37,28 @@ com.greenteam/
 
 | Field | Type | Description |
 |---|---|---|
-| `salesman_id` | string (UUID) | Salesman identifier |
-| `sale_id` | string (UUID) | Unique sale identifier |
+| `salesman_id` | integer | Salesman identifier |
+| `sale_id` | integer | Unique sale identifier |
 | `quantity` | integer | Number of units sold |
-| `product_id` | string (UUID) | Product identifier |
+| `product_id` | integer | Product identifier |
+| `store_id` | integer | Store identifier |
 | `city_name` | string | City where the sale happened |
 | `store_name` | string | Store where the sale happened |
 | `sale_date` | string (`YYYY-MM-DD` or ISO timestamp) | Sale day (the parser truncates to `YYYY-MM-DD`) |
-| `country_id` | string (UUID) | Country where the sale happened |
+| `country_name` | string | Country where the sale happened |
 | `amount` | string (decimal) | Unit price — **not** multiplied by quantity |
 
 ```json
 {
-  "salesman_id": "8e95c9ef-9f63-4c8b-9f2e-46a0a1a7d2c1",
-  "sale_id":     "51d6c8f8-b9f0-4f3d-9db6-8df2412db5b8",
+  "salesman_id": 12,
+  "sale_id":     1,
   "quantity":    3,
-  "product_id":  "f5884206-8361-4c6e-9bb0-6a9d8ca4a404",
+  "product_id":  1004,
+  "store_id":    7,
   "city_name":   "Sao Paulo",
   "store_name":  "Loja Centro",
   "sale_date":   "2026-03-11",
-  "country_id":  "4b38fc9f-5f1c-46af-858f-5d9f9bb49a67",
+  "country_name": "Brazil",
   "amount":      "29.90"
 }
 ```

@@ -1,5 +1,4 @@
 const { Kafka } = require('kafkajs');
-const { randomUUID } = require('node:crypto');
 
 const config = {
   brokers: (process.env.KAFKA_BROKERS || 'localhost:9092')
@@ -78,7 +77,7 @@ const lastNames = [
   'Santana', 'Santos', 'Silva', 'Soares', 'Souza', 'Teixeira', 'Vieira'
 ];
 
-const productIds = Array.from({ length: 50 }, () => randomUUID());
+const productIds = Array.from({ length: 50 }, (_, index) => index + 1001);
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -107,7 +106,7 @@ function randomQuantity() {
 
 function generateStore(index, location) {
   return {
-    id: randomUUID(),
+    id: index,
     name: `Store-${location.state}-${String(index).padStart(3, '0')}`,
     city: location.city,
     state: location.state,
@@ -124,23 +123,23 @@ function generateStores(count) {
   });
 }
 
-function generateSalesman(stores) {
+function generateSalesman(index, stores) {
   const store = pick(stores);
   return {
-    id: randomUUID(),
+    id: index,
     name: randomName(),
     store_id: store.id
   };
 }
 
 function generateSalesmen(count, stores) {
-  return Array.from({ length: count }).map(() => generateSalesman(stores));
+  return Array.from({ length: count }).map((_, index) => generateSalesman(index + 1, stores));
 }
 
-function generateSale(salesmen) {
+function generateSale(index, salesmen) {
   const salesman = pick(salesmen);
   return {
-    id: randomUUID(),
+    id: index,
     salesman_id: salesman.id,
     store_id: salesman.store_id,
     amount: randomAmount(),
@@ -191,6 +190,8 @@ async function main() {
   const stores = generateStores(config.storeCount);
   const salesmen = generateSalesmen(config.salesmanCount, stores);
   let storeSequence = stores.length + 1;
+  let salesmanSequence = salesmen.length + 1;
+  let saleSequence = 1;
 
   const shutdown = async (signal) => {
     try {
@@ -243,7 +244,8 @@ async function main() {
   }, fsIntervalMs);
 
   setInterval(async () => {
-    const salesman = generateSalesman(stores);
+    const salesman = generateSalesman(salesmanSequence, stores);
+    salesmanSequence += 1;
     salesmen.push(salesman);
 
     try {
@@ -254,7 +256,8 @@ async function main() {
   }, apiIntervalMs);
 
   setInterval(async () => {
-    const sale = generateSale(salesmen);
+    const sale = generateSale(saleSequence, salesmen);
+    saleSequence += 1;
 
     try {
       await publishBatch(producer, config.topicSalesDb, [sale]);

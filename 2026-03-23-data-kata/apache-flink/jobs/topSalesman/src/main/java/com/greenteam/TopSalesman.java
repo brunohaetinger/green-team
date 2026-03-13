@@ -40,9 +40,10 @@ public class TopSalesman {
         DataStream<TopSalesmanResult> topSalesmanStream = inputStream
             .flatMap(new ParseSalesEvent())
             .name("operator: parse sales-enriched")
-            .windowAll(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
+            .keyBy(event -> event.saleDate)
+            .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
             .process(new TopSalesmanWindowFormatter())
-            .name("operator: aggregate top salesman nationwide");
+            .name("operator: aggregate top salesman by sale date");
 
         topSalesmanStream.print("sink: stdout");
 

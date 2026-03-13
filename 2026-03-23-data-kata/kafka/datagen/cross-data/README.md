@@ -9,7 +9,7 @@ Simple Node.js generator that publishes fake but consistent data across these Ka
 ## Why this generator
 
 `DatagenConnector` is great for random data, but it does not enforce cross-topic references.
-This script ensures IDs are consistent across topics:
+This script ensures integer IDs are consistent across topics:
 
 - `salesmans.store_id` is always an existing `stores.id`
 - `sales.salesman_id` is always an existing `salesmans.id`

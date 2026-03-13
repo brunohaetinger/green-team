@@ -34,7 +34,6 @@ public class CitySalesWindowFormatter
             cityName,
             storeName,
             saleDate,
-            acc.countryId,
             windowStart,
             windowEnd,
             acc.totalAmount.setScale(2, RoundingMode.HALF_UP),

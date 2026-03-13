@@ -4,21 +4,26 @@
   "fields": [
     {
       "name": "salesman_id",
+      "type": "int"
+    },
+    {
+      "name": "salesman_name",
       "type": {
         "type": "string",
         "arg.properties": {
-          "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+          "options": [
+            "Amanda Souza",
+            "Bruno Lima",
+            "Carla Dias",
+            "Diego Alves",
+            "Fernanda Costa"
+          ]
         }
       }
     },
     {
       "name": "sale_id",
-      "type": {
-        "type": "string",
-        "arg.properties": {
-          "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-        }
-      }
+      "type": "int"
     },
     {
       "name": "quantity",
@@ -30,41 +35,74 @@
       }
     },
     {
+      "name": "sale_date",
+      "type": {
+        "type": "string",
+        "arg.properties": {
+          "options": [
+            "2026-03-20T10:15:00Z",
+            "2026-03-20T14:30:00Z",
+            "2026-03-21T09:45:00Z",
+            "2026-03-21T16:10:00Z",
+            "2026-03-22T11:20:00Z"
+          ]
+        }
+      }
+    },
+    {
       "name": "product_id",
       "type": {
+        "type": "int",
+        "arg.properties": {
+          "range": { "min": 1001, "max": 1050 }
+        }
+      }
+    },
+    {
+      "name": "store_id",
+      "type": {
+        "type": "int",
+        "arg.properties": {
+          "range": { "min": 1, "max": 500 }
+        }
+      }
+    },
+    {
+      "name": "city_name",
+      "type": {
         "type": "string",
         "arg.properties": {
           "options": [
-            "prod-0001",
-            "prod-0002",
-            "prod-0003",
-            "prod-0004",
-            "prod-0005"
+            "Sao Paulo",
+            "Rio de Janeiro",
+            "Belo Horizonte",
+            "Porto Alegre",
+            "Curitiba"
           ]
         }
       }
     },
     {
-      "name": "city_id",
+      "name": "store_name",
       "type": {
         "type": "string",
         "arg.properties": {
           "options": [
-            "city-sp",
-            "city-rj",
-            "city-bh",
-            "city-poa",
-            "city-cwb"
+            "Store-SP-001",
+            "Store-RJ-001",
+            "Store-BH-001",
+            "Store-POA-001",
+            "Store-CWB-001"
           ]
         }
       }
     },
     {
-      "name": "country_id",
+      "name": "country_name",
       "type": {
         "type": "string",
         "arg.properties": {
-          "options": ["country-br"]
+          "options": ["Brazil"]
         }
       }
     },

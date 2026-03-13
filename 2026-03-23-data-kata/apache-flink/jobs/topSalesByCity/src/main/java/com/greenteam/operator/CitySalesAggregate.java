@@ -24,9 +24,6 @@ public class CitySalesAggregate
         if (acc.cityName == null && event.cityName != null) {
             acc.cityName = event.cityName;
         }
-        if (acc.countryId == null && event.countryId != null) {
-            acc.countryId = event.countryId;
-        }
         if (acc.storeName == null && event.storeName != null) {
             acc.storeName = event.storeName;
         }
@@ -48,10 +45,6 @@ public class CitySalesAggregate
         left.totalUnits  += right.totalUnits;
         left.eventCount  += right.eventCount;
         left.saleIds.addAll(right.saleIds);
-
-        if (left.countryId == null) {
-            left.countryId = right.countryId;
-        }
 
         return left;
     }

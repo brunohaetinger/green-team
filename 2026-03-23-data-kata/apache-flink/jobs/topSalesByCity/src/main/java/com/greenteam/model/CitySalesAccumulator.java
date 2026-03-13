@@ -9,10 +9,9 @@ public class CitySalesAccumulator {
     public BigDecimal totalAmount = BigDecimal.ZERO;
     public long totalUnits  = 0;
     public long eventCount  = 0;
-    public String countryId;
     public String storeName;
     public String saleDate;
     public String cityName;
-    public Set<String> saleIds = new HashSet<>();
+    public Set<Integer> saleIds = new HashSet<>();
 }
 
