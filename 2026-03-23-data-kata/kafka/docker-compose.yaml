@@ -9,7 +9,7 @@ services:
     ports:
       - "9092:9092"
     volumes:
-      - kafka-data:/var/lib/kafka/data
+      - kafka-data-kata:/var/lib/kafka/data
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -98,5 +98,5 @@ services:
       - data-kata-net
 
 volumes:
-  kafka-data:
+  kafka-data-kata:
     driver: local
