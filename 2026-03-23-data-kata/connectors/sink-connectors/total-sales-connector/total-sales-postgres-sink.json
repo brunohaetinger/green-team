@@ -10,7 +10,7 @@
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "value.converter.schemas.enable": "true",
     "dialect.name": "PostgreSqlDatabaseDialect",
-    "table.name.format": "total_sales",
+    "table.name.format": "total_sales_window_deltas",
     "insert.mode": "insert",
     "pk.mode": "none",
     "auto.create": "false",

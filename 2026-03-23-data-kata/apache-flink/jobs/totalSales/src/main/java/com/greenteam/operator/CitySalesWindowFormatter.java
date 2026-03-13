@@ -14,18 +14,26 @@ public class CitySalesWindowFormatter
 
     @Override
     public void process(
-        String cityId,
+        String compositeKey,
         Context context,
         Iterable<CitySalesAccumulator> elements,
         Collector<CitySalesResult> out
     ) {
         CitySalesAccumulator acc = elements.iterator().next();
 
+        // compositeKey format: "cityName|storeName|saleDate"
+        String[] parts   = compositeKey.split("\\|", 3);
+        String cityName  = parts[0];
+        String storeName = parts.length > 1 ? parts[1] : acc.storeName;
+        String saleDate  = parts.length > 2 ? parts[2] : acc.saleDate;
+
         String windowStart = Instant.ofEpochMilli(context.window().getStart()).toString();
         String windowEnd   = Instant.ofEpochMilli(context.window().getEnd()).toString();
 
         out.collect(new CitySalesResult(
-            cityId,
+            cityName,
+            storeName,
+            saleDate,
             acc.countryId,
             windowStart,
             windowEnd,

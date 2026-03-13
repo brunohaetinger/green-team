@@ -46,13 +46,13 @@ tasks {
         archiveFileName.set("${project.name}-${project.version}-fat.jar")
         
         manifest {
-            attributes["Main-Class"] = "com.greenteam.TotalSales"
+            attributes["Main-Class"] = "com.greenteam.TotalSalesByCity"
         }
     }
     
     register<JavaExec>("run") {
         group = "verification"
-        mainClass.set("com.greenteam.TotalSales")
+        mainClass.set("com.greenteam.TotalSalesByCity")
         classpath = sourceSets["main"].runtimeClasspath
     }
 }

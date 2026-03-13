@@ -21,8 +21,17 @@ public class CitySalesAggregate
         acc.eventCount += 1;
         acc.saleIds.add(event.saleId);
 
+        if (acc.cityName == null && event.cityName != null) {
+            acc.cityName = event.cityName;
+        }
         if (acc.countryId == null && event.countryId != null) {
             acc.countryId = event.countryId;
+        }
+        if (acc.storeName == null && event.storeName != null) {
+            acc.storeName = event.storeName;
+        }
+        if (acc.saleDate == null && event.saleDate != null) {
+            acc.saleDate = event.saleDate;
         }
 
         return acc;

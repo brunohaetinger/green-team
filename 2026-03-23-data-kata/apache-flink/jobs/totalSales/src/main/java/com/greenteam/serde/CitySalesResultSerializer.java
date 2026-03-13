@@ -6,13 +6,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.greenteam.config.JobConfig;
 import com.greenteam.model.CitySalesResult;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
+import org.apache.kafka.connect.data.Date;
 import org.apache.kafka.connect.data.Decimal;
 import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.data.Timestamp;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Base64;
 
 public class CitySalesResultSerializer implements KafkaRecordSerializationSchema<CitySalesResult> {
@@ -26,7 +26,7 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         KafkaSinkContext context,
         Long timestamp
     ) {
-        byte[] key = (element.cityId + "|" + element.windowEnd).getBytes(StandardCharsets.UTF_8);
+        byte[] key = (element.cityName + "|" + element.storeName + "|" + element.saleDate + "|" + element.windowEnd).getBytes(StandardCharsets.UTF_8);
         byte[] value = buildValue(element).getBytes(StandardCharsets.UTF_8);
         return new ProducerRecord<>(JobConfig.OUTPUT_TOPIC, key, value);
     }
@@ -36,23 +36,11 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         root.set("schema", buildSchema());
 
         ObjectNode payload = objectMapper.createObjectNode();
-        payload.put("schema_version", "1.0");
-        payload.put("aggregation_type", "city_sales");
-        payload.put("city_id", element.cityId);
-
-        if (element.countryId == null) {
-            payload.putNull("country_id");
-        } else {
-            payload.put("country_id", element.countryId);
-        }
-
-        payload.put("window_start", toEpochMillis(element.windowStart));
-        payload.put("window_end", toEpochMillis(element.windowEnd));
+        payload.put("city_name", element.cityName);
+        payload.put("store_name", element.storeName);
+        payload.put("sale_date", toKafkaDate(element.saleDate));
         payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount)));
         payload.put("total_units", element.totalUnits);
-        payload.put("total_orders", element.totalOrders);
-        payload.put("event_count", element.eventCount);
-        payload.put("processed_at", toEpochMillis(element.processedAt));
 
         root.set("payload", payload);
         return root.toString();
@@ -65,17 +53,11 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         schema.put("name", "com.greenteam.total_sales.Value");
 
         ArrayNode fields = objectMapper.createArrayNode();
-        fields.add(requiredField("schema_version", "string"));
-        fields.add(requiredField("aggregation_type", "string"));
-        fields.add(requiredField("city_id", "string"));
-        fields.add(optionalField("country_id", "string"));
-        fields.add(timestampField("window_start"));
-        fields.add(timestampField("window_end"));
+        fields.add(requiredField("city_name", "string"));
+        fields.add(requiredField("store_name", "string"));
+        fields.add(dateField("sale_date"));
         fields.add(decimalField("total_amount", 2));
         fields.add(requiredField("total_units", "int64"));
-        fields.add(requiredField("total_orders", "int64"));
-        fields.add(requiredField("event_count", "int64"));
-        fields.add(timestampField("processed_at"));
         schema.set("fields", fields);
 
         return schema;
@@ -86,12 +68,6 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         field.put("field", fieldName);
         field.put("type", type);
         field.put("optional", false);
-        return field;
-    }
-
-    private static ObjectNode optionalField(String fieldName, String type) {
-        ObjectNode field = requiredField(fieldName, type);
-        field.put("optional", true);
         return field;
     }
 
@@ -106,15 +82,16 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         return field;
     }
 
-    private static ObjectNode timestampField(String fieldName) {
-        ObjectNode field = requiredField(fieldName, "int64");
-        field.put("name", Timestamp.LOGICAL_NAME);
+    private static ObjectNode dateField(String fieldName) {
+        ObjectNode field = requiredField(fieldName, "int32");
+        field.put("name", Date.LOGICAL_NAME);
         field.put("version", 1);
         return field;
     }
 
-    private static long toEpochMillis(String isoInstant) {
-        return Instant.parse(isoInstant).toEpochMilli();
+    private static int toKafkaDate(String isoDate) {
+        // Kafka Connect Date logical type = days since epoch.
+        return (int) LocalDate.parse(isoDate).toEpochDay();
     }
 }
 
