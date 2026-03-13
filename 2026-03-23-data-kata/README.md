@@ -156,6 +156,7 @@ Output topic produced by the `topSalesByCity` job.
 | Field | Type | Description |
 |---|---|---|
 | `city_name` | string | Aggregation key |
+| `store_id` | integer | Reliable store key |
 | `store_name` | string | Aggregation key |
 | `sale_date` | date | Aggregation key (day) |
 | `total_amount` | decimal (2dp) | Sum of `quantity × amount` |
@@ -164,6 +165,7 @@ Output topic produced by the `topSalesByCity` job.
 ```json
 {
     "city_name": "Sao Paulo",
+    "store_id": 7,
     "store_name": "Store-SP-001",
     "sale_date": "2026-03-11",
     "total_amount": 9876.50,
@@ -177,6 +179,7 @@ Output topic produced by the `topSalesman` job.
 
 | Field | Type | Description |
 |---|---|---|
+| `salesman_id` | integer | Reliable salesman key |
 | `salesman_name` | string | Winning salesman for the day |
 | `sale_date` | date | Sales day used for the ranking |
 | `total_amount` | decimal (2dp) | Sum of `quantity × amount` |
@@ -184,6 +187,7 @@ Output topic produced by the `topSalesman` job.
 
 ```json
 {
+    "salesman_id": 12,
     "salesman_name": "Amanda Souza",
     "sale_date": "2026-03-11",
     "total_amount": 12500.40,
@@ -200,6 +204,7 @@ Append-only table written by the JDBC sink for `top-sales`.
 | Column | Type |
 |---|---|
 | `city_name` | `TEXT` |
+| `store_id` | `INTEGER` |
 | `store_name` | `TEXT` |
 | `sale_date` | `DATE` |
 | `total_amount` | `NUMERIC(18, 2)` |
@@ -212,6 +217,7 @@ Accumulated reporting table maintained by trigger in Postgres.
 | Column | Type |
 |---|---|
 | `city_name` | `TEXT` |
+| `store_id` | `INTEGER` |
 | `store_name` | `TEXT` |
 | `sale_date` | `DATE` |
 | `total_amount` | `NUMERIC(18, 2)` |
@@ -224,6 +230,7 @@ Append-only table written by the JDBC sink for `top-salesman`.
 
 | Column | Type |
 |---|---|
+| `salesman_id` | `INTEGER` |
 | `salesman_name` | `TEXT` |
 | `sale_date` | `DATE` |
 | `total_amount` | `NUMERIC(18, 2)` |
@@ -235,6 +242,7 @@ Accumulated reporting table maintained by trigger in Postgres.
 
 | Column | Type |
 |---|---|
+| `salesman_id` | `INTEGER` |
 | `salesman_name` | `TEXT` |
 | `sale_date` | `DATE` |
 | `total_amount` | `NUMERIC(18, 2)` |

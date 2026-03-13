@@ -26,7 +26,7 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         KafkaSinkContext context,
         Long timestamp
     ) {
-        byte[] key = (element.cityName + "|" + element.storeName + "|" + element.saleDate + "|" + element.windowEnd).getBytes(StandardCharsets.UTF_8);
+        byte[] key = (element.storeId + "|" + element.saleDate + "|" + element.windowEnd).getBytes(StandardCharsets.UTF_8);
         byte[] value = buildValue(element).getBytes(StandardCharsets.UTF_8);
         return new ProducerRecord<>(JobConfig.OUTPUT_TOPIC, key, value);
     }
@@ -37,6 +37,7 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
 
         ObjectNode payload = objectMapper.createObjectNode();
         payload.put("city_name", element.cityName);
+        payload.put("store_id", element.storeId);
         payload.put("store_name", element.storeName);
         payload.put("sale_date", toKafkaDate(element.saleDate));
         payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount)));
@@ -54,6 +55,7 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
 
         ArrayNode fields = objectMapper.createArrayNode();
         fields.add(requiredField("city_name", "string"));
+    fields.add(requiredField("store_id", "int32"));
         fields.add(requiredField("store_name", "string"));
         fields.add(dateField("sale_date"));
         fields.add(decimalField("total_amount", 2));

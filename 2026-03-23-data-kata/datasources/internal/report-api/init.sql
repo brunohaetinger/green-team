@@ -1,21 +1,23 @@
 -- Append table: receives one row per Flink window result
 CREATE TABLE IF NOT EXISTS total_sales_by_city_window_deltas (
     city_name        TEXT NOT NULL,
+    store_id         INTEGER NOT NULL,
     store_name       TEXT NOT NULL,
     sale_date        DATE NOT NULL,
     total_amount     NUMERIC(18, 2) NOT NULL,
     total_units      BIGINT NOT NULL
 );
 
--- Accumulated table: one row per (city_name, store_name, sale_date)
+-- Accumulated table: one row per (store_id, sale_date)
 CREATE TABLE IF NOT EXISTS total_sales_by_city (
     city_name    TEXT NOT NULL,
+    store_id     INTEGER NOT NULL,
     store_name   TEXT NOT NULL,
     sale_date    DATE NOT NULL,
     total_amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
     total_units  BIGINT NOT NULL DEFAULT 0,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT pk_total_sales_by_city PRIMARY KEY (city_name, store_name, sale_date)
+    CONSTRAINT pk_total_sales_by_city PRIMARY KEY (store_id, sale_date)
 );
 
 -- Function: accumulates deltas from each window event into total_sales_by_city
@@ -25,15 +27,17 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     INSERT INTO total_sales_by_city (
-        city_name, store_name, sale_date,
+        city_name, store_id, store_name, sale_date,
         total_amount, total_units, updated_at
     )
     VALUES (
-        NEW.city_name, NEW.store_name, NEW.sale_date,
+        NEW.city_name, NEW.store_id, NEW.store_name, NEW.sale_date,
         NEW.total_amount, NEW.total_units, now()
     )
-    ON CONFLICT (city_name, store_name, sale_date)
+    ON CONFLICT (store_id, sale_date)
     DO UPDATE SET
+        city_name = EXCLUDED.city_name,
+        store_name = EXCLUDED.store_name,
         total_amount = total_sales_by_city.total_amount + EXCLUDED.total_amount,
         total_units  = total_sales_by_city.total_units  + EXCLUDED.total_units,
         updated_at   = now();
@@ -50,9 +54,8 @@ AFTER INSERT ON total_sales_by_city_window_deltas
 FOR EACH ROW
 EXECUTE FUNCTION fn_accumulate_total_sales();
 
-ALTER TABLE IF EXISTS top_salesman RENAME TO top_salesman_window_deltas;
-
 CREATE TABLE IF NOT EXISTS top_salesman_window_deltas (
+    salesman_id INTEGER NOT NULL,
     salesman_name TEXT NOT NULL,
     sale_date DATE NOT NULL,
     total_amount NUMERIC(18, 2) NOT NULL,
@@ -60,12 +63,13 @@ CREATE TABLE IF NOT EXISTS top_salesman_window_deltas (
 );
 
 CREATE TABLE IF NOT EXISTS top_salesman (
+    salesman_id INTEGER NOT NULL,
     salesman_name TEXT NOT NULL,
     sale_date DATE NOT NULL,
     total_amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
     total_units BIGINT NOT NULL DEFAULT 0,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT pk_top_salesman PRIMARY KEY (salesman_name, sale_date)
+    CONSTRAINT pk_top_salesman PRIMARY KEY (salesman_id, sale_date)
 );
 
 CREATE OR REPLACE FUNCTION fn_accumulate_top_salesman()
@@ -74,15 +78,16 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     INSERT INTO top_salesman (
-        salesman_name, sale_date,
+        salesman_id, salesman_name, sale_date,
         total_amount, total_units, updated_at
     )
     VALUES (
-        NEW.salesman_name, NEW.sale_date,
+        NEW.salesman_id, NEW.salesman_name, NEW.sale_date,
         NEW.total_amount, NEW.total_units, now()
     )
-    ON CONFLICT (salesman_name, sale_date)
+    ON CONFLICT (salesman_id, sale_date)
     DO UPDATE SET
+        salesman_name = EXCLUDED.salesman_name,
         total_amount = top_salesman.total_amount + EXCLUDED.total_amount,
         total_units  = top_salesman.total_units  + EXCLUDED.total_units,
         updated_at   = now();
@@ -99,6 +104,7 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_accumulate_top_salesman();
 
 INSERT INTO top_salesman (
+    salesman_id,
     salesman_name,
     sale_date,
     total_amount,
@@ -106,15 +112,17 @@ INSERT INTO top_salesman (
     updated_at
 )
 SELECT
+    salesman_id,
     salesman_name,
     sale_date,
     SUM(total_amount) AS total_amount,
     SUM(total_units) AS total_units,
     now()
 FROM top_salesman_window_deltas
-GROUP BY salesman_name, sale_date
-ON CONFLICT (salesman_name, sale_date)
+GROUP BY salesman_id, salesman_name, sale_date
+ON CONFLICT (salesman_id, sale_date)
 DO UPDATE SET
+    salesman_name = EXCLUDED.salesman_name,
     total_amount = EXCLUDED.total_amount,
     total_units = EXCLUDED.total_units,
     updated_at = now();

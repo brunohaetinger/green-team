@@ -21,17 +21,19 @@ public class CitySalesWindowFormatter
     ) {
         CitySalesAccumulator acc = elements.iterator().next();
 
-        // compositeKey format: "cityName|storeName|saleDate"
-        String[] parts   = compositeKey.split("\\|", 3);
-        String cityName  = parts[0];
-        String storeName = parts.length > 1 ? parts[1] : acc.storeName;
-        String saleDate  = parts.length > 2 ? parts[2] : acc.saleDate;
+        // compositeKey format: "storeId|saleDate"
+        String[] parts = compositeKey.split("\\|", 2);
+        int storeId = parts.length > 0 ? Integer.parseInt(parts[0]) : acc.storeId;
+        String saleDate = parts.length > 1 ? parts[1] : acc.saleDate;
+        String cityName = acc.cityName;
+        String storeName = acc.storeName;
 
         String windowStart = Instant.ofEpochMilli(context.window().getStart()).toString();
         String windowEnd   = Instant.ofEpochMilli(context.window().getEnd()).toString();
 
         out.collect(new CitySalesResult(
             cityName,
+            storeId,
             storeName,
             saleDate,
             windowStart,

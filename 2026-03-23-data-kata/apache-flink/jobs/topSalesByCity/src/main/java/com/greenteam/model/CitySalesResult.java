@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public class CitySalesResult {
 
     public final String cityName;
+    public final int storeId;
     public final String storeName;
     public final String saleDate;
     public final String windowStart;
@@ -17,6 +18,7 @@ public class CitySalesResult {
 
     public CitySalesResult(
         String cityName,
+        int storeId,
         String storeName,
         String saleDate,
         String windowStart,
@@ -28,6 +30,7 @@ public class CitySalesResult {
         String processedAt
     ) {
         this.cityName = cityName;
+        this.storeId = storeId;
         this.storeName = storeName;
         this.saleDate = saleDate;
         this.windowStart = windowStart;
@@ -43,6 +46,7 @@ public class CitySalesResult {
     public String toString() {
         return "CitySalesResult{" +
             "cityName='" + cityName + '\'' +
+            ", storeId=" + storeId +
             ", storeName='" + storeName + '\'' +
             ", saleDate='" + saleDate + '\'' +
             ", windowEnd='" + windowEnd + '\'' +

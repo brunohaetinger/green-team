@@ -50,6 +50,7 @@ public class TopSalesmanWindowFormatter
         }
 
         out.collect(new TopSalesmanResult(
+            topSalesmanId,
             topSalesmanName,
             saleDate,
             topTotals.totalAmount.setScale(2, RoundingMode.HALF_UP),

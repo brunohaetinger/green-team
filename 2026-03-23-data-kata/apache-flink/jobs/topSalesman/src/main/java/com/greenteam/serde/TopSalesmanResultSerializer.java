@@ -26,7 +26,7 @@ public class TopSalesmanResultSerializer implements KafkaRecordSerializationSche
         KafkaSinkContext context,
         Long timestamp
     ) {
-        byte[] key = (element.salesmanName + "|" + element.saleDate).getBytes(StandardCharsets.UTF_8);
+        byte[] key = (element.salesmanId + "|" + element.saleDate).getBytes(StandardCharsets.UTF_8);
         byte[] value = buildValue(element).getBytes(StandardCharsets.UTF_8);
         return new ProducerRecord<>(JobConfig.OUTPUT_TOPIC, key, value);
     }
@@ -36,6 +36,7 @@ public class TopSalesmanResultSerializer implements KafkaRecordSerializationSche
         root.set("schema", buildSchema());
 
         ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("salesman_id", element.salesmanId);
         payload.put("salesman_name", element.salesmanName);
         payload.put("sale_date", toKafkaDate(element.saleDate));
         payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount)));
@@ -52,6 +53,7 @@ public class TopSalesmanResultSerializer implements KafkaRecordSerializationSche
         schema.put("name", "com.greenteam.top_salesman.Value");
 
         ArrayNode fields = objectMapper.createArrayNode();
+        fields.add(requiredField("salesman_id", "int32"));
         fields.add(requiredField("salesman_name", "string"));
         fields.add(dateField("sale_date"));
         fields.add(decimalField("total_amount", 2));

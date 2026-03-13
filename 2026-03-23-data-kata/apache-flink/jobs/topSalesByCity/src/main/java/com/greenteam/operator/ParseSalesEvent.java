@@ -19,20 +19,21 @@ public class ParseSalesEvent implements FlatMapFunction<String, SaleEvent> {
             JsonNode node = objectMapper.readTree(message);
 
             String cityName    = JsonUtils.requiredText(node, "city_name");
+            int    storeId     = node.path("store_id").asInt(-1);
             String storeName   = JsonUtils.requiredText(node, "store_name");
             String saleDateRaw = JsonUtils.requiredText(node, "sale_date");
             int    saleId      = node.path("sale_id").asInt(-1);
             int    quantity    = node.path("quantity").asInt(-1);
             String amountRaw   = node.path("amount").asText();
 
-            if (saleId < 0 || quantity <= 0 || amountRaw.isBlank()) {
+            if (storeId < 0 || saleId < 0 || quantity <= 0 || amountRaw.isBlank()) {
                 return;
             }
 
             // Truncate ISO timestamp to date ("2026-03-13T12:00:00Z" -> "2026-03-13")
             String saleDate = saleDateRaw.length() >= 10 ? saleDateRaw.substring(0, 10) : saleDateRaw;
 
-            out.collect(new SaleEvent(cityName, storeName, saleDate, saleId, quantity, new BigDecimal(amountRaw)));
+            out.collect(new SaleEvent(cityName, storeId, storeName, saleDate, saleId, quantity, new BigDecimal(amountRaw)));
         } catch (Exception ignored) {
             // Skip malformed records so the stream keeps running.
         }
