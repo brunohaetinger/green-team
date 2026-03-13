@@ -7,9 +7,9 @@ const config = {
     .map((b) => b.trim())
     .filter(Boolean),
   clientId: process.env.KAFKA_CLIENT_ID || 'cross-data-generator',
-  topicSalesFs: process.env.TOPIC_SALES_FS || 'sales-fs',
-  topicSalesApi: process.env.TOPIC_SALES_API || 'sales-api',
-  topicSalesDb: process.env.TOPIC_SALES_DB || 'sales-db',
+  topicSalesFs: process.env.TOPIC_SALES_FS || 'stores',
+  topicSalesApi: process.env.TOPIC_SALES_API || 'salesmans',
+  topicSalesDb: process.env.TOPIC_SALES_DB || 'sales',
   storeCount: Number(process.env.STORE_COUNT || 81),
   salesmanCount: Number(process.env.SALESMAN_COUNT || 80),
   salesPerSecond: Number(process.env.SALES_PER_SECOND || 5),

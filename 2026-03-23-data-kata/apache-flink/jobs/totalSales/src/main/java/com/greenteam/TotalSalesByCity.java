@@ -43,7 +43,7 @@ public class TotalSalesByCity {
         // --- Pipeline ---
         DataStream<CitySalesResult> aggregatedStream = inputStream
             .flatMap(new ParseSalesEvent())
-            .name("operator: parse sales-events")
+            .name("operator: parse sales-enriched")
             .keyBy(event -> event.cityName + "|" + event.storeName + "|" + event.saleDate)
             .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
             .aggregate(new CitySalesAggregate(), new CitySalesWindowFormatter())

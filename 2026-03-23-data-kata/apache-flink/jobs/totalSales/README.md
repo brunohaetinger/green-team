@@ -33,7 +33,7 @@ com.greenteam/
 
 ## Data contracts
 
-### Input — `sales-events`
+### Input — `sales-enriched`
 
 | Field | Type | Description |
 |---|---|---|
@@ -63,7 +63,7 @@ com.greenteam/
 
 ---
 
-### Output — `total-sales`
+### Output — `top-sales`
 
 | Field | Type | Description |
 |---|---|---|

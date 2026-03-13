@@ -1,0 +1,14 @@
+{
+  "name": "sales-enriched-datagen",
+  "config": {
+    "connector.class": "io.confluent.kafka.connect.datagen.DatagenConnector",
+    "tasks.max": "1",
+    "kafka.topic": "sales-enriched",
+    "max.interval": "100",
+    "iterations": "-1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "schema.string": "{  \"type\": \"record\",  \"name\": \"SalesEvent\",  \"fields\": [    {      \"name\": \"salesman_id\",      \"type\": {        \"type\": \"string\",        \"arg.properties\": {          \"regex\": \"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"        }      }    },    {      \"name\": \"sale_id\",      \"type\": {        \"type\": \"string\",        \"arg.properties\": {          \"regex\": \"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"        }      }    },    {      \"name\": \"quantity\",      \"type\": {        \"type\": \"int\",        \"arg.properties\": {          \"range\": { \"min\": 1, \"max\": 20 }        }      }    },    {      \"name\": \"product_id\",      \"type\": {        \"type\": \"string\",        \"arg.properties\": {          \"options\": [            \"prod-0001\",            \"prod-0002\",            \"prod-0003\",            \"prod-0004\",            \"prod-0005\"          ]        }      }    },    {      \"name\": \"city_id\",      \"type\": {        \"type\": \"string\",        \"arg.properties\": {          \"options\": [            \"city-sp\",            \"city-rj\",            \"city-bh\",            \"city-poa\",            \"city-cwb\"          ]        }      }    },    {      \"name\": \"country_id\",      \"type\": {        \"type\": \"string\",        \"arg.properties\": {          \"options\": [\"country-br\"]        }      }    },    {      \"name\": \"amount\",      \"type\": {        \"type\": \"string\",        \"arg.properties\": {          \"options\": [            \"9.90\",            \"19.90\",            \"29.90\",            \"49.90\",            \"99.90\",            \"149.90\",            \"199.90\",            \"299.90\",            \"499.90\"          ]        }      }    }  ]}"
+  }
+}

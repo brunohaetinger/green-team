@@ -78,7 +78,7 @@ cd scripts/connector
 }
 ```
 
-## Payload that sales-events needs to receive
+## Payload that sales-enriched needs to receive
 ```json
 {
   "salesman_id": "8e95c9ef-9f63-4c8b-9f2e-46a0a1a7d2c1",

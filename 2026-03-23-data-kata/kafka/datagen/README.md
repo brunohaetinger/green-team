@@ -1,6 +1,6 @@
 ## Generate fake data (Datagen)
 
-Use Kafka Connect Datagen to continuously publish fake messages to `sales-events`.
+Use Kafka Connect Datagen to continuously publish fake messages to `sales-enriched`.
 
 ### Prerequisites
 
@@ -17,17 +17,17 @@ docker exec kafka-connect find /usr/share/confluent-hub-components -name "kafka-
 
 ### Generate `connector.json`
 
-Generate the connector payload based on `sales-events-schema.avsc`
+Generate the connector payload based on `sales-enriched-schema.avsc`
 
 ```bash
-SCHEMA=$(cat sales-events-schema.avsc | tr -d '\n' | sed 's/"/\\"/g') && \
-cat > sales-events-connector.json <<EOF
+SCHEMA=$(cat sales-enriched-schema.avsc | tr -d '\n' | sed 's/"/\\"/g') && \
+cat > sales-enriched-connector.json <<EOF
 {
-  "name": "sales-events-datagen",
+  "name": "sales-enriched-datagen",
   "config": {
     "connector.class": "io.confluent.kafka.connect.datagen.DatagenConnector",
     "tasks.max": "1",
-    "kafka.topic": "sales-events",
+    "kafka.topic": "sales-enriched",
     "max.interval": "100",
     "iterations": "-1",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
@@ -44,21 +44,21 @@ EOF
 ```bash
 curl -X POST "http://localhost:8083/connectors" \
   -H "Content-Type: application/json" \
-  -d @sales-events-connector.json
+  -d @sales-enriched-connector.json
 ```
 
 ### Check connector status
 
 ```bash
-curl "http://localhost:8083/connectors/sales-events-datagen/status"
+curl "http://localhost:8083/connectors/sales-enriched-datagen/status"
 ```
 
 ### Connector controls
 
 ```bash
-curl -X PUT "http://localhost:8083/connectors/sales-events-datagen/pause"
-curl -X PUT "http://localhost:8083/connectors/sales-events-datagen/resume"
-curl -X DELETE "http://localhost:8083/connectors/sales-events-datagen"
+curl -X PUT "http://localhost:8083/connectors/sales-enriched-datagen/pause"
+curl -X PUT "http://localhost:8083/connectors/sales-enriched-datagen/resume"
+curl -X DELETE "http://localhost:8083/connectors/sales-enriched-datagen"
 ```
 
 ### Datagen tuning
