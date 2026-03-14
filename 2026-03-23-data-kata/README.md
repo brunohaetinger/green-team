@@ -306,8 +306,8 @@ Returns the top salesman records from `top_salesman`, enriched with city and cou
 
 | Parameter | Type | Required | Default | Allowed values |
 |---|---|---|---|---|
-| `filterBy` | string | No | `salesmanId` | `salesmanId`, `saleDate` |
-| `sortBy` | string | No | `totalAmount` | `salesmanId`, `totalAmount`, `totalSales`, `totalUnits` |
+| `filterBy` | string | No | `salesmanName` | `salesmanName`, `saleDate` |
+| `sortBy` | string | No | `totalAmount` | `salesmanName`, `totalAmount`, `totalSales`, `totalUnits` |
 | `page` | integer | No | `0` | any non-negative integer |
 | `size` | integer | No | `50` | any positive integer |
 
@@ -319,7 +319,6 @@ Returns the top salesman records from `top_salesman`, enriched with city and cou
 {
   "content": [
     {
-      "salesmanId": 12,
       "salesmanName": "Amanda Souza",
       "cityName": "Sao Paulo",
       "countryName": "Brazil",
