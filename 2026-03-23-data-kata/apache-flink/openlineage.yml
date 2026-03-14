@@ -1,0 +1,10 @@
+transport:
+  type: http
+  url: http://marquez-api:4000
+  endpoint: /api/v1/lineage
+
+namespace: green-team-data-kata
+
+job:
+  name:
+    prefix: flink-
