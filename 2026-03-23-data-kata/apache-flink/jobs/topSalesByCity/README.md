@@ -92,7 +92,7 @@ Kafka record key: `store_id|sale_date|window_end`
 ## Build
 
 ```bash
-./gradlew clean build
+./gradlew clean shadowJar
 ```
 
 Output fat jar: `build/libs/topSalesByCity-1.0-SNAPSHOT-fat.jar`
