@@ -1,26 +1,26 @@
 services:
+
   jobmanager:
     image: flink:2.2.0-scala_2.12-java21
     hostname: jobmanager
     container_name: flink-jobmanager
+    command: jobmanager
     ports:
       - "8082:8081"
-    command: jobmanager
     environment:
-      - |
-        FLINK_PROPERTIES=
+      FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         parallelism.default: 2
         taskmanager.numberOfTaskSlots: 2
-        openlineage.transport.type: http
-        openlineage.transport.url: http://marquez-api:5000
-        openlineage.transport.endpoint: /api/v1/lineage
-        openlineage.namespace: green-team-data-kata
-        openlineage.job.name.prefix: flink-
+        execution.job-status-changed-listeners: io.openlineage.flink.listener.OpenLineageJobStatusChangedListenerFactory
+      OPENLINEAGE__TRANSPORT__TYPE: http
+      OPENLINEAGE__TRANSPORT__URL: http://marquez-api:4000
+      OPENLINEAGE__TRANSPORT__ENDPOINT: /api/v1/lineage
+      OPENLINEAGE__NAMESPACE: green-team-data-kata
     volumes:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
-      - ./jobs/jar/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
+      - ./libs/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
     networks:
       - flink-network
       - data-kata-net
@@ -28,26 +28,23 @@ services:
   taskmanager:
     image: flink:2.2.0-scala_2.12-java21
     hostname: taskmanager
-    container_name: flink-taskmanager
+    command: taskmanager
     depends_on:
       - jobmanager
-    command: taskmanager
-    scale: 1
     environment:
-      - |
-        FLINK_PROPERTIES=
+      FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
         parallelism.default: 2
-        openlineage.transport.type: http
-        openlineage.transport.url: http://marquez-api:5000
-        openlineage.transport.endpoint: /api/v1/lineage
-        openlineage.namespace: green-team-data-kata
-        openlineage.job.name.prefix: flink-
+        execution.job-status-changed-listeners: io.openlineage.flink.listener.OpenLineageJobStatusChangedListenerFactory
+      OPENLINEAGE__TRANSPORT__TYPE: http
+      OPENLINEAGE__TRANSPORT__URL: http://marquez-api:4000
+      OPENLINEAGE__TRANSPORT__ENDPOINT: /api/v1/lineage
+      OPENLINEAGE__NAMESPACE: green-team-data-kata
     volumes:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
-      - ./jobs/jar/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
+      - ./libs/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
     networks:
       - flink-network
       - data-kata-net
