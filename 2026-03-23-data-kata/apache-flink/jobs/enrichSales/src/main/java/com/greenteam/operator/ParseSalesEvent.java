@@ -11,6 +11,11 @@ import org.apache.flink.util.Collector;
 
 import java.math.BigDecimal;
 
+/*
+    * This operator is responsible for parsing the raw JSON messages that are consumed from the sales topic in Kafka and converting them into SalesEvent objects that can be processed by the enrichment operators. 
+    * It uses the Jackson library to parse the JSON messages and extract the relevant fields to create the SalesEvent objects. 
+    * If a JSON message is malformed or does not contain the required fields, it increments a counter for malformed records and discards the message from the stream.
+*/
 public class ParseSalesEvent extends RichFlatMapFunction<String, SalesEvent> {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

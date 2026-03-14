@@ -9,6 +9,10 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.nio.charset.StandardCharsets;
 
+/*
+    * This class is responsible for serializing the SalesEnrichedEvent objects into JSON format and creating ProducerRecord objects that can be sent to the output topic in Kafka. 
+    * It uses the Jackson library to convert the SalesEnrichedEvent objects into JSON strings, and then creates ProducerRecord objects with the appropriate key and value for each enriched sale event.
+*/
 public class SalesEnrichedSerializer implements KafkaRecordSerializationSchema<SalesEnrichedEvent> {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

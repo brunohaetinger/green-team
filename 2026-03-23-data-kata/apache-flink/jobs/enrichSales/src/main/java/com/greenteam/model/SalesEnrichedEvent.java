@@ -2,6 +2,10 @@ package com.greenteam.model;
 
 import java.math.BigDecimal;
 
+/*
+    * This class represents an enriched sale event that contains all the information about a sale, including the salesman and store information. 
+    * It is the final output of the enrichment process and will be emitted to the output topic.s
+*/
 public class SalesEnrichedEvent {
 
     public int salesmanId;

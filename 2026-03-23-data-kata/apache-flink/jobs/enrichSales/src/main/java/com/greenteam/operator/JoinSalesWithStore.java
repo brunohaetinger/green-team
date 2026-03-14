@@ -17,6 +17,13 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+/*
+    * This operator is responsible for joining the sales events with the store information. 
+    * It uses a keyed state to store the store information and a MapState to store the pending sales that are waiting for their corresponding store information. 
+    * When a new sale event is received, it checks if the corresponding store information is already stored in the state. If it is, it enriches the sale event with the store information and emits it to the output topic. 
+    * If the store information is not stored in the state, it adds the sale event to the pending state and waits for the corresponding store information to arrive. 
+    * When a new store event is received, it updates the store information in the state and checks if there are any pending sales that can be enriched with the new store information. If there are, it enriches them and emits them to the output topic.
+*/
 public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEvent, StoreEvent, SaleWithStoreEvent> {
 
     private final long ttlMs;
@@ -33,6 +40,8 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         this.ttlMs = ttlMs;
     }
 
+    // The open method is called when the operator is initialized. It is used to set up the state and metrics for the operator.
+    // We create a ValueState to store the store information, and a MapState to store the pending sales that are waiting for their corresponding store information.
     @Override
     public void open(OpenContext openContext) {
         storeState = getRuntimeContext().getState(new ValueStateDescriptor<>("store-state", StoreEvent.class));
@@ -48,6 +57,10 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         getRuntimeContext().getMetricGroup().gauge("pending_sales_missing_store_current", pendingGaugeValue::get);
     }
 
+    // The processElement1 method is called whenever a new sale event is received.
+    // It checks if the corresponding store information is already stored in the state.
+    // If it is, it enriches the sale event with the store information and emits it to the output topic.
+    // If the store information is not stored in the state, it adds the sale event to the pending state and waits for the corresponding store information to arrive.
     @Override
     public void processElement1(SalesEvent sale, Context ctx, Collector<SaleWithStoreEvent> out) throws Exception {
         StoreEvent store = storeState.value();
@@ -63,6 +76,13 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         pendingGaugeValue.incrementAndGet();
     }
 
+    // The processElement2 method is called whenever a new store event is received. 
+    // It updates the store information in the state and checks if there are any pending sales that can be enriched with the new store information.
+    // We iterate over the pending sales in the MapState and check if any of them can be enriched with the new store information.
+    // If a pending sale can be enriched, we emit the enriched sale event to the output topic and remove the pending sale from the state. 
+    // If a pending sale has expired, we remove it from the state and increment the TTL expired counter. 
+    // If a pending sale is enriched with the store information, we increment the late join counter, 
+    // which indicates that the store information arrived after the sale event, but we were still able to successfully enrich the sale event with the store
     @Override
     public void processElement2(StoreEvent store, Context ctx, Collector<SaleWithStoreEvent> out) throws Exception {
         storeState.update(store);
@@ -88,6 +108,11 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         }
     }
 
+    // The onTimer method is called whenever a timer that we registered for a pending sale expires.
+    // We iterate over the pending sales in the MapState and check if any of them have expired. 
+    // If a pending sale has expired, we remove it from the state and increment the TTL expired counter,
+    // which indicates that the store information did not arrive within the TTL defined in the JobConfig and the pending sale was discarded from the state.
+    // This method is important for cleaning up expired pending sales from the state and preventing the state from growing indefinitely with pending sales that will never be enriched with the store information
     @Override
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<SaleWithStoreEvent> out) throws Exception {
         Iterator<Map.Entry<Integer, PendingSalesByStore>> iterator = pendingState.entries().iterator();
@@ -103,6 +128,8 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         }
     }
 
+    // The merge method is a helper method that takes a sale event and a store event, 
+    // and merges them into a single SaleWithStoreEvent that contains all the information from both events.
     private SaleWithStoreEvent merge(SalesEvent sale, StoreEvent store) {
         return new SaleWithStoreEvent(
             sale.salesmanId,
