@@ -9,6 +9,8 @@ services:
         condition: service_healthy
       external-db-postgres:
         condition: service_healthy
+      source-fs:
+        condition: service_healthy
     volumes:
       - ./:/connectors:ro
       - ./register-connectors.sh:/register-connectors.sh:ro

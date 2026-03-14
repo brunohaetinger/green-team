@@ -73,6 +73,8 @@ services:
         condition: service_healthy
     ports:
       - "8083:8083"
+    volumes:
+    - ../data:/data
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8083/connectors > /dev/null"]
       interval: 10s
