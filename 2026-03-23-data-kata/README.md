@@ -257,20 +257,20 @@ Base URL: `http://localhost:8080/api/v1`
 
 ---
 
-#### `GET /sales/rankings/top-sales`
+#### `GET /sales/rankings/top-sales-by-city`
 
-Returns the top city/store sales records from `total_sales_by_city`, with optional grouping and sorting.
+Returns the top city/store sales records from `total_sales_by_city`, with optional filtering and sorting.
 
 **Query parameters**
 
 | Parameter | Type | Required | Default | Allowed values |
 |---|---|---|---|---|
-| `groupBy` | string | No | `cityName` | `cityName`, `countryName`, `storeId`, `storeName`, `saleDate` |
+| `filterBy` | string | No | `cityName` | `cityName`, `saleDate` |
 | `sortBy` | string | No | `totalAmount` | `totalAmount`, `totalSales`, `totalUnits` |
 | `page` | integer | No | `0` | any non-negative integer |
 | `size` | integer | No | `50` | any positive integer |
 
-> `totalSales` = number of distinct sale transactions aggregated in that group.
+> `totalSales` = number of distinct sale transactions aggregated by city.
 
 **Response `200 OK`**
 
@@ -280,8 +280,6 @@ Returns the top city/store sales records from `total_sales_by_city`, with option
     {
       "cityName": "Sao Paulo",
       "countryName": "Brazil",
-      "storeId": 7,
-      "storeName": "Store-SP-001",
       "saleDate": "2026-03-11",
       "totalAmount": 9876.50,
       "totalUnits": 143,
@@ -302,18 +300,18 @@ Returns the top city/store sales records from `total_sales_by_city`, with option
 
 #### `GET /sales/rankings/top-salesman`
 
-Returns the top salesman records from `top_salesman`, enriched with city and country, with optional grouping and sorting.
+Returns the top salesman records from `top_salesman`, enriched with city and country, with optional filtering and sorting.
 
 **Query parameters**
 
 | Parameter | Type | Required | Default | Allowed values |
 |---|---|---|---|---|
-| `groupBy` | string | No | `salesmanId` | `salesmanId`, `salesmanName`, `cityName`, `countryName`, `saleDate` |
-| `sortBy` | string | No | `totalAmount` | `totalAmount`, `totalSales`, `totalUnits` |
+| `filterBy` | string | No | `salesmanId` | `salesmanId`, `saleDate` |
+| `sortBy` | string | No | `totalAmount` | `salesmanId`, `totalAmount`, `totalSales`, `totalUnits` |
 | `page` | integer | No | `0` | any non-negative integer |
 | `size` | integer | No | `50` | any positive integer |
 
-> `totalSales` = number of distinct sale transactions aggregated in that group.
+> `totalSales` = number of distinct sale transactions aggregated by salesman.
 
 **Response `200 OK`**
 
