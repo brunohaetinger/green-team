@@ -4,7 +4,12 @@ services:
     container_name: source-fs
     hostname: source-fs
     volumes:
-    - ../../data:/data
+    - ../../../data:/data
     command: tail -f /dev/null
+    healthcheck:
+      test: ["CMD-SHELL", "ls /data"]
+      interval: 10s
+      timeout: 5s
+      retries: 5    
     networks:
       - data-kata-net
