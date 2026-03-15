@@ -1,6 +1,6 @@
 .metals/
 .vscode/
-/target
+**/target/
 Cargo.lock
 
 package-lock.json
