@@ -261,12 +261,13 @@ Returns the top city/store sales records from `total_sales_by_city`, with option
 
 | Parameter | Type | Required | Default | Allowed values |
 |---|---|---|---|---|
-| `filterBy` | string | No | `cityName` | `cityName`, `saleDate` |
-| `sortBy` | string | No | `totalAmount` | `totalAmount`, `totalSales`, `totalUnits` |
+| `filterBy` | string | No | — | `cityName`, `saleDate` |
+| `filterValue` | string | No | — | value to match against the `filterBy` field |
+| `sortBy` | string | No | `totalAmount` | `totalAmount`, `totalUnits` |
 | `page` | integer | No | `0` | any non-negative integer |
 | `size` | integer | No | `50` | any positive integer |
 
-> `totalSales` = number of distinct sale transactions aggregated by city.
+> `filterBy` and `filterValue` must be used together. If omitted, all records are returned.
 
 **Response `200 OK`**
 
@@ -278,8 +279,7 @@ Returns the top city/store sales records from `total_sales_by_city`, with option
       "countryName": "Brazil",
       "saleDate": "2026-03-11",
       "totalAmount": 9876.50,
-      "totalUnits": 143,
-      "totalSales": 47
+      "totalUnits": 143
     }
   ],
   "pageable": {
@@ -302,12 +302,13 @@ Returns the top salesman records from `top_salesman`, enriched with city and cou
 
 | Parameter | Type | Required | Default | Allowed values |
 |---|---|---|---|---|
-| `filterBy` | string | No | `salesmanName` | `salesmanName`, `saleDate` |
-| `sortBy` | string | No | `totalAmount` | `salesmanName`, `totalAmount`, `totalSales`, `totalUnits` |
+| `filterBy` | string | No | — | `salesmanName`, `saleDate` |
+| `filterValue` | string | No | — | value to match against the `filterBy` field |
+| `sortBy` | string | No | `totalAmount` | `salesmanName`, `totalAmount`, `totalUnits` |
 | `page` | integer | No | `0` | any non-negative integer |
 | `size` | integer | No | `50` | any positive integer |
 
-> `totalSales` = number of distinct sale transactions aggregated by salesman.
+> `filterBy` and `filterValue` must be used together. If omitted, all records are returned.
 
 **Response `200 OK`**
 
@@ -320,8 +321,7 @@ Returns the top salesman records from `top_salesman`, enriched with city and cou
       "countryName": "Brazil",
       "saleDate": "2026-03-11",
       "totalAmount": 12500.40,
-      "totalUnits": 188,
-      "totalSales": 63
+      "totalUnits": 188
     }
   ],
   "pageable": {
