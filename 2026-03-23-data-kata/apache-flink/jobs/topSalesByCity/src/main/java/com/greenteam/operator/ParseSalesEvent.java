@@ -9,6 +9,10 @@ import org.apache.flink.util.Collector;
 
 import java.math.BigDecimal;
 
+/**
+ * FlatMapFunction to parse raw JSON strings into SaleEvent objects.
+ * It handles malformed records gracefully by skipping them.
+ */
 public class ParseSalesEvent implements FlatMapFunction<String, SaleEvent> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

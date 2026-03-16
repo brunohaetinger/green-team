@@ -204,8 +204,6 @@ Append-only table written by the JDBC sink for `top-sales`.
 | Column | Type |
 |---|---|
 | `city_name` | `TEXT` |
-| `store_id` | `INTEGER` |
-| `store_name` | `TEXT` |
 | `sale_date` | `DATE` |
 | `total_amount` | `NUMERIC(18, 2)` |
 | `total_units` | `BIGINT` |
@@ -217,8 +215,6 @@ Accumulated reporting table maintained by trigger in Postgres.
 | Column | Type |
 |---|---|
 | `city_name` | `TEXT` |
-| `store_id` | `INTEGER` |
-| `store_name` | `TEXT` |
 | `sale_date` | `DATE` |
 | `total_amount` | `NUMERIC(18, 2)` |
 | `total_units` | `BIGINT` |

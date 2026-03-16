@@ -10,8 +10,7 @@ services:
     environment:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
-        parallelism.default: 2
-        taskmanager.numberOfTaskSlots: 2
+        parallelism.default: 1
         execution.job-status-changed-listeners: io.openlineage.flink.listener.OpenLineageJobStatusChangedListenerFactory
       OPENLINEAGE__TRANSPORT__TYPE: http
       OPENLINEAGE__TRANSPORT__URL: http://marquez-api:4000
@@ -34,8 +33,7 @@ services:
     environment:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2
-        parallelism.default: 2
+        taskmanager.numberOfTaskSlots: 6
         execution.job-status-changed-listeners: io.openlineage.flink.listener.OpenLineageJobStatusChangedListenerFactory
       OPENLINEAGE__TRANSPORT__TYPE: http
       OPENLINEAGE__TRANSPORT__URL: http://marquez-api:4000

@@ -9,6 +9,11 @@ import org.apache.flink.util.Collector;
 import java.math.RoundingMode;
 import java.time.Instant;
 
+/**
+ * ProcessWindowFunction to format the aggregated city sales data into a CitySalesResult.
+ * It extracts city/store information and formats the window time range.
+ * This executes after the aggregation step and prepares the final output for each window.
+ */
 public class CitySalesWindowFormatter
     extends ProcessWindowFunction<CitySalesAccumulator, CitySalesResult, String, TimeWindow> {
 
@@ -21,28 +26,18 @@ public class CitySalesWindowFormatter
     ) {
         CitySalesAccumulator acc = elements.iterator().next();
 
-        // compositeKey format: "storeId|saleDate"
+        // compositeKey format: "cityName|saleDate"
         String[] parts = compositeKey.split("\\|", 2);
-        int storeId = parts.length > 0 ? Integer.parseInt(parts[0]) : acc.storeId;
+        String cityName = parts.length > 0 ? parts[0] : acc.cityName;
         String saleDate = parts.length > 1 ? parts[1] : acc.saleDate;
-        String cityName = acc.cityName;
-        String storeName = acc.storeName;
-
-        String windowStart = Instant.ofEpochMilli(context.window().getStart()).toString();
-        String windowEnd   = Instant.ofEpochMilli(context.window().getEnd()).toString();
 
         out.collect(new CitySalesResult(
             cityName,
-            storeId,
-            storeName,
             saleDate,
-            windowStart,
-            windowEnd,
             acc.totalAmount.setScale(2, RoundingMode.HALF_UP),
             acc.totalUnits,
-            acc.saleIds.size(),
-            acc.eventCount,
-            Instant.now().toString()
+            Instant.now().toString(),
+            Instant.ofEpochMilli(context.window().getEnd()).toString()
         ));
     }
 }

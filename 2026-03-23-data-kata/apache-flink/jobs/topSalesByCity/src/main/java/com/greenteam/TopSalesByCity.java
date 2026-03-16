@@ -44,8 +44,8 @@ public class TopSalesByCity {
         DataStream<CitySalesResult> aggregatedStream = inputStream
             .flatMap(new ParseSalesEvent())
             .name("operator: parse sales-enriched")
-            .keyBy(event -> event.storeId + "|" + event.saleDate)
-            .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
+            .keyBy(event -> event.cityName + "|" + event.saleDate) // composite key of city and date for aggregation, it is important to include the date in the key to ensure that sales from different dates are not aggregated together, even if they are from the same city.
+            .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES))) // Tumbling window of 5 minutes, it will create non-overlapping windows, and all events that arrive within the same window will be grouped together for processing.
             .aggregate(new CitySalesAggregate(), new CitySalesWindowFormatter())
             .name("operator: aggregate total sales by city");
 
@@ -53,12 +53,12 @@ public class TopSalesByCity {
 
         // --- Sink ---
         Properties producerConfig = new Properties();
-        producerConfig.setProperty("transaction.timeout.ms", JobConfig.TRANSACTION_TIMEOUT_MS);
+        producerConfig.setProperty("transaction.timeout.ms", JobConfig.TRANSACTION_TIMEOUT_MS); // Set the transaction timeout to a value that is longer than the maximum expected processing time of a window, this ensures that transactions will not be aborted prematurely while waiting for late events or during long processing times.
 
         KafkaSink<CitySalesResult> sink = KafkaSink.<CitySalesResult>builder()
             .setBootstrapServers(JobConfig.BOOTSTRAP_SERVERS)
             .setRecordSerializer(new CitySalesResultSerializer())
-            .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+            .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE) // Exactly-once semantics to ensure that each aggregated result is written to Kafka exactly once, even in the case of failures or retries.
             .setTransactionalIdPrefix(JobConfig.TRANSACTIONAL_ID_PREFIX)
             .setKafkaProducerConfig(producerConfig)
             .build();
