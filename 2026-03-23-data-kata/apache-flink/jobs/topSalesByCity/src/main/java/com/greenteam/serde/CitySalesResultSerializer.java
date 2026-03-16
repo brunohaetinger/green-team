@@ -58,8 +58,6 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
 
         ArrayNode fields = objectMapper.createArrayNode();
         fields.add(requiredField("city_name", "string"));
-        fields.add(requiredField("store_id", "int32"));
-        fields.add(requiredField("store_name", "string"));
         fields.add(dateField("sale_date"));
         fields.add(decimalField("total_amount", 2));
         fields.add(requiredField("total_units", "int64"));
