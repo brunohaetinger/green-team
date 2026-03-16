@@ -70,8 +70,6 @@ com.greenteam/
 | Field | Type | Description |
 |---|---|---|
 | `city_name` | string | Aggregation key |
-| `store_id` | integer | Reliable store key |
-| `store_name` | string | Aggregation key |
 | `sale_date` | date | Aggregation key (day) |
 | `total_amount` | decimal (2dp) | Sum of `quantity × amount` across all events |
 | `total_units` | integer | Sum of `quantity` |
@@ -79,15 +77,13 @@ com.greenteam/
 ```json
 {
   "city_name":        "Sao Paulo",
-  "store_id":         7,
-  "store_name":       "Loja Centro",
   "sale_date":        "2026-03-11",
   "total_amount":     9876.50,
   "total_units":      143
 }
 ```
 
-Kafka record key: `store_id|sale_date|window_end`
+Kafka record key: `city_name|sale_date|window_end`
 
 ## Build
 
