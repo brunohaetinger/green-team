@@ -176,3 +176,40 @@ docker exec -it flink-jobmanager flink run \
 |---|---|---|
 | `--class` | `com.greenteam.EnrichSales` | Entry point |
 | `-p` | `1` | Parallelism (task slots to use) |
+
+## Flink Checkpoints & State Backend
+
+Flink jobs periodically create snapshots (checkpoints) of their internal state to ensure fault tolerance and data consistency. If a failure occurs, Flink can restore the job from the latest checkpoint, avoiding data loss or duplication.
+
+### Where Are Snapshots Stored?
+- By default, snapshots are stored in the local filesystem of the JobManager container (e.g., `/tmp/flink`).
+- The storage location can be configured via Flink's state backend settings.
+- For production, it's recommended to use a distributed storage (S3, HDFS, NFS, etc.) for durability and scalability.
+
+### Best Practices for State Backend
+- **Development/Local:** Use the filesystem backend for simplicity.
+- **Production/Distributed:** Use `RocksDBStateBackend` with checkpoints stored in S3 or HDFS. This backend is highly scalable and efficient for large state.
+- S3 is ideal for cloud environments; HDFS is preferred in Hadoop clusters.
+
+### Example Configuration
+To configure the state backend and checkpoint directory in your Flink job:
+
+```java
+import org.apache.flink.runtime.state.filesystem.FsStateBackend;
+import org.apache.flink.runtime.state.rocksdb.RocksDBStateBackend;
+
+// For filesystem backend
+env.setStateBackend(new FsStateBackend("file:///tmp/flink/checkpoints"));
+
+// For RocksDB backend with S3
+env.setStateBackend(new RocksDBStateBackend("s3://your-bucket/flink/checkpoints", true));
+```
+
+### Why Use Checkpoints?
+- Guarantees exactly-once or at-least-once processing.
+- Enables fast recovery from failures.
+- Preserves operator and keyed state across restarts.
+
+For more details, see:
+- [Flink State Backends & Checkpoints](https://nightlies.apache.org/flink/flink-docs-master/docs/ops/state/state_backends/)
+- [Flink Recovery & Fault Tolerance](https://nightlies.apache.org/flink/flink-docs-master/docs/ops/state/checkpoints/)
