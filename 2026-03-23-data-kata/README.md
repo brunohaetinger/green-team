@@ -156,8 +156,6 @@ Output topic produced by the `topSalesByCity` job.
 | Field | Type | Description |
 |---|---|---|
 | `city_name` | string | Aggregation key |
-| `store_id` | integer | Reliable store key |
-| `store_name` | string | Aggregation key |
 | `sale_date` | date | Aggregation key (day) |
 | `total_amount` | decimal (2dp) | Sum of `quantity × amount` |
 | `total_units` | integer | Sum of `quantity` |
@@ -165,8 +163,6 @@ Output topic produced by the `topSalesByCity` job.
 ```json
 {
     "city_name": "Sao Paulo",
-    "store_id": 7,
-    "store_name": "Store-SP-001",
     "sale_date": "2026-03-11",
     "total_amount": 9876.50,
     "total_units": 143
