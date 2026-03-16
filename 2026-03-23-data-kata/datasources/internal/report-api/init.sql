@@ -1,8 +1,6 @@
 -- Append table: receives one row per Flink window result
 CREATE TABLE IF NOT EXISTS total_sales_by_city_window_deltas (
     city_name        TEXT NOT NULL,
-    store_id         INTEGER NOT NULL,
-    store_name       TEXT NOT NULL,
     sale_date        DATE NOT NULL,
     total_amount     NUMERIC(18, 2) NOT NULL,
     total_units      BIGINT NOT NULL
@@ -11,13 +9,11 @@ CREATE TABLE IF NOT EXISTS total_sales_by_city_window_deltas (
 -- Accumulated table: one row per (store_id, sale_date)
 CREATE TABLE IF NOT EXISTS total_sales_by_city (
     city_name    TEXT NOT NULL,
-    store_id     INTEGER NOT NULL,
-    store_name   TEXT NOT NULL,
     sale_date    DATE NOT NULL,
     total_amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
     total_units  BIGINT NOT NULL DEFAULT 0,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT pk_total_sales_by_city PRIMARY KEY (store_id, sale_date)
+    CONSTRAINT pk_total_sales_by_city PRIMARY KEY (city_name, sale_date)
 );
 
 -- Function: accumulates deltas from each window event into total_sales_by_city
@@ -27,17 +23,14 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     INSERT INTO total_sales_by_city (
-        city_name, store_id, store_name, sale_date,
-        total_amount, total_units, updated_at
+        city_name, sale_date, total_amount, total_units, updated_at
     )
     VALUES (
-        NEW.city_name, NEW.store_id, NEW.store_name, NEW.sale_date,
-        NEW.total_amount, NEW.total_units, now()
+        NEW.city_name, NEW.sale_date, NEW.total_amount, NEW.total_units, now()
     )
-    ON CONFLICT (store_id, sale_date)
+    ON CONFLICT (city_name, sale_date)
     DO UPDATE SET
         city_name = EXCLUDED.city_name,
-        store_name = EXCLUDED.store_name,
         total_amount = total_sales_by_city.total_amount + EXCLUDED.total_amount,
         total_units  = total_sales_by_city.total_units  + EXCLUDED.total_units,
         updated_at   = now();
