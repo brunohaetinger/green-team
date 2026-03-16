@@ -28,8 +28,8 @@ public class CitySalesWindowFormatter
 
         // compositeKey format: "cityName|saleDate"
         String[] parts = compositeKey.split("\\|", 2);
-        String cityName = parts.length > 0 ? parts[0] : acc.cityName;
-        String saleDate = parts.length > 1 ? parts[1] : acc.saleDate;
+        String cityName = parts[0];
+        String saleDate = parts[1];
 
         out.collect(new CitySalesResult(
             cityName,

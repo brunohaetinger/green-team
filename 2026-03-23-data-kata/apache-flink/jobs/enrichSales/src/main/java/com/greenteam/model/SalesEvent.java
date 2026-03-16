@@ -21,8 +21,6 @@ public class SalesEvent {
     public int productId;
     public int quantity;
 
-    public SalesEvent() {}
-
     public SalesEvent(int saleId, int salesmanId, int storeId, BigDecimal amount, String saleDate, int productId, int quantity) {
         this.saleId = saleId;
         this.salesmanId = salesmanId;

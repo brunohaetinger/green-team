@@ -24,21 +24,6 @@ public class CitySalesAggregate
     public CitySalesAccumulator add(SaleEvent event, CitySalesAccumulator acc) {
         acc.totalAmount = acc.totalAmount.add(event.amount.multiply(BigDecimal.valueOf(event.quantity)));
         acc.totalUnits += event.quantity;
-        acc.saleIds.add(event.saleId);
-
-        if (acc.cityName == null && event.cityName != null) {
-            acc.cityName = event.cityName;
-        }
-        if (acc.storeId < 0 && event.storeId >= 0) {
-            acc.storeId = event.storeId;
-        }
-        if (acc.storeName == null && event.storeName != null) {
-            acc.storeName = event.storeName;
-        }
-        if (acc.saleDate == null && event.saleDate != null) {
-            acc.saleDate = event.saleDate;
-        }
-
         return acc;
     }
 
@@ -51,11 +36,6 @@ public class CitySalesAggregate
     public CitySalesAccumulator merge(CitySalesAccumulator left, CitySalesAccumulator right) {
         left.totalAmount = left.totalAmount.add(right.totalAmount);
         left.totalUnits  += right.totalUnits;
-        left.saleIds.addAll(right.saleIds);
-        if (left.storeId < 0) {
-            left.storeId = right.storeId;
-        }
-
         return left;
     }
 }

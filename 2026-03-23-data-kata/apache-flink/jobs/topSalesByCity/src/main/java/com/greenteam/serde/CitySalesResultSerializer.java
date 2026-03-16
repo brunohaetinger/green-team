@@ -29,7 +29,7 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
     ) {
         // Composite key format: "cityName|saleDate|windowEnd" - this allows us to easily identify the city and date for each record in Kafka.
         // we are using windowEnd in the key to ensure that records from different windows for the same city/date combination are treated as separate entries in Kafka.
-        byte[] key = (element.cityName + "|" + element.saleDate + "|" + (element.windowEnd != null ? element.windowEnd : "")).getBytes(StandardCharsets.UTF_8);
+        byte[] key = (element.cityName() + "|" + element.saleDate() + "|" + element.windowEnd()).getBytes(StandardCharsets.UTF_8);
         byte[] value = buildValue(element).getBytes(StandardCharsets.UTF_8);
         return new ProducerRecord<>(JobConfig.OUTPUT_TOPIC, key, value);
     }
@@ -40,10 +40,10 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         root.set("schema", buildSchema());
     
         ObjectNode payload = objectMapper.createObjectNode();
-        payload.put("city_name", element.cityName);
-        payload.put("sale_date", toKafkaDate(element.saleDate));
-        payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount)));
-        payload.put("total_units", element.totalUnits);
+        payload.put("city_name", element.cityName());
+        payload.put("sale_date", toKafkaDate(element.saleDate()));
+        payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount())));
+        payload.put("total_units", element.totalUnits());
 
         root.set("payload", payload);
         return root.toString();

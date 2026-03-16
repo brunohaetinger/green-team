@@ -21,8 +21,6 @@ public class SaleWithStoreEvent {
     public String countryName;
     public BigDecimal amount;
 
-    public SaleWithStoreEvent() {}
-
     public SaleWithStoreEvent(
         int salesmanId,
         int saleId,
