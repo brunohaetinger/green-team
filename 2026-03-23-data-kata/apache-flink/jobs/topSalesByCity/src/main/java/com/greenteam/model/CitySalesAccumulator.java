@@ -12,10 +12,5 @@ import java.util.Set;
 public class CitySalesAccumulator {
     public BigDecimal totalAmount = BigDecimal.ZERO;
     public long totalUnits  = 0;
-    public int storeId = -1;
-    public String storeName;
-    public String saleDate;
-    public String cityName;
-    public Set<Integer> saleIds = new HashSet<>();
 }
 

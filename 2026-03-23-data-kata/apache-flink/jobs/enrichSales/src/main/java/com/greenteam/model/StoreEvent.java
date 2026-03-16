@@ -15,8 +15,6 @@ public class StoreEvent {
     public String state;
     public String country;
 
-    public StoreEvent() {}
-
     public StoreEvent(int id, String name, String city, String state, String country) {
         this.id = id;
         this.name = name;

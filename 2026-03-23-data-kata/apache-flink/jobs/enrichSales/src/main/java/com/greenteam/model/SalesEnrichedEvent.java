@@ -20,8 +20,6 @@ public class SalesEnrichedEvent {
     public String countryName;
     public BigDecimal amount;
 
-    public SalesEnrichedEvent() {}
-
     public SalesEnrichedEvent(
         int salesmanId,
         String salesmanName,
