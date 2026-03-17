@@ -17,6 +17,8 @@ services:
         openlineage.transport.endpoint: /api/v1/lineage
         openlineage.namespace: green-team-data-kata
         openlineage.job.name.prefix: flink-
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
     volumes:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
@@ -44,6 +46,8 @@ services:
         openlineage.transport.endpoint: /api/v1/lineage
         openlineage.namespace: green-team-data-kata
         openlineage.job.name.prefix: flink-
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
     volumes:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
