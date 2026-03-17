@@ -73,6 +73,9 @@ com.greenteam/
 | `sale_date` | date | Aggregation key (day) |
 | `total_amount` | decimal (2dp) | Sum of `quantity × amount` across all events |
 | `total_units` | integer | Sum of `quantity` |
+| `processed_at` | date | Date of `processed_at` |
+| `window_start` | date | Date of `window_start` |
+| `window_end` | date | Date of `window_end` |
 
 ```json
 {

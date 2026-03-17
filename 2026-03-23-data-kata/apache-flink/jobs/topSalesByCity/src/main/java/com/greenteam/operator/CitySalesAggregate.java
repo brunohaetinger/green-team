@@ -5,6 +5,8 @@ import com.greenteam.model.SaleEvent;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Date;
 
 /**
  * AggregateFunction to compute total sales amount and total units sold for each city.
@@ -29,6 +31,7 @@ public class CitySalesAggregate
 
     @Override
     public CitySalesAccumulator getResult(CitySalesAccumulator acc) {
+        acc.processedAt = Instant.now();
         return acc;
     }
 
