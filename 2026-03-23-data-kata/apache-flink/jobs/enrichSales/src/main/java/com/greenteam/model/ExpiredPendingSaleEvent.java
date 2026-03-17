@@ -7,11 +7,6 @@ import java.math.BigDecimal;
  * Event representing a sale that expired while waiting for enrichment (salesman, store, etc).
  * Can be used to persist in Kafka and reprocess later.
  */
-
-/**
- * Event representing a sale that expired while waiting for salesman information.
- * Can be used to persist in Kafka and reprocess later.
- */
 public class ExpiredPendingSaleEvent implements Serializable {
     public int saleId;
     public int salesmanId;

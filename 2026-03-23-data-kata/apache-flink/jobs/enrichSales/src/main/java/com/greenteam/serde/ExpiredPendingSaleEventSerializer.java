@@ -2,9 +2,7 @@ package com.greenteam.serde;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.greenteam.config.JobConfig;
 import com.greenteam.model.ExpiredPendingSaleEvent;
-import com.greenteam.model.ExpiredReason;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
