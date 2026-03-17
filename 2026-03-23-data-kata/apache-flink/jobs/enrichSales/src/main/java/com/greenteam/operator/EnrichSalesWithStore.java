@@ -17,7 +17,7 @@ import org.apache.flink.util.OutputTag;
  * Emits ExpiredPendingSaleEvent if enrichment expires.
  */
 public class EnrichSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEvent, StoreEvent, SaleWithStoreEvent> {
-    public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG = new OutputTag<>("expired-sales-store");
+        public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG = new OutputTag<ExpiredPendingSaleEvent>("expired-sales-store") {};
 
     private final long ttlMs;
     private transient ValueState<SalesEvent> pendingSaleState;
