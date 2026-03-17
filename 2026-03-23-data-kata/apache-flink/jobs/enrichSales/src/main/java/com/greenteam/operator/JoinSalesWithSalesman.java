@@ -40,7 +40,7 @@ public class JoinSalesWithSalesman extends KeyedCoProcessFunction<Integer, SaleW
 
     // OutputTag for side output of expired sales
     public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG =
-            new OutputTag<ExpiredPendingSaleEvent>("expired-sales"){};
+            new OutputTag<>("expired-sales"){};
 
     public JoinSalesWithSalesman(long ttlMs) {
         this.ttlMs = ttlMs;
@@ -78,19 +78,12 @@ public class JoinSalesWithSalesman extends KeyedCoProcessFunction<Integer, SaleW
     public void processElement1(SaleWithStoreEvent sale, Context ctx, Collector<SalesEnrichedEvent> out) throws Exception {
         SalesmanEvent salesman = salesmanState.value();
         if (salesman != null) {
-            // If the salesman information is already stored in the state, we can immediately enrich the sale event with the salesman information
-            // This is a late join, which means that the salesman information arrived after the sale event, 
-            // but we were still able to successfully enrich the sale event with the salesman information
             out.collect(merge(sale, salesman));
             return;
         }
 
-        // If the salesman information is not stored in the state, we need to add the sale event to the pending state and wait for the corresponding salesman information to arrive. 
-        // We calculate the expiration time for the pending sale based on the current processing time and the TTL defined in the JobConfig, 
-        // and we store the pending sale in the MapState keyed by the sale ID. 
-        // We also register a timer to trigger when the pending sale expires, which will allow us to clean up expired pending sales from the state.
         long expiresAt = ctx.timerService().currentProcessingTime() + ttlMs;
-        pendingState.put(sale.saleId, new PendingSalesBySalesman(sale, expiresAt));
+        pendingState.put(sale.saleId, new PendingSalesBySalesman(sale, expiresAt, null));
         ctx.timerService().registerProcessingTimeTimer(expiresAt);
         pendingCounter.inc();
         pendingGaugeValue.incrementAndGet();
@@ -112,6 +105,10 @@ public class JoinSalesWithSalesman extends KeyedCoProcessFunction<Integer, SaleW
         while (iterator.hasNext()) {
             Map.Entry<Integer, PendingSalesBySalesman> entry = iterator.next();
             PendingSalesBySalesman pending = entry.getValue();
+
+            if (pending.sale.salesmanId == salesman.id) {
+                pending.lastKnownSalesman = salesman;
+            }
 
             if (pending.expiresAt <= now) {
                 iterator.remove();

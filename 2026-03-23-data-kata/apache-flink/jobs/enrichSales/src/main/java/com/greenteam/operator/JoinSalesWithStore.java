@@ -41,7 +41,7 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
 
     // OutputTag for side output of expired sales (store TTL)
     public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG =
-            new OutputTag<ExpiredPendingSaleEvent>("expired-sales-store"){};
+            new OutputTag<>("expired-sales-store"){};
 
     public JoinSalesWithStore(long ttlMs) {
         this.ttlMs = ttlMs;
@@ -77,7 +77,7 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         }
 
         long expiresAt = ctx.timerService().currentProcessingTime() + ttlMs;
-        pendingState.put(sale.saleId, new PendingSalesByStore(sale, expiresAt));
+        pendingState.put(sale.saleId, new PendingSalesByStore(sale, expiresAt, null));
         ctx.timerService().registerProcessingTimeTimer(expiresAt);
         pendingCounter.inc();
         pendingGaugeValue.incrementAndGet();
@@ -100,6 +100,10 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         while (iterator.hasNext()) {
             Map.Entry<Integer, PendingSalesByStore> entry = iterator.next();
             PendingSalesByStore pending = entry.getValue();
+
+            if (pending.sale.storeId == store.id) {
+                pending.lastKnownStore = store;
+            }
 
             if (pending.expiresAt <= now) {
                 iterator.remove();

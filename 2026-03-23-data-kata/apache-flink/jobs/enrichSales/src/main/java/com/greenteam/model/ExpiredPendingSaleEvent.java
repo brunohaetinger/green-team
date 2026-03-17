@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 public class ExpiredPendingSaleEvent implements Serializable {
     public int saleId;
     public int salesmanId;
+    public String salesmanName;
     public String saleDate;
     public int productId;
     public int storeId;
@@ -26,6 +27,7 @@ public class ExpiredPendingSaleEvent implements Serializable {
     public ExpiredPendingSaleEvent(
             int saleId,
             int salesmanId,
+            String salesmanName,
             String saleDate,
             int productId,
             int storeId,
@@ -39,6 +41,7 @@ public class ExpiredPendingSaleEvent implements Serializable {
     ) {
         this.saleId = saleId;
         this.salesmanId = salesmanId;
+        this.salesmanName = salesmanName;
         this.saleDate = saleDate;
         this.productId = productId;
         this.storeId = storeId;
@@ -53,9 +56,14 @@ public class ExpiredPendingSaleEvent implements Serializable {
 
     public static ExpiredPendingSaleEvent fromPending(PendingSalesBySalesman pending, ExpiredReason reason) {
         SaleWithStoreEvent sale = pending.sale;
+        String salesmanName = null;
+        if (pending.lastKnownSalesman != null) {
+            salesmanName = pending.lastKnownSalesman.name;
+        }
         return new ExpiredPendingSaleEvent(
                 sale.saleId,
                 sale.salesmanId,
+                salesmanName,
                 sale.saleDate,
                 sale.productId,
                 sale.storeId,
@@ -71,15 +79,24 @@ public class ExpiredPendingSaleEvent implements Serializable {
 
     public static ExpiredPendingSaleEvent fromPending(PendingSalesByStore pending, ExpiredReason reason) {
         SalesEvent sale = pending.sale;
+        String cityName = null;
+        String storeName = null;
+        String countryName = null;
+        if (pending.lastKnownStore != null) {
+            cityName = pending.lastKnownStore.city;
+            storeName = pending.lastKnownStore.name;
+            countryName = pending.lastKnownStore.country;
+        }
         return new ExpiredPendingSaleEvent(
                 sale.saleId,
                 sale.salesmanId,
+                null,
                 sale.saleDate,
                 sale.productId,
                 sale.storeId,
-                null, // cityName (not available in SalesEvent)
-                null, // storeName (not available in SalesEvent)
-                null, // countryName (not available in SalesEvent)
+                cityName,
+                storeName,
+                countryName,
                 sale.amount,
                 sale.quantity,
                 pending.expiresAt,
