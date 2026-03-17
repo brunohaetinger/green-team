@@ -18,17 +18,19 @@ public class ParseSalesEvent implements FlatMapFunction<String, SaleEvent> {
         try {
             JsonNode node = objectMapper.readTree(message);
 
-            String salesmanId = JsonUtils.requiredText(node, "salesman_id");
-            String saleId = JsonUtils.requiredText(node, "sale_id");
-            String countryId = JsonUtils.optionalText(node, "country_id");
+            int salesmanId = node.path("salesman_id").asInt(-1);
+            String salesmanName = JsonUtils.requiredText(node, "salesman_name");
+            String saleDateRaw = JsonUtils.requiredText(node, "sale_date");
             int quantity = node.path("quantity").asInt(-1);
             String amountRaw = node.path("amount").asText();
 
-            if (quantity <= 0 || amountRaw.isBlank()) {
+            if (salesmanId < 0 || quantity <= 0 || amountRaw.isBlank()) {
                 return;
             }
 
-            out.collect(new SaleEvent(salesmanId, countryId, saleId, quantity, new BigDecimal(amountRaw)));
+            String saleDate = saleDateRaw.length() >= 10 ? saleDateRaw.substring(0, 10) : saleDateRaw;
+
+            out.collect(new SaleEvent(salesmanId, salesmanName, saleDate, quantity, new BigDecimal(amountRaw)));
         } catch (Exception ignored) {
             // Skip malformed records so the stream keeps running.
         }
