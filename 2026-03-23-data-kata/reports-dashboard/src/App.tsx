@@ -30,7 +30,7 @@ const mockSalesData: SalesData[] = [
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950/50 py-12 px-4">
+    <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
@@ -41,18 +41,18 @@ function App() {
           </p>
         </header>
 
-        <Card className="shadow-sm border-border/60">
+        <Card className="shadow-sm border-border/60 bg-card">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Sales by City</CardTitle>
+            <CardTitle className="text-lg text-foreground">Sales by City</CardTitle>
             <CardDescription>
               Ranked by total revenue amount
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-lg border overflow-hidden">
+            <div className="rounded-lg border border-border overflow-hidden bg-card">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableRow className="bg-muted/40 hover:bg-muted/40 border-border">
                     <TableHead className="w-16 font-medium text-muted-foreground">
                       Rank
                     </TableHead>
@@ -77,16 +77,16 @@ function App() {
                   {mockSalesData.map((data, index) => (
                     <TableRow
                       key={index}
-                      className="hover:bg-muted/30 transition-colors"
+                      className="hover:bg-muted/20 transition-colors border-border"
                     >
-                      <TableCell className="font-medium text-muted-foreground">
-                        {index + 1}
+                      <TableCell className="font-medium text-primary">
+                        #{index + 1}
                       </TableCell>
-                      <TableCell className="font-medium">{data.city}</TableCell>
+                      <TableCell className="font-medium text-foreground">{data.city}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {data.country}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">
+                      <TableCell className="text-right font-mono tabular-nums text-emerald-400">
                         ${data.amount.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
