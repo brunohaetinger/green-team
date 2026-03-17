@@ -1,6 +1,8 @@
 package com.greenteam.model;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 
 /*
  * This class represents the final result of the aggregation of sales data by city.
@@ -8,8 +10,8 @@ import java.math.BigDecimal;
  * total sales amount, total units sold, and other details that are needed for reporting
  * or further analysis.
  */
-public record CitySalesResult(String cityName, String saleDate, BigDecimal totalAmount, long totalUnits,
-                              String processedAt, String windowEnd) {
+public record CitySalesResult(String cityName, LocalDate saleDate, BigDecimal totalAmount, long totalUnits,
+                              Instant processedAt, long windowStart, long windowEnd) {
 
     @Override
     public String toString() {

@@ -1,6 +1,7 @@
 package com.greenteam.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /* 
  * This class represents a single sale event, containing all the relevant information about the sale,
@@ -11,11 +12,11 @@ import java.math.BigDecimal;
 public class SaleEvent {
 
     public String cityName;
-    public String saleDate;
+    public LocalDate saleDate;
     public int quantity;
     public BigDecimal amount;
 
-    public SaleEvent(String cityName, String saleDate, int quantity, BigDecimal amount) {
+    public SaleEvent(String cityName, LocalDate saleDate, int quantity, BigDecimal amount) {
         this.cityName = cityName;
         this.saleDate = saleDate;
         this.quantity = quantity;

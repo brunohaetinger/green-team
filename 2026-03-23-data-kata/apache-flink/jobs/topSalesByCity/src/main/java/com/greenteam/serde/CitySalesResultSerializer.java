@@ -10,9 +10,10 @@ import org.apache.kafka.connect.data.Date;
 import org.apache.kafka.connect.data.Decimal;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.connect.data.Timestamp;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
+import java.time.*;
 import java.util.Base64;
 
 public class CitySalesResultSerializer implements KafkaRecordSerializationSchema<CitySalesResult> {
@@ -41,9 +42,12 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
     
         ObjectNode payload = objectMapper.createObjectNode();
         payload.put("city_name", element.cityName());
-        payload.put("sale_date", toKafkaDate(element.saleDate()));
+        payload.put("sale_date", element.saleDate().toEpochDay());
         payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount())));
         payload.put("total_units", element.totalUnits());
+        payload.put("processed_at", element.processedAt().toEpochMilli());
+        payload.put("window_start", element.windowStart());
+        payload.put("window_end", element.windowEnd());
 
         root.set("payload", payload);
         return root.toString();
@@ -61,6 +65,9 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         fields.add(dateField("sale_date"));
         fields.add(decimalField("total_amount", 2));
         fields.add(requiredField("total_units", "int64"));
+        fields.add(timestampField("processed_at"));
+        fields.add(timestampField("window_start"));
+        fields.add(timestampField("window_end"));
         schema.set("fields", fields);
 
         return schema;
@@ -92,10 +99,11 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         return field;
     }
 
-    // This method converts an ISO date string (e.g., "2024-06-01") into the integer format expected by Kafka Connect for Date logical types, which is the number of days since the Unix epoch (January 1, 1970).
-    private static int toKafkaDate(String isoDate) {
-        // Kafka Connect Date logical type = days since epoch.
-        return (int) LocalDate.parse(isoDate).toEpochDay();
+    private static ObjectNode timestampField(String fieldName) {
+        ObjectNode field = requiredField(fieldName, "int32");
+        field.put("name", Timestamp.LOGICAL_NAME);
+        field.put("version", 1);
+        return field;
     }
 }
 
