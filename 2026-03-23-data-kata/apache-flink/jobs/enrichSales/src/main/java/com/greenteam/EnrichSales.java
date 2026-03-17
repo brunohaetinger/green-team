@@ -1,12 +1,10 @@
 package com.greenteam;
 
 import com.greenteam.config.JobConfig;
-import com.greenteam.model.SaleWithStoreEvent;
-import com.greenteam.model.SalesEnrichedEvent;
-import com.greenteam.model.SalesEvent;
-import com.greenteam.model.SalesmanEvent;
-import com.greenteam.model.StoreEvent;
-import com.greenteam.model.ExpiredPendingSaleEvent;
+import com.greenteam.model.*;
+import com.greenteam.operator.EnrichSalesWithStore;
+import com.greenteam.operator.EnrichSalesWithSalesman;
+import com.greenteam.operator.MergeEnrichments;
 import com.greenteam.operator.JoinSalesWithSalesman;
 import com.greenteam.operator.JoinSalesWithStore;
 import com.greenteam.operator.ParseSalesEvent;
@@ -24,6 +22,7 @@ import org.apache.flink.core.execution.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
 
 import java.util.Properties;
 
@@ -95,35 +94,39 @@ public class EnrichSales {
             .flatMap(new ParseSalesmanEvent())
             .name("operator: parse salesmans");
 
-        // We connect the sales stream with the stores stream using the JoinSalesWithStore operator to enrich the sales events with the corresponding store information.
-        // The JoinSalesWithStore operator performs a key-based join between the sales and stores streams, where the key is the store ID. 
-        // It uses state to keep track of pending sales that are waiting for their corresponding store information, and it emits enriched sale events to the output topic when the store information arrives. 
-        // If a sale event does not find its corresponding store information within the TTL defined in the JobConfig, it is discarded from the state and a counter for TTL expired pending sales is incremented.
+        // Parallel enrichment: SalesEvent with StoreEvent
         SingleOutputStreamOperator<SaleWithStoreEvent> saleWithStoreStream = salesStream
             .keyBy(sale -> sale.storeId)
             .connect(storesStream.keyBy(store -> store.id))
-            .process(new JoinSalesWithStore(JobConfig.PENDING_SALES_TTL_MS))
-            .name("operator: join sales + stores");
+            .process(new EnrichSalesWithStore(JobConfig.PENDING_SALES_TTL_MS))
+            .name("operator: enrich sales + store");
 
-        // We then connect the enriched sales stream with the salesmans stream using the JoinSalesWithSalesman operator to further enrich the sale events with the corresponding salesman information
-        // The JoinSalesWithSalesman operator performs a key-based join between the enriched sales stream and the salesmans stream, where the key is the salesman ID.
-        // It uses state to keep track of pending sales that are waiting for their corresponding salesman information, and it emits fully enriched sale events to the output topic when the salesman information arrives.
-        SingleOutputStreamOperator<SalesEnrichedEvent> enrichedStream = saleWithStoreStream
+        // Parallel enrichment: SalesEvent with SalesmanEvent
+        SingleOutputStreamOperator<SaleWithSalesmanEvent> saleWithSalesmanStream = salesStream
             .keyBy(sale -> sale.salesmanId)
             .connect(salesmansStream.keyBy(salesman -> salesman.id))
-            .process(new JoinSalesWithSalesman(JobConfig.PENDING_SALES_TTL_MS))
-            .name("operator: join sales + salesman");
+            .process(new EnrichSalesWithSalesman(JobConfig.PENDING_SALES_TTL_MS))
+            .name("operator: enrich sales + salesman");
 
-        // Retrieve side output for expired sales from salesman join
-        DataStream<ExpiredPendingSaleEvent> expiredSalesFromSalesman = enrichedStream
-            .getSideOutput(JoinSalesWithSalesman.EXPIRED_SALES_TAG);
+        // Merge enrichments
+        SingleOutputStreamOperator<SalesEnrichedEvent> enrichedStream = saleWithStoreStream
+            .connect(saleWithSalesmanStream)
+            .keyBy(store -> store.saleId, salesman -> salesman.saleId)
+            .process(new MergeEnrichments(JobConfig.PENDING_SALES_TTL_MS))
+            .name("operator: merge enrichments");
 
-        // Retrieve side output for expired sales from store join
+        // Retrieve side outputs for expired sales
         DataStream<ExpiredPendingSaleEvent> expiredSalesFromStore = saleWithStoreStream
-            .getSideOutput(JoinSalesWithStore.EXPIRED_SALES_TAG);
+                .getSideOutput(EnrichSalesWithStore.EXPIRED_SALES_TAG);
+        DataStream<ExpiredPendingSaleEvent> expiredSalesFromSalesman = saleWithSalesmanStream
+                .getSideOutput(EnrichSalesWithSalesman.EXPIRED_SALES_TAG);
+        DataStream<ExpiredPendingSaleEvent> expiredSalesFromMerge = enrichedStream
+                .getSideOutput(MergeEnrichments.EXPIRED_SALES_TAG);
 
         // Union all expired sales
-        DataStream<ExpiredPendingSaleEvent> expiredSalesStream = expiredSalesFromSalesman.union(expiredSalesFromStore);
+        DataStream<ExpiredPendingSaleEvent> expiredSalesStream = expiredSalesFromStore
+                .union(expiredSalesFromSalesman)
+                .union(expiredSalesFromMerge);
 
         Properties producerConfig = new Properties();
         producerConfig.setProperty("transaction.timeout.ms", JobConfig.TRANSACTION_TIMEOUT_MS);
@@ -137,10 +140,7 @@ public class EnrichSales {
             .setKafkaProducerConfig(producerConfig)
             .build();
 
-        // We connect the enriched sales stream to the Kafka sink to emit the fully enriched sale events to the output topic in Kafka.
-        enrichedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
-
-        // Kafka sink for expired sales
+        // Define the Kafka sink for expired sales events
         KafkaSink<ExpiredPendingSaleEvent> expiredSalesSink = KafkaSink.<ExpiredPendingSaleEvent>builder()
             .setBootstrapServers(JobConfig.BOOTSTRAP_SERVERS)
             .setRecordSerializer(new ExpiredPendingSaleEventSerializer())
@@ -148,6 +148,9 @@ public class EnrichSales {
             .setTransactionalIdPrefix(JobConfig.TRANSACTIONAL_ID_PREFIX + "-expired")
             .setKafkaProducerConfig(producerConfig)
             .build();
+
+        // We connect the enriched sales stream to the Kafka sink to emit the fully enriched sale events to the output topic in Kafka.
+        enrichedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
         expiredSalesStream.sinkTo(expiredSalesSink).name("sink: sales-expired");
 
