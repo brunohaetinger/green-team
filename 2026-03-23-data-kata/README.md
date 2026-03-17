@@ -147,6 +147,49 @@ Event produced after joining sale data with store and salesman context. This is 
 }
 ```
 
+### Expired topic
+
+#### `sales-expired`
+
+Event produced when a sale could not be enriched within the configured TTL. This topic is used for auditing and possible reprocessing. It contains the maximum available context for each expired sale event.
+
+| Field           | Type      | Description |
+|-----------------|-----------|-------------|
+| `sale_id`       | integer   | Sale identifier |
+| `salesman_id`   | integer   | Salesman identifier |
+| `salesman_name` | string    | Last known salesman name (if available) |
+| `sale_date`     | string    | Sale timestamp (ISO-8601) |
+| `product_id`    | integer   | Product identifier |
+| `store_id`      | integer   | Store identifier |
+| `city_name`     | string    | Last known city name (if available) |
+| `store_name`    | string    | Last known store name (if available) |
+| `country_name`  | string    | Last known country name (if available) |
+| `amount`        | number    | Unit price |
+| `quantity`      | integer   | Quantity sold |
+| `expires_at`    | long      | Expiration timestamp (epoch millis) |
+| `reason`        | string    | Expiration reason: `SALESMAN_TTL_EXPIRED`, `STORE_TTL_EXPIRED`, or `MERGE_TTL_EXPIRED` |
+
+```json
+{
+  "sale_id": 45,
+  "salesman_id": 0,
+  "salesman_name": null,
+  "sale_date": "2026-03-11T14:20:31Z",
+  "product_id": 1004,
+  "store_id": 7,
+  "city_name": "Sao Paulo",
+  "store_name": "Store-SP-001",
+  "country_name": "Brazil",
+  "amount": 29.90,
+  "quantity": 3,
+  "expires_at": 1773754790609,
+  "reason": "STORE_TTL_EXPIRED"
+}
+```
+
+- If enrichment was not possible, some fields (like `salesman_name`, `city_name`, etc.) may be null.
+- The `reason` field indicates which enrichment step failed due to TTL expiration.
+
 ### Aggregated outputs
 
 #### `top-sales`
