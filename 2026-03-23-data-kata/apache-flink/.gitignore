@@ -1,2 +1,4 @@
 jobs/jar/**
 sales-events-connector.json
+jobs/*/build/
+jobs/*/.gradle/

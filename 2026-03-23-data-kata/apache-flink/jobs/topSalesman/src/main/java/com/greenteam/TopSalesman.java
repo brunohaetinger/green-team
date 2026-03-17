@@ -23,6 +23,7 @@ public class TopSalesman {
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+        // --- Source ---
         KafkaSource<String> source = KafkaSource.<String>builder()
             .setBootstrapServers(JobConfig.BOOTSTRAP_SERVERS)
             .setTopics(JobConfig.INPUT_TOPIC)
@@ -37,15 +38,18 @@ public class TopSalesman {
             "source: " + JobConfig.INPUT_TOPIC
         );
 
-        DataStream<TopSalesmanResult> topSalesmanStream = inputStream
+        // --- Pipeline ---
+        DataStream<TopSalesmanResult> aggregatedStream = inputStream
             .flatMap(new ParseSalesEvent())
-            .name("operator: parse sales-events")
-            .windowAll(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
-            .process(new TopSalesmanWindowFormatter())
-            .name("operator: aggregate top salesman nationwide");
+            .name("operator: parse sales-enriched")
+            .keyBy(event -> event.salesmanId + "|" + event.saleDate)
+            .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
+            .aggregate(new com.greenteam.operator.TopSalesmanAggregate(), new com.greenteam.operator.TopSalesmanWindowFormatter())
+            .name("operator: aggregate salesman by id and date");
 
-        topSalesmanStream.print("sink: stdout");
+        aggregatedStream.print("sink: stdout");
 
+        // --- Sink ---
         Properties producerConfig = new Properties();
         producerConfig.setProperty("transaction.timeout.ms", JobConfig.TRANSACTION_TIMEOUT_MS);
 
@@ -57,7 +61,7 @@ public class TopSalesman {
             .setKafkaProducerConfig(producerConfig)
             .build();
 
-        topSalesmanStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
+        aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
         env.execute("topSalesman: aggregate top salesman nationwide");
     }

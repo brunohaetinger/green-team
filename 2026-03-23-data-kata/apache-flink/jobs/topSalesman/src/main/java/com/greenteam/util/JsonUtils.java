@@ -13,12 +13,4 @@ public final class JsonUtils {
         }
         return value.asText();
     }
-
-    public static String optionalText(JsonNode node, String fieldName) {
-        JsonNode value = node.get(fieldName);
-        if (value == null || value.asText().isBlank()) {
-            return null;
-        }
-        return value.asText();
-    }
 }
