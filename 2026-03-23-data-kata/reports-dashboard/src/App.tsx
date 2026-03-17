@@ -6,6 +6,13 @@ import {
   TableHeader,
   TableRow,
 } from "./components/ui/table"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./components/ui/card"
 
 interface SalesData {
   city: string
@@ -23,32 +30,79 @@ const mockSalesData: SalesData[] = [
 
 function App() {
   return (
-    <div className="p-8">
-      <h1 className="mb-8">Top Sales Rankings</h1>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]">#</TableHead>
-            <TableHead>City</TableHead>
-            <TableHead>Country</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead className="text-right">Units</TableHead>
-            <TableHead className="text-right">Orders</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {mockSalesData.map((data, index) => (
-            <TableRow key={index}>
-              <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell>{data.city}</TableCell>
-              <TableCell>{data.country}</TableCell>
-              <TableCell className="text-right">${data.amount.toLocaleString()}</TableCell>
-              <TableCell className="text-right">{data.units.toLocaleString()}</TableCell>
-              <TableCell className="text-right">{data.orders.toLocaleString()}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950/50 py-12 px-4">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Top Sales Rankings
+          </h1>
+          <p className="text-muted-foreground">
+            Overview of the best performing cities by revenue
+          </p>
+        </header>
+
+        <Card className="shadow-sm border-border/60">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Sales by City</CardTitle>
+            <CardDescription>
+              Ranked by total revenue amount
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="w-16 font-medium text-muted-foreground">
+                      Rank
+                    </TableHead>
+                    <TableHead className="font-medium text-muted-foreground">
+                      City
+                    </TableHead>
+                    <TableHead className="font-medium text-muted-foreground">
+                      Country
+                    </TableHead>
+                    <TableHead className="text-right font-medium text-muted-foreground">
+                      Amount
+                    </TableHead>
+                    <TableHead className="text-right font-medium text-muted-foreground">
+                      Units
+                    </TableHead>
+                    <TableHead className="text-right font-medium text-muted-foreground">
+                      Orders
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockSalesData.map((data, index) => (
+                    <TableRow
+                      key={index}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
+                      <TableCell className="font-medium text-muted-foreground">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">{data.city}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {data.country}
+                      </TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">
+                        ${data.amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                        {data.units.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                        {data.orders.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
