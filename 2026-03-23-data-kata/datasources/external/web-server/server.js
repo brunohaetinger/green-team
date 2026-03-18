@@ -12,7 +12,7 @@ const pool = new Pool({
 const requestListener = async function (req, res) {
   if (req.url === '/sales' && req.method === 'GET') {
     try {
-      const result = await pool.query('SELECT id, salesman_id, product_id, quantity FROM sales');
+      const result = await pool.query('SELECT id, name, store_id FROM salesmans');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result.rows));
     } catch (err) {
