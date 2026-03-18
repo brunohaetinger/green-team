@@ -1,17 +1,21 @@
 package com.greenteam;
 
 import com.greenteam.config.JobConfig;
-import com.greenteam.model.*;
-import com.greenteam.operator.EnrichSalesWithStore;
+import com.greenteam.model.ExpiredPendingSaleEvent;
+import com.greenteam.model.SaleWithSalesmanEvent;
+import com.greenteam.model.SaleWithStoreEvent;
+import com.greenteam.model.SalesEnrichedEvent;
+import com.greenteam.model.SalesEvent;
+import com.greenteam.model.SalesmanEvent;
+import com.greenteam.model.StoreEvent;
 import com.greenteam.operator.EnrichSalesWithSalesman;
+import com.greenteam.operator.EnrichSalesWithStore;
 import com.greenteam.operator.MergeEnrichments;
-import com.greenteam.operator.JoinSalesWithSalesman;
-import com.greenteam.operator.JoinSalesWithStore;
 import com.greenteam.operator.ParseSalesEvent;
 import com.greenteam.operator.ParseSalesmanEvent;
 import com.greenteam.operator.ParseStoreEvent;
-import com.greenteam.serde.SalesEnrichedSerializer;
 import com.greenteam.serde.ExpiredPendingSaleEventSerializer;
+import com.greenteam.serde.SalesEnrichedSerializer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.base.DeliveryGuarantee;
@@ -19,14 +23,14 @@ import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.core.execution.CheckpointingMode;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.datastream.KeyedStream;
-
 import java.util.Properties;
 
 public class EnrichSales {
+
+    private static final String JOB_NAME = "enrich sales from topics";
 
     public static void main(String[] args) throws Exception {
         // The main method is the entry point of the Flink job. 
@@ -154,6 +158,6 @@ public class EnrichSales {
 
         expiredSalesStream.sinkTo(expiredSalesSink).name("sink: sales-expired");
 
-        env.execute("enrich sales from topics");
+        env.execute(JOB_NAME);
     }
 }

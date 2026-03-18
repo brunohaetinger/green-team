@@ -111,6 +111,7 @@ cp build/libs/topSalesman-1.0-SNAPSHOT-fat.jar ../jar/
 
 ```bash
 docker exec -it flink-jobmanager flink run \
+  -Dexecution.attached=true \
   -p 1 \
   --class com.greenteam.TopSalesman \
   /opt/flink/jobs/topSalesman-1.0-SNAPSHOT-fat.jar
