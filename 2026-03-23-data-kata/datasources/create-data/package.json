@@ -1,0 +1,14 @@
+{
+  "name": "create-data",
+  "version": "1.0.0",
+  "description": "Fake data generator for DB and CSV (no Kafka)",
+  "main": "create-data.js",
+  "type": "module",
+  "scripts": {
+    "start": "node create-data.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "csv-writer": "^1.6.0"
+  }
+}
