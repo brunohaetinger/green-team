@@ -14,6 +14,8 @@ include:
   - ./data-lineage/docker-compose.yaml
   # Report API
   - ./api/docker-compose.yaml
+  # Observability
+  - ./observability/docker-compose.yaml
 
 # Docker setup
 networks:
