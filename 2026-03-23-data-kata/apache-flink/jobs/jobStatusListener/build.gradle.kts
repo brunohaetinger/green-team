@@ -20,5 +20,5 @@ dependencies {
 }
 
 tasks.jar {
-    archiveFileName.set("jobStatusListener-${project.version}.jar")
+    archiveFileName.set("customStatusListener-${project.version}.jar")
 }
