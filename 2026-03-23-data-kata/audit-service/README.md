@@ -17,12 +17,27 @@ sales-enriched topic ──→ Audit Service ──→ S3
 - Spring Kafka
 - Gradle
 
-## Build & Run
+## Development Setup
 
 ### Prerequisites
 
 - Java 21
-- Kafka running on `localhost:9092`
+- Docker & Docker Compose
+
+### 1. Start Required Infrastructure
+
+Start Kafka and related services from the project root:
+
+```bash
+# Start Kafka broker and Kafka Connect
+docker-compose up -d
+```
+
+### 3. Data Generation
+
+For generating test sales events, refer to the **datagen** module in the project root. The datagen service produces messages to Kafka topics that this service consumes.
+
+## Build & Run
 
 ### Build
 
@@ -30,27 +45,21 @@ sales-enriched topic ──→ Audit Service ──→ S3
 ./gradlew clean build
 ```
 
-### Run
+### Run Tests
+
+```bash
+./gradlew test
+```
+
+### Run Application
 
 ```bash
 ./gradlew bootRun
 ```
 
-Or run the JAR directly:
-
-```bash
-java -jar build/libs/audit-service-1.0-SNAPSHOT.jar
-```
-
-### Run with Docker Kafka
-
-When Kafka is running in Docker, use:
-
-```bash
-SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092 ./gradlew bootRun
-```
-
 ## Configuration
+
+### Application Properties
 
 | Property | Default | Description |
 |----------|---------|-------------|
@@ -58,6 +67,15 @@ SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092 ./gradlew bootRun
 | `spring.kafka.bootstrap-servers` | localhost:9092 | Kafka broker address |
 | `spring.kafka.consumer.group-id` | audit-service-group | Consumer group ID |
 | `spring.kafka.consumer.auto-offset-reset` | earliest | Start from earliest offset |
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `S3_BUCKET_NAME` | Yes | Target S3 bucket name |
+| `AWS_DEFAULT_REGION` | Yes | AWS region (e.g., `us-east-1`) |
+| `AWS_ACCESS_KEY_ID` | Yes | AWS access key |
+| `AWS_SECRET_ACCESS_KEY` | Yes | AWS secret key |
 
 ## API Endpoints
 
@@ -93,9 +111,34 @@ Consumes from topic: `sales-enriched`
 audit-service/
 ├── build.gradle
 ├── src/main/java/com/greenteam/
-│   ├── AuditService.java         # Spring Boot application
-│   ├── HealthController.java     # Health endpoint
-│   └── SalesEventConsumer.java   # Kafka consumer
-└── src/main/resources/
-    └── application.properties    # Configuration
+│   ├── AuditService.java           # Spring Boot application
+│   ├── HealthController.java       # Health endpoint
+│   ├── SalesEventConsumer.java     # Kafka consumer
+│   ├── config/
+│   │   └── S3Config.java           # AWS S3 client configuration
+│   ├── model/
+│   │   └── SalesEvent.java         # Event model with CSV serialization
+│   └── service/
+│       └── S3Service.java          # S3 persistence logic
+├── src/main/resources/
+│   └── application.properties      # Configuration
+└── src/test/java/com/greenteam/
+    ├── HealthControllerTest.java
+    ├── SalesEventConsumerTest.java
+    ├── model/
+    │   └── SalesEventTest.java
+    └── service/
+        └── S3ServiceTest.java
+```
+
+## S3 Output Structure
+
+Events are saved as CSV files organized by date, country, city, and store:
+
+```
+s3://{bucket}/
+└── {date}/
+    └── {country}/
+        └── {city}/
+            └── {store}.csv
 ```
