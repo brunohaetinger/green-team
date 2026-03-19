@@ -23,10 +23,53 @@ This folder contains the observability stack for the Data Kata pipeline.
 - **Prometheus URL:** [http://localhost:9090](http://localhost:9090)
 - **Grafana URL:** [http://localhost:3001](http://localhost:3001) (Default user/pass: `admin`/`admin`)
 - **Dashboards:**
-    - **Pipeline Errors:** Monitor error rates across all components.
-    - **E2E Bottleneck:** Visualize throughput (events/sec) at each stage to identify slow components.
-    - **Connectors & Volume:** Track data volume and buffer status to prevent congestion.
-    - **Data Flow Lineage:** For tracing data path, use **Marquez Web** at [http://localhost:3000](http://localhost:3000).
+    - **Pipeline Observability Dashboards:** A centralized view of the data pipeline health, performance, and reliability.
+
+#### Understanding the Pipeline Observability Dashboard
+
+The dashboard is divided into three main sections to help you monitor and troubleshoot the pipeline:
+
+##### 1. Pipeline Errors (Vector)
+*   **Graph:** **Component Error Rate (Vector)**
+*   **Metric:** `rate(vector_component_errors_total[1m])`
+*   **Y-Axis:** **Errors per second**.
+*   **How to read:**
+    - This graph shows the number of errors per second for each stage of the pipeline:
+        - **Connectors/Sources Errors:** Failures in fetching logs from Docker (e.g., permission issues).
+        - **Transformers/Processing Errors:** Failures in parsing or transforming logs (e.g., invalid JSON).
+        - **Sinks/Storage Errors:** Failures in sending data to the final destination (e.g., network timeout).
+    - **Healthy:** All lines should be at 0.
+    - **Issue:** A spike indicates that a specific stage is failing.
+
+##### 2. E2E Bottleneck Check
+*   **Graph:** **Throughput by Stage (events/sec)**
+*   **Metrics:** 
+    - `rate(vector_component_sent_events_total[1m])`
+    - `rate(flink_jobmanager_Status_JVM_CPU_Load[1m])`
+*   **Y-Axis:**
+    - **Throughput (Lines):** **Events per second**.
+    - **Flink CPU Load:** **Percentage (0.0 to 1.0)**, where 1.0 represents 100% CPU usage.
+*   **How to read:**
+    - This graph explicitly identifies the pipeline steps:
+        - **1. Connectors (Debezium/Source):** Raw events entering the pipeline.
+        - **2. Transformers (Log Processing):** Events successfully parsed/transformed.
+        - **3. Sinks (Flink/Kafka/Storage):** Events sent to the final output.
+    - **Bottleneck Detection:** If the throughput of "Connectors" is much higher than "Transformers", the bottleneck is in the parsing stage. If "Transformers" is high but "Sinks" is low, the issue is in the final delivery (e.g., slow sink).
+    - **Flink CPU Load:** Helps correlate if Flink processing power is the limiting factor.
+
+##### 3. Connectors Healthy & Volume
+*   **Graph:** **Buffer Volume (Potential Congestion)**
+*   **Metric:** `vector_buffer_received_events_total`
+*   **Y-Axis:** **Total number of events** (accumulated in buffer).
+*   **How to read:**
+    - Tracks data accumulation in Vector's internal buffers for each stage:
+        - **Connectors Buffer**: Data waiting to be processed.
+        - **Transformers Buffer**: Data waiting to be sent to sinks.
+        - **Sinks Buffer**: Data queued for final delivery.
+    - **Healthy:** The buffer should be relatively stable or empty.
+    - **Issue:** An upward trend in any buffer indicates that the *next* stage cannot keep up with the current data rate (congestion).
+
+---
 
 ## End-to-End Observability Flow
 

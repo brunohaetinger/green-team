@@ -62,7 +62,6 @@ services:
   #     KAFKA_CLUSTERS_0_NAME: local
   #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
   kafka-connect:
-    platform: linux/amd64
     build:
       context: .
       dockerfile: kafka-connect.Dockerfile

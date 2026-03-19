@@ -25,7 +25,6 @@ services:
   # Soda: Data quality checks
   soda:
     image: sodadata/soda-core:latest
-    platform: linux/amd64
     container_name: soda
     volumes:
       - ./soda:/etc/soda
