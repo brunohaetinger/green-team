@@ -11,7 +11,8 @@ services:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         parallelism.default: 1
-        execution.job-status-changed-listeners: io.openlineage.flink.listener.OpenLineageJobStatusChangedListenerFactory
+        execution.attached: true
+        execution.job-status-changed-listeners: com.greenteam.CustomStatusChangedListenerFactory
       OPENLINEAGE__TRANSPORT__TYPE: http
       OPENLINEAGE__TRANSPORT__URL: http://marquez-api:4000
       OPENLINEAGE__TRANSPORT__ENDPOINT: /api/v1/lineage
@@ -20,6 +21,7 @@ services:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
       - ./libs/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
+      - ./libs/customStatusListener-1.0-SNAPSHOT.jar:/opt/flink/lib/customStatusListener-1.0-SNAPSHOT.jar
     networks:
       - flink-network
       - data-kata-net
@@ -34,7 +36,8 @@ services:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 6
-        execution.job-status-changed-listeners: io.openlineage.flink.listener.OpenLineageJobStatusChangedListenerFactory
+        execution.attached: true
+        execution.job-status-changed-listeners: com.greenteam.CustomStatusChangedListenerFactory
       OPENLINEAGE__TRANSPORT__TYPE: http
       OPENLINEAGE__TRANSPORT__URL: http://marquez-api:4000
       OPENLINEAGE__TRANSPORT__ENDPOINT: /api/v1/lineage
@@ -43,6 +46,7 @@ services:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
       - ./libs/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
+      - ./libs/customStatusListener-1.0-SNAPSHOT.jar:/opt/flink/lib/customStatusListener-1.0-SNAPSHOT.jar
     networks:
       - flink-network
       - data-kata-net

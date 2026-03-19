@@ -15,11 +15,11 @@ import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsIni
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
-
 import java.time.Duration;
 import java.util.Properties;
 
 public class TopSalesByCity {
+    private static final String JOB_NAME = "top sales by city";
 
     public static void main(String[] args) throws Exception {
 
@@ -65,6 +65,6 @@ public class TopSalesByCity {
 
         aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
-        env.execute("top sales by city");
+        env.execute(JOB_NAME);
     }
 }

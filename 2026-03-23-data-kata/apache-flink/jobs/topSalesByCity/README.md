@@ -110,6 +110,7 @@ cp build/libs/topSalesByCity-1.0-SNAPSHOT-fat.jar ../jar/
 
 ```bash
 docker exec -it flink-jobmanager flink run \
+  -Dexecution.attached=true \
   -p 1 \
   --class com.greenteam.TopSalesByCity \
   /opt/flink/jobs/topSalesByCity-1.0-SNAPSHOT-fat.jar
