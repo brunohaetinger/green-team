@@ -21,7 +21,7 @@ services:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
       - ./libs/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
-      - ./jobs/jar/customStatusListener-1.0-SNAPSHOT.jar:/opt/flink/lib/customStatusListener-1.0-SNAPSHOT.jar
+      - ./libs/customStatusListener-1.0-SNAPSHOT.jar:/opt/flink/lib/customStatusListener-1.0-SNAPSHOT.jar
     networks:
       - flink-network
       - data-kata-net
@@ -46,7 +46,7 @@ services:
       - flink-data:/tmp
       - ./jobs/jar:/opt/flink/jobs
       - ./libs/openlineage-flink-1.45.0.jar:/opt/flink/lib/openlineage-flink-1.45.0.jar
-      - ./jobs/jar/customStatusListener-1.0-SNAPSHOT.jar:/opt/flink/lib/customStatusListener-1.0-SNAPSHOT.jar
+      - ./libs/customStatusListener-1.0-SNAPSHOT.jar:/opt/flink/lib/customStatusListener-1.0-SNAPSHOT.jar
     networks:
       - flink-network
       - data-kata-net
