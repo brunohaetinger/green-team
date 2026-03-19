@@ -17,14 +17,14 @@ import java.time.ZoneId;
  * This executes after the aggregation step and prepares the final output for each window.
  */
 public class CitySalesWindowFormatter
-    extends ProcessWindowFunction<CitySalesAccumulator, CitySalesResult, String, TimeWindow> {
+        extends ProcessWindowFunction<CitySalesAccumulator, CitySalesResult, String, TimeWindow> {
 
     @Override
     public void process(
-        String compositeKey,
-        Context context,
-        Iterable<CitySalesAccumulator> elements,
-        Collector<CitySalesResult> out
+            String compositeKey,
+            Context context,
+            Iterable<CitySalesAccumulator> elements,
+            Collector<CitySalesResult> out
     ) {
         CitySalesAccumulator acc = elements.iterator().next();
 
@@ -32,15 +32,18 @@ public class CitySalesWindowFormatter
         String[] parts = compositeKey.split("\\|", 2);
         String cityName = parts[0];
         LocalDate saleDate = LocalDate.parse(parts[1]);
+        String windowId = compositeKey + "|" + context.window().getEnd();
 
         out.collect(new CitySalesResult(
-            cityName,
-            saleDate,
-            acc.totalAmount.setScale(2, RoundingMode.HALF_UP),
-            acc.totalUnits,
-            acc.processedAt,
-            context.window().getStart(),
-            context.window().getEnd()
+                cityName,
+                saleDate,
+                acc.totalAmount.setScale(2, RoundingMode.HALF_UP),
+                acc.totalUnits,
+                acc.sourceEventCount,
+                windowId,
+                acc.processedAt,
+                context.window().getStart(),
+                context.window().getEnd()
         ));
     }
 }

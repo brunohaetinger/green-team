@@ -45,6 +45,8 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         payload.put("sale_date", element.saleDate().toEpochDay());
         payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount())));
         payload.put("total_units", element.totalUnits());
+        payload.put("source_event_count", element.sourceEventCount());
+        payload.put("window_id", element.windowId());
         payload.put("processed_at", element.processedAt().toEpochMilli());
         payload.put("window_start", element.windowStart());
         payload.put("window_end", element.windowEnd());
@@ -65,6 +67,8 @@ public class CitySalesResultSerializer implements KafkaRecordSerializationSchema
         fields.add(dateField("sale_date"));
         fields.add(decimalField("total_amount", 2));
         fields.add(requiredField("total_units", "int64"));
+        fields.add(requiredField("source_event_count", "int64"));
+        fields.add(requiredField("window_id", "string"));
         fields.add(timestampField("processed_at"));
         fields.add(timestampField("window_start"));
         fields.add(timestampField("window_end"));

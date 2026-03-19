@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 */
 public class SalesEvent {
 
+    public String eventId;
+    public String traceId;
     public int saleId;
     public int salesmanId;
     public int storeId;
@@ -21,7 +23,9 @@ public class SalesEvent {
     public int productId;
     public int quantity;
 
-    public SalesEvent(int saleId, int salesmanId, int storeId, BigDecimal amount, String saleDate, int productId, int quantity) {
+    public SalesEvent(String eventId, String traceId, int saleId, int salesmanId, int storeId, BigDecimal amount, String saleDate, int productId, int quantity) {
+        this.eventId = eventId;
+        this.traceId = traceId;
         this.saleId = saleId;
         this.salesmanId = salesmanId;
         this.storeId = storeId;

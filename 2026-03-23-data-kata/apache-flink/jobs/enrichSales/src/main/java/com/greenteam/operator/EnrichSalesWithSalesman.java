@@ -1,10 +1,10 @@
 package com.greenteam.operator;
 
-import com.greenteam.model.SalesEvent;
-import com.greenteam.model.SalesmanEvent;
-import com.greenteam.model.SaleWithSalesmanEvent;
 import com.greenteam.model.ExpiredPendingSaleEvent;
 import com.greenteam.model.ExpiredReason;
+import com.greenteam.model.SaleWithSalesmanEvent;
+import com.greenteam.model.SalesEvent;
+import com.greenteam.model.SalesmanEvent;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
@@ -17,7 +17,8 @@ import org.apache.flink.util.OutputTag;
  * Emits ExpiredPendingSaleEvent if enrichment expires.
  */
 public class EnrichSalesWithSalesman extends KeyedCoProcessFunction<Integer, SalesEvent, SalesmanEvent, SaleWithSalesmanEvent> {
-        public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG = new OutputTag<ExpiredPendingSaleEvent>("expired-sales-salesman") {};
+    public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG = new OutputTag<ExpiredPendingSaleEvent>("expired-sales-salesman") {
+    };
 
     private final long ttlMs;
     private transient ValueState<SalesEvent> pendingSaleState;
@@ -74,6 +75,8 @@ public class EnrichSalesWithSalesman extends KeyedCoProcessFunction<Integer, Sal
         if (sale == null || salesman == null) {
             ExpiredPendingSaleEvent expired = new ExpiredPendingSaleEvent();
             expired.saleId = ctx.getCurrentKey();
+            expired.eventId = sale != null ? sale.eventId : Integer.toString(ctx.getCurrentKey());
+            expired.traceId = sale != null ? sale.traceId : expired.eventId;
             expired.expiresAt = timestamp;
             expired.reason = ExpiredReason.SALESMAN_TTL_EXPIRED;
             ctx.output(EXPIRED_SALES_TAG, expired);
@@ -85,13 +88,15 @@ public class EnrichSalesWithSalesman extends KeyedCoProcessFunction<Integer, Sal
 
     private SaleWithSalesmanEvent merge(SalesEvent sale, SalesmanEvent salesman) {
         return new SaleWithSalesmanEvent(
-            sale.saleId,
-            salesman.id,
-            salesman.name,
-            sale.saleDate,
-            sale.productId,
-            sale.storeId,
-            sale.quantity
+                sale.eventId,
+                sale.traceId,
+                sale.saleId,
+                salesman.id,
+                salesman.name,
+                sale.saleDate,
+                sale.productId,
+                sale.storeId,
+                sale.quantity
         );
     }
 }

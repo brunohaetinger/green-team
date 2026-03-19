@@ -1,12 +1,11 @@
 package com.greenteam.operator;
 
+import com.greenteam.model.ExpiredPendingSaleEvent;
+import com.greenteam.model.ExpiredReason;
 import com.greenteam.model.PendingSalesBySalesman;
 import com.greenteam.model.SaleWithStoreEvent;
 import com.greenteam.model.SalesEnrichedEvent;
 import com.greenteam.model.SalesmanEvent;
-import com.greenteam.model.ExpiredPendingSaleEvent;
-import com.greenteam.model.ExpiredReason;
-import org.apache.flink.util.OutputTag;
 import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -15,17 +14,17 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
-
+import org.apache.flink.util.OutputTag;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /*
-    * This class joins the sales events that have been enriched with the store information with the salesman information
-    * The join is performed by using a keyed state that stores the salesman information
-    * When a sale event is received, we check if the corresponding salesman information
-    * is already stored in the state. If it is, we can immediately enrich the sale event with the salesman information
-*/
+ * This class joins the sales events that have been enriched with the store information with the salesman information
+ * The join is performed by using a keyed state that stores the salesman information
+ * When a sale event is received, we check if the corresponding salesman information
+ * is already stored in the state. If it is, we can immediately enrich the sale event with the salesman information
+ */
 public class JoinSalesWithSalesman extends KeyedCoProcessFunction<Integer, SaleWithStoreEvent, SalesmanEvent, SalesEnrichedEvent> {
 
     private final long ttlMs;
@@ -40,7 +39,8 @@ public class JoinSalesWithSalesman extends KeyedCoProcessFunction<Integer, SaleW
 
     // OutputTag for side output of expired sales
     public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG =
-            new OutputTag<>("expired-sales"){};
+            new OutputTag<>("expired-sales") {
+            };
 
     public JoinSalesWithSalesman(long ttlMs) {
         this.ttlMs = ttlMs;
@@ -54,8 +54,8 @@ public class JoinSalesWithSalesman extends KeyedCoProcessFunction<Integer, SaleW
     public void open(OpenContext openContext) {
         salesmanState = getRuntimeContext().getState(new ValueStateDescriptor<>("salesman-state", SalesmanEvent.class));
         pendingState = getRuntimeContext().getMapState(
-            // The MapState is keyed by the sale ID, which allows us to efficiently look up the pending sales for a given sale when we receive a salesman event.
-            new MapStateDescriptor<>("pending-sales-by-salesman", Integer.class, PendingSalesBySalesman.class)
+                // The MapState is keyed by the sale ID, which allows us to efficiently look up the pending sales for a given sale when we receive a salesman event.
+                new MapStateDescriptor<>("pending-sales-by-salesman", Integer.class, PendingSalesBySalesman.class)
         );
 
         // The pending counter is incremented whenever we add a new pending sale to the state, and decremented whenever we remove a pending sale from the state (either because it was enriched with the salesman information or because it expired).
@@ -150,17 +150,19 @@ public class JoinSalesWithSalesman extends KeyedCoProcessFunction<Integer, SaleW
     // and merges them into a single SalesEnrichedEvent that contains all the information from both events.
     private SalesEnrichedEvent merge(SaleWithStoreEvent sale, SalesmanEvent salesman) {
         return new SalesEnrichedEvent(
-            sale.salesmanId,
-            salesman.name,
-            sale.saleId,
-            sale.quantity,
-            sale.productId,
-            sale.storeId,
-            sale.cityName,
-            sale.storeName,
-            sale.saleDate,
-            sale.countryName,
-            sale.amount
+                sale.eventId,
+                sale.traceId,
+                sale.salesmanId,
+                salesman.name,
+                sale.saleId,
+                sale.quantity,
+                sale.productId,
+                sale.storeId,
+                sale.cityName,
+                sale.storeName,
+                sale.saleDate,
+                sale.countryName,
+                sale.amount
         );
     }
 }

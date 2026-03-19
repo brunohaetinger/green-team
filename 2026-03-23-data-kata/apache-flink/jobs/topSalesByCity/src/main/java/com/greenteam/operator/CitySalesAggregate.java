@@ -26,6 +26,7 @@ public class CitySalesAggregate
     public CitySalesAccumulator add(SaleEvent event, CitySalesAccumulator acc) {
         acc.totalAmount = acc.totalAmount.add(event.amount.multiply(BigDecimal.valueOf(event.quantity)));
         acc.totalUnits += event.quantity;
+        acc.sourceEventCount += 1;
         return acc;
     }
 
@@ -39,6 +40,7 @@ public class CitySalesAggregate
     public CitySalesAccumulator merge(CitySalesAccumulator left, CitySalesAccumulator right) {
         left.totalAmount = left.totalAmount.add(right.totalAmount);
         left.totalUnits  += right.totalUnits;
+        left.sourceEventCount += right.sourceEventCount;
         return left;
     }
 }

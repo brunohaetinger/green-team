@@ -3,11 +3,13 @@ package com.greenteam.model;
 import java.math.BigDecimal;
 
 /*
-    * This class represents an enriched sale event that contains all the information about a sale, including the salesman and store information. 
-    * It is the final output of the enrichment process and will be emitted to the output topic.s
-*/
+ * This class represents an enriched sale event that contains all the information about a sale, including the salesman and store information.
+ * It is the final output of the enrichment process and will be emitted to the output topic.s
+ */
 public class SalesEnrichedEvent {
 
+    public String eventId;
+    public String traceId;
     public int salesmanId;
     public String salesmanName;
     public int saleId;
@@ -21,18 +23,22 @@ public class SalesEnrichedEvent {
     public BigDecimal amount;
 
     public SalesEnrichedEvent(
-        int salesmanId,
-        String salesmanName,
-        int saleId,
-        int quantity,
-        int productId,
-        int storeId,
-        String cityName,
-        String storeName,
-        String saleDate,
-        String countryName,
-        BigDecimal amount
+            String eventId,
+            String traceId,
+            int salesmanId,
+            String salesmanName,
+            int saleId,
+            int quantity,
+            int productId,
+            int storeId,
+            String cityName,
+            String storeName,
+            String saleDate,
+            String countryName,
+            BigDecimal amount
     ) {
+        this.eventId = eventId;
+        this.traceId = traceId;
         this.salesmanId = salesmanId;
         this.salesmanName = salesmanName;
         this.saleId = saleId;

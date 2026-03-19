@@ -1,9 +1,12 @@
 package com.greenteam;
 
 import com.greenteam.config.JobConfig;
+import com.greenteam.model.EventLineageRecord;
+import com.greenteam.model.SaleEvent;
 import com.greenteam.model.TopSalesmanResult;
 import com.greenteam.operator.ParseSalesEvent;
 import com.greenteam.operator.TopSalesmanWindowFormatter;
+import com.greenteam.serde.EventLineageRecordSerializer;
 import com.greenteam.serde.TopSalesmanResultSerializer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
@@ -38,10 +41,26 @@ public class TopSalesman {
             "source: " + JobConfig.INPUT_TOPIC
         );
 
-        // --- Pipeline ---
-        DataStream<TopSalesmanResult> aggregatedStream = inputStream
+        DataStream<SaleEvent> parsedStream = inputStream
             .flatMap(new ParseSalesEvent())
-            .name("operator: parse sales-enriched")
+            .name("operator: parse sales-enriched");
+
+        DataStream<EventLineageRecord> lineageStream = parsedStream
+                .map(event -> new EventLineageRecord(
+                        event.eventId,
+                        event.traceId,
+                        event.saleId,
+                        "TopSalesman",
+                        "AGGREGATION_INPUT",
+                        JobConfig.INPUT_TOPIC,
+                        JobConfig.OUTPUT_TOPIC,
+                        event.salesmanId + "|" + event.saleDate,
+                        System.currentTimeMillis()
+                ))
+                .name("operator: top-salesman lineage audit");
+
+        // --- Pipeline ---
+        DataStream<TopSalesmanResult> aggregatedStream = parsedStream
             .keyBy(event -> event.salesmanId + "|" + event.saleDate)
             .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(JobConfig.WINDOW_MINUTES)))
             .aggregate(new com.greenteam.operator.TopSalesmanAggregate(), new com.greenteam.operator.TopSalesmanWindowFormatter())
@@ -61,7 +80,16 @@ public class TopSalesman {
             .setKafkaProducerConfig(producerConfig)
             .build();
 
+        KafkaSink<EventLineageRecord> lineageSink = KafkaSink.<EventLineageRecord>builder()
+                .setBootstrapServers(JobConfig.BOOTSTRAP_SERVERS)
+                .setRecordSerializer(new EventLineageRecordSerializer())
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(JobConfig.TRANSACTIONAL_ID_PREFIX + "lineage-")
+                .setKafkaProducerConfig(producerConfig)
+                .build();
+
         aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
+        lineageStream.sinkTo(lineageSink).name("sink: " + JobConfig.EVENT_LINEAGE_TOPIC);
 
         env.execute("topSalesman: aggregate top salesman nationwide");
     }

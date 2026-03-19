@@ -3,7 +3,7 @@ package com.greenteam.model;
 import java.math.BigDecimal;
 
 public record TopSalesmanResult(int salesmanId, String salesmanName, String saleDate, BigDecimal totalAmount,
-                                long totalUnits) {
+                                long totalUnits, long sourceEventCount, String windowId) {
 
     @Override
     public String toString() {
@@ -14,6 +14,8 @@ public record TopSalesmanResult(int salesmanId, String salesmanName, String sale
                 ", saleDate='" + saleDate + '\'' +
                 ", totalAmount=" + totalAmount +
                 ", totalUnits=" + totalUnits +
+                ", sourceEventCount=" + sourceEventCount +
+                ", windowId=" + windowId +
                 '}';
     }
 }

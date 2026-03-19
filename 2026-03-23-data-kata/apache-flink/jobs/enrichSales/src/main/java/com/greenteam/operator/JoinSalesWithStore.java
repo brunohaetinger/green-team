@@ -1,11 +1,11 @@
 package com.greenteam.operator;
 
+import com.greenteam.model.ExpiredPendingSaleEvent;
+import com.greenteam.model.ExpiredReason;
 import com.greenteam.model.PendingSalesByStore;
 import com.greenteam.model.SaleWithStoreEvent;
 import com.greenteam.model.SalesEvent;
 import com.greenteam.model.StoreEvent;
-import com.greenteam.model.ExpiredPendingSaleEvent;
-import com.greenteam.model.ExpiredReason;
 import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -14,19 +14,18 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
-
 import org.apache.flink.util.OutputTag;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /*
-    * This operator is responsible for joining the sales events with the store information. 
-    * It uses a keyed state to store the store information and a MapState to store the pending sales that are waiting for their corresponding store information. 
-    * When a new sale event is received, it checks if the corresponding store information is already stored in the state. If it is, it enriches the sale event with the store information and emits it to the output topic. 
-    * If the store information is not stored in the state, it adds the sale event to the pending state and waits for the corresponding store information to arrive. 
-    * When a new store event is received, it updates the store information in the state and checks if there are any pending sales that can be enriched with the new store information. If there are, it enriches them and emits them to the output topic.
-*/
+ * This operator is responsible for joining the sales events with the store information.
+ * It uses a keyed state to store the store information and a MapState to store the pending sales that are waiting for their corresponding store information.
+ * When a new sale event is received, it checks if the corresponding store information is already stored in the state. If it is, it enriches the sale event with the store information and emits it to the output topic.
+ * If the store information is not stored in the state, it adds the sale event to the pending state and waits for the corresponding store information to arrive.
+ * When a new store event is received, it updates the store information in the state and checks if there are any pending sales that can be enriched with the new store information. If there are, it enriches them and emits them to the output topic.
+ */
 public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEvent, StoreEvent, SaleWithStoreEvent> {
 
     private final long ttlMs;
@@ -41,7 +40,8 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
 
     // OutputTag for side output of expired sales (store TTL)
     public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG =
-            new OutputTag<>("expired-sales-store"){};
+            new OutputTag<>("expired-sales-store") {
+            };
 
     public JoinSalesWithStore(long ttlMs) {
         this.ttlMs = ttlMs;
@@ -53,7 +53,7 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
     public void open(OpenContext openContext) {
         storeState = getRuntimeContext().getState(new ValueStateDescriptor<>("store-state", StoreEvent.class));
         pendingState = getRuntimeContext().getMapState(
-            new MapStateDescriptor<>("pending-sales-by-store", Integer.class, PendingSalesByStore.class)
+                new MapStateDescriptor<>("pending-sales-by-store", Integer.class, PendingSalesByStore.class)
         );
 
         pendingCounter = getRuntimeContext().getMetricGroup().counter("pending_sales_missing_store_total");
@@ -145,16 +145,18 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
     // and merges them into a single SaleWithStoreEvent that contains all the information from both events.
     private SaleWithStoreEvent merge(SalesEvent sale, StoreEvent store) {
         return new SaleWithStoreEvent(
-            sale.salesmanId,
-            sale.saleId,
-            sale.quantity,
-            sale.productId,
-            sale.storeId,
-            store.city,
-            store.name,
-            sale.saleDate,
-            store.country,
-            sale.amount
+                sale.eventId,
+                sale.traceId,
+                sale.salesmanId,
+                sale.saleId,
+                sale.quantity,
+                sale.productId,
+                sale.storeId,
+                store.city,
+                store.name,
+                sale.saleDate,
+                store.country,
+                sale.amount
         );
     }
 }

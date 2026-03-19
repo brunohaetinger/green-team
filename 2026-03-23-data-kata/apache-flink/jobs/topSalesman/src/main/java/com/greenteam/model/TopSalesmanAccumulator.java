@@ -8,4 +8,5 @@ public class TopSalesmanAccumulator {
     public String saleDate;
     public BigDecimal totalAmount = BigDecimal.ZERO;
     public long totalUnits = 0;
+    public long sourceEventCount = 0;
 }

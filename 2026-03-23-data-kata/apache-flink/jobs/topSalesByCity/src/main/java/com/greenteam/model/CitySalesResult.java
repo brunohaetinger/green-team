@@ -11,7 +11,8 @@ import java.time.LocalDate;
  * or further analysis.
  */
 public record CitySalesResult(String cityName, LocalDate saleDate, BigDecimal totalAmount, long totalUnits,
-                              Instant processedAt, long windowStart, long windowEnd) {
+                              long sourceEventCount, String windowId, Instant processedAt, long windowStart,
+                              long windowEnd) {
 
     @Override
     public String toString() {
@@ -21,6 +22,8 @@ public record CitySalesResult(String cityName, LocalDate saleDate, BigDecimal to
                 ", totalAmount=" + totalAmount +
                 ", totalUnits=" + totalUnits +
                 ", windowEnd='" + windowEnd + '\'' +
+                ", sourceEventCount=" + sourceEventCount +
+                ", windowId='" + windowId + '\'' +
                 '}';
     }
 }

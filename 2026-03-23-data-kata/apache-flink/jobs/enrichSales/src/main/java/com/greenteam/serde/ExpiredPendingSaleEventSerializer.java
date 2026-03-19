@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.greenteam.model.ExpiredPendingSaleEvent;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.kafka.clients.producer.ProducerRecord;
-
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -27,6 +26,8 @@ public class ExpiredPendingSaleEventSerializer implements KafkaRecordSerializati
 
     private String buildJson(ExpiredPendingSaleEvent element) {
         ObjectNode root = OBJECT_MAPPER.createObjectNode();
+        root.put("event_id", element.eventId);
+        root.put("trace_id", element.traceId);
         root.put("sale_id", element.saleId);
         root.put("salesman_id", element.salesmanId);
         root.put("sale_date", element.saleDate);

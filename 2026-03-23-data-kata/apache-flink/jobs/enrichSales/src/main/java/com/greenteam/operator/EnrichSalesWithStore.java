@@ -1,10 +1,10 @@
 package com.greenteam.operator;
 
-import com.greenteam.model.SalesEvent;
-import com.greenteam.model.StoreEvent;
-import com.greenteam.model.SaleWithStoreEvent;
 import com.greenteam.model.ExpiredPendingSaleEvent;
 import com.greenteam.model.ExpiredReason;
+import com.greenteam.model.SaleWithStoreEvent;
+import com.greenteam.model.SalesEvent;
+import com.greenteam.model.StoreEvent;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
@@ -17,7 +17,8 @@ import org.apache.flink.util.OutputTag;
  * Emits ExpiredPendingSaleEvent if enrichment expires.
  */
 public class EnrichSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEvent, StoreEvent, SaleWithStoreEvent> {
-        public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG = new OutputTag<ExpiredPendingSaleEvent>("expired-sales-store") {};
+    public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG = new OutputTag<ExpiredPendingSaleEvent>("expired-sales-store") {
+    };
 
     private final long ttlMs;
     private transient ValueState<SalesEvent> pendingSaleState;
@@ -74,6 +75,8 @@ public class EnrichSalesWithStore extends KeyedCoProcessFunction<Integer, SalesE
         if (sale == null || store == null) {
             ExpiredPendingSaleEvent expired = new ExpiredPendingSaleEvent();
             expired.saleId = ctx.getCurrentKey();
+            expired.eventId = sale != null ? sale.eventId : Integer.toString(ctx.getCurrentKey());
+            expired.traceId = sale != null ? sale.traceId : expired.eventId;
             expired.expiresAt = timestamp;
             expired.reason = ExpiredReason.STORE_TTL_EXPIRED;
             ctx.output(EXPIRED_SALES_TAG, expired);
@@ -85,16 +88,18 @@ public class EnrichSalesWithStore extends KeyedCoProcessFunction<Integer, SalesE
 
     private SaleWithStoreEvent merge(SalesEvent sale, StoreEvent store) {
         return new SaleWithStoreEvent(
-            sale.salesmanId,
-            sale.saleId,
-            sale.quantity,
-            sale.productId,
-            sale.storeId,
-            store.city,
-            store.name,
-            sale.saleDate,
-            store.country,
-            sale.amount
+                sale.eventId,
+                sale.traceId,
+                sale.salesmanId,
+                sale.saleId,
+                sale.quantity,
+                sale.productId,
+                sale.storeId,
+                store.city,
+                store.name,
+                sale.saleDate,
+                store.country,
+                sale.amount
         );
     }
 }

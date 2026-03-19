@@ -3,11 +3,12 @@ package com.greenteam.util;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /*
-    * This class contains utility methods for working with JSON data in the enrichment job.
-*/
+ * This class contains utility methods for working with JSON data in the enrichment job.
+ */
 public final class JsonUtils {
 
-    private JsonUtils() {}
+    private JsonUtils() {
+    }
 
     // The resolvePayload method is responsible for extracting the relevant JSON node from the raw JSON message that is consumed from Kafka.
     // The raw JSON messages are expected to have a structure that may contain a "payload" field, which in turn may contain an "after" field that contains the actual data we want to extract. 
@@ -40,6 +41,15 @@ public final class JsonUtils {
             throw new IllegalArgumentException("Missing required field: " + fieldName);
         }
         return value.asText();
+    }
+
+    public static String optionalText(JsonNode node, String fieldName) {
+        JsonNode value = node.get(fieldName);
+        if (value == null || value.isNull()) {
+            return null;
+        }
+        String text = value.asText();
+        return text == null || text.isBlank() ? null : text;
     }
 
     // The requiredInt method is a helper method that extracts a required integer field from a JSON node.

@@ -41,6 +41,8 @@ public class TopSalesmanResultSerializer implements KafkaRecordSerializationSche
         payload.put("sale_date", toKafkaDate(element.saleDate()));
         payload.put("total_amount", Base64.getEncoder().encodeToString(Decimal.fromLogical(DECIMAL_SCHEMA, element.totalAmount())));
         payload.put("total_units", element.totalUnits());
+        payload.put("source_event_count", element.sourceEventCount());
+        payload.put("window_id", element.windowId());
 
         root.set("payload", payload);
         return root.toString();
@@ -58,6 +60,8 @@ public class TopSalesmanResultSerializer implements KafkaRecordSerializationSche
         fields.add(dateField("sale_date"));
         fields.add(decimalField("total_amount", 2));
         fields.add(requiredField("total_units", "int64"));
+        fields.add(requiredField("source_event_count", "int64"));
+        fields.add(requiredField("window_id", "string"));
         schema.set("fields", fields);
         return schema;
     }

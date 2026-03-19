@@ -10,6 +10,7 @@ import com.greenteam.operator.JoinSalesWithStore;
 import com.greenteam.operator.ParseSalesEvent;
 import com.greenteam.operator.ParseSalesmanEvent;
 import com.greenteam.operator.ParseStoreEvent;
+import com.greenteam.serde.EventLineageRecordSerializer;
 import com.greenteam.serde.SalesEnrichedSerializer;
 import com.greenteam.serde.ExpiredPendingSaleEventSerializer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -149,10 +150,50 @@ public class EnrichSales {
             .setKafkaProducerConfig(producerConfig)
             .build();
 
+        KafkaSink<EventLineageRecord> eventLineageSink = KafkaSink.<EventLineageRecord>builder()
+                .setBootstrapServers(JobConfig.BOOTSTRAP_SERVERS)
+                .setRecordSerializer(new EventLineageRecordSerializer())
+                .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+                .setTransactionalIdPrefix(JobConfig.TRANSACTIONAL_ID_PREFIX + "lineage-")
+                .setKafkaProducerConfig(producerConfig)
+                .build();
+
+        DataStream<EventLineageRecord> enrichedLineageStream = enrichedStream
+                .map(event -> new EventLineageRecord(
+                        event.eventId,
+                        event.traceId,
+                        event.saleId,
+                        "EnrichSales",
+                        "ENRICHED_EMITTED",
+                        JobConfig.SALES_TOPIC,
+                        JobConfig.OUTPUT_TOPIC,
+                        Integer.toString(event.saleId),
+                        System.currentTimeMillis()
+                ))
+                .name("operator: enrich lineage audit");
+
+        DataStream<EventLineageRecord> expiredLineageStream = expiredSalesStream
+                .map(event -> new EventLineageRecord(
+                        event.eventId,
+                        event.traceId,
+                        event.saleId,
+                        "EnrichSales",
+                        "EXPIRED_EMITTED",
+                        JobConfig.SALES_TOPIC,
+                        "sales-expired",
+                        Integer.toString(event.saleId),
+                        System.currentTimeMillis()
+                ))
+                .name("operator: expired lineage audit");
+
         // We connect the enriched sales stream to the Kafka sink to emit the fully enriched sale events to the output topic in Kafka.
         enrichedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
         expiredSalesStream.sinkTo(expiredSalesSink).name("sink: sales-expired");
+        //
+        enrichedLineageStream.union(expiredLineageStream)
+                .sinkTo(eventLineageSink)
+                .name("sink: " + JobConfig.EVENT_LINEAGE_TOPIC);
 
         env.execute("enrich sales from topics");
     }

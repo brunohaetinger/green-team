@@ -7,6 +7,7 @@ public final class JobConfig {
     public static final String STORES_TOPIC = "stores";
     public static final String SALESMANS_TOPIC = "salesmans";
     public static final String OUTPUT_TOPIC = "sales-enriched";
+    public static final String EVENT_LINEAGE_TOPIC = "event-lineage";
 
     // consumer group IDs are used to identify the consumer group that each source operator belongs to.
     // A consumer group is a group of consumers that work together to consume messages from a topic. 

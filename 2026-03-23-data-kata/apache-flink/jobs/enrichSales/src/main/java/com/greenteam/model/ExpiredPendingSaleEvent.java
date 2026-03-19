@@ -8,6 +8,8 @@ import java.math.BigDecimal;
  * Can be used to persist in Kafka and reprocess later.
  */
 public class ExpiredPendingSaleEvent implements Serializable {
+    public String eventId;
+    public String traceId;
     public int saleId;
     public int salesmanId;
     public String salesmanName;
@@ -22,10 +24,13 @@ public class ExpiredPendingSaleEvent implements Serializable {
     public long expiresAt;
     public ExpiredReason reason;
 
-    public ExpiredPendingSaleEvent() {}
+    public ExpiredPendingSaleEvent() {
+    }
 
     public ExpiredPendingSaleEvent(
             int saleId,
+            String eventId,
+            String traceId,
             int salesmanId,
             String salesmanName,
             String saleDate,
@@ -40,6 +45,8 @@ public class ExpiredPendingSaleEvent implements Serializable {
             ExpiredReason reason
     ) {
         this.saleId = saleId;
+        this.eventId = eventId;
+        this.traceId = traceId;
         this.salesmanId = salesmanId;
         this.salesmanName = salesmanName;
         this.saleDate = saleDate;
@@ -62,6 +69,8 @@ public class ExpiredPendingSaleEvent implements Serializable {
         }
         return new ExpiredPendingSaleEvent(
                 sale.saleId,
+                sale.eventId,
+                sale.traceId,
                 sale.salesmanId,
                 salesmanName,
                 sale.saleDate,
@@ -89,6 +98,8 @@ public class ExpiredPendingSaleEvent implements Serializable {
         }
         return new ExpiredPendingSaleEvent(
                 sale.saleId,
+                sale.eventId,
+                sale.traceId,
                 sale.salesmanId,
                 null,
                 sale.saleDate,

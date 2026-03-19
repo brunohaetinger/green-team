@@ -1,10 +1,10 @@
 package com.greenteam.operator;
 
-import com.greenteam.model.SaleWithStoreEvent;
-import com.greenteam.model.SaleWithSalesmanEvent;
-import com.greenteam.model.SalesEnrichedEvent;
 import com.greenteam.model.ExpiredPendingSaleEvent;
 import com.greenteam.model.ExpiredReason;
+import com.greenteam.model.SaleWithSalesmanEvent;
+import com.greenteam.model.SaleWithStoreEvent;
+import com.greenteam.model.SalesEnrichedEvent;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
@@ -17,7 +17,8 @@ import org.apache.flink.util.OutputTag;
  * Emits ExpiredPendingSaleEvent if any enrichment expires.
  */
 public class MergeEnrichments extends KeyedCoProcessFunction<Integer, SaleWithStoreEvent, SaleWithSalesmanEvent, SalesEnrichedEvent> {
-                public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG = new OutputTag<>("expired-sales-merge") {};
+    public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG = new OutputTag<>("expired-sales-merge") {
+    };
 
     private final long ttlMs;
     private transient ValueState<SaleWithStoreEvent> storeState;
@@ -74,6 +75,8 @@ public class MergeEnrichments extends KeyedCoProcessFunction<Integer, SaleWithSt
         if (storeEnriched == null || salesmanEnriched == null) {
             ExpiredPendingSaleEvent expired = new ExpiredPendingSaleEvent();
             expired.saleId = ctx.getCurrentKey();
+            expired.eventId = storeEnriched != null ? storeEnriched.eventId : salesmanEnriched != null ? salesmanEnriched.eventId : Integer.toString(ctx.getCurrentKey());
+            expired.traceId = storeEnriched != null ? storeEnriched.traceId : salesmanEnriched != null ? salesmanEnriched.traceId : expired.eventId;
             expired.expiresAt = timestamp;
             expired.reason = ExpiredReason.MERGE_TTL_EXPIRED;
             ctx.output(EXPIRED_SALES_TAG, expired);
@@ -85,17 +88,19 @@ public class MergeEnrichments extends KeyedCoProcessFunction<Integer, SaleWithSt
 
     private SalesEnrichedEvent merge(SaleWithStoreEvent storeEnriched, SaleWithSalesmanEvent salesmanEnriched) {
         return new SalesEnrichedEvent(
-            salesmanEnriched.salesmanId,
-            salesmanEnriched.salesmanName,
-            storeEnriched.saleId,
-            storeEnriched.quantity,
-            storeEnriched.productId,
-            storeEnriched.storeId,
-            storeEnriched.cityName,
-            storeEnriched.storeName,
-            storeEnriched.saleDate,
-            storeEnriched.countryName,
-            storeEnriched.amount
+                storeEnriched.eventId,
+                storeEnriched.traceId,
+                salesmanEnriched.salesmanId,
+                salesmanEnriched.salesmanName,
+                storeEnriched.saleId,
+                storeEnriched.quantity,
+                storeEnriched.productId,
+                storeEnriched.storeId,
+                storeEnriched.cityName,
+                storeEnriched.storeName,
+                storeEnriched.saleDate,
+                storeEnriched.countryName,
+                storeEnriched.amount
         );
     }
 }

@@ -21,12 +21,15 @@ public class TopSalesmanWindowFormatter
     ) {
         TopSalesmanAccumulator acc = elements.iterator().next();
         if (acc.totalUnits > 0) {
+            String windowId = key + "|" + context.window().getEnd();
             out.collect(new TopSalesmanResult(
                 acc.salesmanId,
                 acc.salesmanName,
                 acc.saleDate,
                 acc.totalAmount.setScale(2, RoundingMode.HALF_UP),
-                acc.totalUnits
+                acc.totalUnits,
+                acc.sourceEventCount,
+                windowId
             ));
         }
     }

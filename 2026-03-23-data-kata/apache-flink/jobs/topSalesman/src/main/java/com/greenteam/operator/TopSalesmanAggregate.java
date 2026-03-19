@@ -25,6 +25,7 @@ public class TopSalesmanAggregate implements AggregateFunction<SaleEvent, TopSal
         }
         acc.totalAmount = acc.totalAmount.add(event.amount.multiply(BigDecimal.valueOf(event.quantity)));
         acc.totalUnits += event.quantity;
+        acc.sourceEventCount += 1;
         return acc;
     }
 
@@ -46,6 +47,7 @@ public class TopSalesmanAggregate implements AggregateFunction<SaleEvent, TopSal
         if (left.salesmanId < 0) {
             left.salesmanId = right.salesmanId;
         }
+        left.sourceEventCount += right.sourceEventCount;
         return left;
     }
 }
