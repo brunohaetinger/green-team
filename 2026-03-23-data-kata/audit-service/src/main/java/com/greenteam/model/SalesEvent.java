@@ -6,8 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SalesEvent {
 
-    @JsonProperty("salrty(\"salesman_id\")\n" +
-            "    private int salesmanId;esman_id")
+    @JsonProperty("salesman_id")
     private int salesmanId;
 
     @JsonProperty("salesman_name")
