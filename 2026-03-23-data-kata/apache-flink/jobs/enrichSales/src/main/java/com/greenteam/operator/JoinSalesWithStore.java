@@ -4,6 +4,8 @@ import com.greenteam.model.PendingSalesByStore;
 import com.greenteam.model.SaleWithStoreEvent;
 import com.greenteam.model.SalesEvent;
 import com.greenteam.model.StoreEvent;
+import com.greenteam.model.ExpiredPendingSaleEvent;
+import com.greenteam.model.ExpiredReason;
 import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -13,6 +15,7 @@ import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 
+import org.apache.flink.util.OutputTag;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,6 +38,10 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
     private transient Counter lateJoinCounter;
     private transient Counter ttlExpiredCounter;
     private transient AtomicLong pendingGaugeValue;
+
+    // OutputTag for side output of expired sales (store TTL)
+    public static final OutputTag<ExpiredPendingSaleEvent> EXPIRED_SALES_TAG =
+            new OutputTag<>("expired-sales-store"){};
 
     public JoinSalesWithStore(long ttlMs) {
         this.ttlMs = ttlMs;
@@ -70,7 +77,7 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         }
 
         long expiresAt = ctx.timerService().currentProcessingTime() + ttlMs;
-        pendingState.put(sale.saleId, new PendingSalesByStore(sale, expiresAt));
+        pendingState.put(sale.saleId, new PendingSalesByStore(sale, expiresAt, null));
         ctx.timerService().registerProcessingTimeTimer(expiresAt);
         pendingCounter.inc();
         pendingGaugeValue.incrementAndGet();
@@ -93,6 +100,10 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
         while (iterator.hasNext()) {
             Map.Entry<Integer, PendingSalesByStore> entry = iterator.next();
             PendingSalesByStore pending = entry.getValue();
+
+            if (pending.sale.storeId == store.id) {
+                pending.lastKnownStore = store;
+            }
 
             if (pending.expiresAt <= now) {
                 iterator.remove();
@@ -121,6 +132,8 @@ public class JoinSalesWithStore extends KeyedCoProcessFunction<Integer, SalesEve
             Map.Entry<Integer, PendingSalesByStore> entry = iterator.next();
             PendingSalesByStore pending = entry.getValue();
             if (pending.expiresAt <= timestamp) {
+                // Emit expired event to side output
+                ctx.output(EXPIRED_SALES_TAG, ExpiredPendingSaleEvent.fromPending(pending, ExpiredReason.STORE_TTL_EXPIRED));
                 iterator.remove();
                 pendingGaugeValue.decrementAndGet();
                 ttlExpiredCounter.inc();

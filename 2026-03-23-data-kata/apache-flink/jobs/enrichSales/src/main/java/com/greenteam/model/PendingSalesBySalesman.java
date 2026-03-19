@@ -12,9 +12,11 @@ public class PendingSalesBySalesman {
 
     public SaleWithStoreEvent sale;
     public long expiresAt;
+    public SalesmanEvent lastKnownSalesman;
 
-    public PendingSalesBySalesman(SaleWithStoreEvent sale, long expiresAt) {
+    public PendingSalesBySalesman(SaleWithStoreEvent sale, long expiresAt, SalesmanEvent lastKnownSalesman) {
         this.sale = sale;
         this.expiresAt = expiresAt;
+        this.lastKnownSalesman = lastKnownSalesman;
     }
 }

@@ -47,6 +47,7 @@ services:
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic sales-enriched --partitions 1 --replication-factor 1
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic top-sales --partitions 1 --replication-factor 1
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic top-salesman --partitions 1 --replication-factor 1
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic sales-expired --partitions 1 --replication-factor 1
       "
   # kafka-ui:
   #   image: provectuslabs/kafka-ui:latest

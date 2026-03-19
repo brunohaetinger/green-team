@@ -8,6 +8,8 @@ import org.apache.flink.util.Collector;
 
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 /**
  * ProcessWindowFunction to format the aggregated city sales data into a CitySalesResult.
@@ -29,15 +31,16 @@ public class CitySalesWindowFormatter
         // compositeKey format: "cityName|saleDate"
         String[] parts = compositeKey.split("\\|", 2);
         String cityName = parts[0];
-        String saleDate = parts[1];
+        LocalDate saleDate = LocalDate.parse(parts[1]);
 
         out.collect(new CitySalesResult(
             cityName,
             saleDate,
             acc.totalAmount.setScale(2, RoundingMode.HALF_UP),
             acc.totalUnits,
-            Instant.now().toString(),
-            Instant.ofEpochMilli(context.window().getEnd()).toString()
+            acc.processedAt,
+            context.window().getStart(),
+            context.window().getEnd()
         ));
     }
 }
