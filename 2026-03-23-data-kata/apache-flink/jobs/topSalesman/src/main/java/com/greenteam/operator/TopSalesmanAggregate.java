@@ -1,19 +1,19 @@
 package com.greenteam.operator;
 
-import com.greenteam.model.SaleEvent;
+import com.greenteam.model.SaleEnriched;
 import com.greenteam.model.TopSalesmanAccumulator;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
 import java.math.BigDecimal;
 
-public class TopSalesmanAggregate implements AggregateFunction<SaleEvent, TopSalesmanAccumulator, TopSalesmanAccumulator> {
+public class TopSalesmanAggregate implements AggregateFunction<SaleEnriched, TopSalesmanAccumulator, TopSalesmanAccumulator> {
     @Override
     public TopSalesmanAccumulator createAccumulator() {
         return new TopSalesmanAccumulator();
     }
 
     @Override
-    public TopSalesmanAccumulator add(SaleEvent event, TopSalesmanAccumulator acc) {
+    public TopSalesmanAccumulator add(SaleEnriched event, TopSalesmanAccumulator acc) {
         if (acc.salesmanId < 0) {
             acc.salesmanId = event.salesmanId;
         }
