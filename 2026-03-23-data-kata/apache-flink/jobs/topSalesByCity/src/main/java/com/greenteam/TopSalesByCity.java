@@ -2,6 +2,7 @@ package com.greenteam;
 
 import com.greenteam.config.JobConfig;
 import com.greenteam.model.CitySalesResult;
+import com.greenteam.openlineage.OpenLineageIntegration;
 import com.greenteam.operator.CitySalesAggregate;
 import com.greenteam.operator.CitySalesWindowFormatter;
 import com.greenteam.operator.ParseSalesEvent;
@@ -19,9 +20,17 @@ import java.time.Duration;
 import java.util.Properties;
 
 public class TopSalesByCity {
-    private static final String JOB_NAME = "top sales by city";
+    private static final String JOB_NAME = "top-sales-by-city";
+    private static final String JOB_NAMESPACE = "green-team-data-kata";
 
     public static void main(String[] args) throws Exception {
+
+        OpenLineageIntegration lineage = new OpenLineageIntegration(
+            JOB_NAME,
+            JOB_NAMESPACE,
+            "http://marquez-api:4000/api/v1/lineage",
+            JobConfig.BOOTSTRAP_SERVERS
+        );
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
@@ -65,6 +74,17 @@ public class TopSalesByCity {
 
         aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
-        env.execute(JOB_NAME);
+        // Emite o evento OpenLineage de Kafka para Kafka logo antes de iniciar o job
+        lineage.emitKafkaToKafkaEvent(
+            JobConfig.INPUT_TOPIC,
+            JobConfig.OUTPUT_TOPIC,
+            io.openlineage.client.OpenLineage.RunEvent.EventType.START
+        );
+
+        try {
+            env.execute(JOB_NAME);
+        } finally {
+            lineage.close();
+        }
     }
 }
