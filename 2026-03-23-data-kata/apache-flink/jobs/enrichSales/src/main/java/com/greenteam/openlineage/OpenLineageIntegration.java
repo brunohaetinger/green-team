@@ -42,16 +42,16 @@ public class OpenLineageIntegration {
 
     public void emitKafkaToKafkaEvent(OpenLineage.RunEvent.EventType eventType) {
         logger.info("Emitting OpenLineage {} event for run ID: {}", eventType, jobId);
-        OpenLineage.JobTypeJobFacet jobTypeFacet = ol.newJobTypeJobFacet("STREAMING", "FLINK", "CUSTOM_FLINK_JOB");
+		OpenLineage.JobTypeJobFacet jobTypeFacet = ol.newJobTypeJobFacet("STREAMING", "FLINK", "JOIN_FLINK_JOB");
 
-        java.util.List<OpenLineage.InputDataset> inputDatasets = new java.util.ArrayList<>();
-        for (String topic : List.of(JobConfig.SALES_TOPIC, JobConfig.SALESMANS_TOPIC, JobConfig.STORES_TOPIC)) {
-            inputDatasets.add((OpenLineage.InputDataset) buildKafkaDatasetInput(topic));
-        }
-        java.util.List<OpenLineage.OutputDataset> outputDatasets = new java.util.ArrayList<>();
-        for (String topic : List.of(JobConfig.OUTPUT_TOPIC, "sales-expired")) {
-            outputDatasets.add((OpenLineage.OutputDataset) buildKafkaDatasetOutput(topic));
-        }
+		java.util.List<OpenLineage.InputDataset> inputDatasets = new java.util.ArrayList<>();
+		for (String topic : List.of(JobConfig.SALES_TOPIC, JobConfig.SALESMANS_TOPIC, JobConfig.STORES_TOPIC)) {
+			inputDatasets.add((OpenLineage.InputDataset) buildKafkaDatasetInput(topic));
+		}
+		java.util.List<OpenLineage.OutputDataset> outputDatasets = new java.util.ArrayList<>();
+		for (String topic : List.of(JobConfig.OUTPUT_TOPIC, "sales-expired")) {
+			outputDatasets.add((OpenLineage.OutputDataset) buildKafkaDatasetOutput(topic));
+		}
 
         OpenLineage.RunEvent event = ol.newRunEventBuilder()
                 .eventTime(ZonedDateTime.now())
@@ -78,6 +78,7 @@ public class OpenLineageIntegration {
     private OpenLineage.Dataset buildKafkaDatasetInput(String topic) {
         OpenLineage.DatasetFacetsBuilder facetsBuilder = ol.newDatasetFacetsBuilder()
                 .dataSource(ol.newDatasourceDatasetFacet("kafka", URI.create(kafkaNamespace)))
+                .datasetType(ol.newDatasetTypeDatasetFacet("STREAM", "STREAM"))
                 .schema(ol.newSchemaDatasetFacet(getInputSchemaFields(topic)));
 
         return ol.newInputDatasetBuilder()
@@ -90,6 +91,7 @@ public class OpenLineageIntegration {
     private OpenLineage.Dataset buildKafkaDatasetOutput(String topic) {
         OpenLineage.DatasetFacetsBuilder facetsBuilder = ol.newDatasetFacetsBuilder()
                 .dataSource(ol.newDatasourceDatasetFacet("kafka", URI.create(kafkaNamespace)))
+                .datasetType(ol.newDatasetTypeDatasetFacet("STREAM", "STREAM"))
                 .schema(ol.newSchemaDatasetFacet(getOutputSchemaFields(topic)));
 
         return ol.newOutputDatasetBuilder()
