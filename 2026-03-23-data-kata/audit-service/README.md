@@ -133,12 +133,12 @@ audit-service/
 
 ## S3 Output Structure
 
-Events are saved as CSV files organized by date, country, city, and store:
+Events are saved as CSV files organized by date, country, city, and sale ID:
 
 ```
 s3://{bucket}/
 └── {date}/
     └── {country}/
         └── {city}/
-            └── {store}.csv
+            └── {sale_id}.csv
 ```

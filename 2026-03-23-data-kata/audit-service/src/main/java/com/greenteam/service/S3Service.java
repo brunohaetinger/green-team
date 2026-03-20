@@ -76,9 +76,9 @@ public class S3Service {
         String dateOnly = extractDateOnly(event.getSaleDate());
         String countryName = sanitizePathComponent(event.getCountryName());
         String cityName = sanitizePathComponent(event.getCityName());
-        String storeName = sanitizePathComponent(event.getStoreName());
+        int saleId = event.getSaleId();
 
-        return String.format("%s/%s/%s/%s.csv", dateOnly, countryName, cityName, storeName);
+        return String.format("%s/%s/%s/%d.csv", dateOnly, countryName, cityName, saleId);
     }
 
     private String extractDateOnly(String saleDate) {

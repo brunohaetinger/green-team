@@ -68,7 +68,7 @@ class S3ServiceTest {
 
         PutObjectRequest capturedRequest = requestCaptor.getValue();
         assertEquals("test-bucket", capturedRequest.bucket());
-        assertEquals("2024-01-15/USA/New York/Main Store.csv", capturedRequest.key());
+        assertEquals("2024-01-15/USA/New York/100.csv", capturedRequest.key());
         assertEquals("text/csv", capturedRequest.contentType());
     }
 
@@ -108,7 +108,7 @@ class S3ServiceTest {
         ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
         verify(s3Client).putObject(requestCaptor.capture(), any(RequestBody.class));
 
-        assertEquals("2024-03-20/Brazil/Sao Paulo/Central.csv", requestCaptor.getValue().key());
+        assertEquals("2024-03-20/Brazil/Sao Paulo/100.csv", requestCaptor.getValue().key());
     }
 
     @Test
@@ -132,11 +132,11 @@ class S3ServiceTest {
         event.setSaleDate("2024-06-15T23:59:59");
         event.setCountryName("France");
         event.setCityName("Paris");
-        event.setStoreName("Eiffel");
+        event.setSaleId(999);
 
         String key = (String) buildKeyMethod.invoke(s3Service, event);
 
-        assertEquals("2024-06-15/France/Paris/Eiffel.csv", key);
+        assertEquals("2024-06-15/France/Paris/999.csv", key);
     }
 
     @Test
