@@ -14,6 +14,12 @@ import java.util.Collections;
 import java.util.UUID;
 
 public class OpenLineageIntegration {
+    /**
+     * Enum to represent the type of Kafka dataset (input or output).
+     */
+    private enum KafkaDatasetType {
+        SALES_ENRICHED, TOP_SALESMAN
+    }
     private static final Logger logger = LoggerFactory.getLogger(OpenLineageIntegration.class);
 
     private final OpenLineage ol;
@@ -40,8 +46,8 @@ public class OpenLineageIntegration {
         logger.info("Emitting OpenLineage {} event for run ID: {}", eventType, jobId);
         OpenLineage.JobTypeJobFacet jobTypeFacet = ol.newJobTypeJobFacet("STREAMING", "FLINK", "CUSTOM_FLINK_JOB");
 
-        OpenLineage.InputDataset inputDataset = (OpenLineage.InputDataset) buildKafkaDataset(inputTopic, true);
-        OpenLineage.OutputDataset outputDataset = (OpenLineage.OutputDataset) buildKafkaDataset(outputTopic, false);
+        OpenLineage.InputDataset inputDataset = (OpenLineage.InputDataset) buildKafkaDataset(inputTopic, KafkaDatasetType.SALES_ENRICHED);
+        OpenLineage.OutputDataset outputDataset = (OpenLineage.OutputDataset) buildKafkaDataset(outputTopic, KafkaDatasetType.TOP_SALESMAN);
 
         OpenLineage.RunEvent event = ol.newRunEventBuilder()
                 .eventTime(ZonedDateTime.now())
@@ -55,7 +61,7 @@ public class OpenLineageIntegration {
                 .inputs(Collections.singletonList(inputDataset))
                 .outputs(Collections.singletonList(outputDataset))
                 .build();
-        // Log do JSON do evento
+
         try {
             ObjectMapper mapper = new ObjectMapper();
             logger.info("OpenLineage event JSON: {}", mapper.writeValueAsString(event));
@@ -65,49 +71,61 @@ public class OpenLineageIntegration {
         transport.emit(event);
     }
 
-    private OpenLineage.Dataset buildKafkaDataset(String topic, boolean isInput) {
-        // Adiciona o facet de schema conforme o tipo do dataset
+    /**
+     * Overloaded method to build a Kafka dataset using the KafkaDatasetType enum.
+     */
+    private OpenLineage.Dataset buildKafkaDataset(String topic, KafkaDatasetType type) {
         OpenLineage.DatasetFacetsBuilder facetsBuilder = ol.newDatasetFacetsBuilder()
-                .dataSource(ol.newDatasourceDatasetFacet("kafka", URI.create(kafkaNamespace)));
+                .dataSource(ol.newDatasourceDatasetFacet("kafka", URI.create(kafkaNamespace)))
+                .schema(ol.newSchemaDatasetFacet(getSchemaFields(type)));
 
-        // Schema facet
-        if (isInput) {
-            // SaleEvent schema
-            facetsBuilder.schema(
-                    ol.newSchemaDatasetFacet(
-                            java.util.List.of(
-                                    ol.newSchemaDatasetFacetFields("cityName", "STRING", null, 1L, null),
-                                    ol.newSchemaDatasetFacetFields("saleDate", "DATE", null, 2L, null),
-                                    ol.newSchemaDatasetFacetFields("quantity", "INT", null, 3L, null),
-                                    ol.newSchemaDatasetFacetFields("amount", "DECIMAL", null, 4L, null)
-                            )
-                    )
-            );
-            return ol.newInputDatasetBuilder()
-                    .namespace(jobNamespace)
-                    .name(topic)
-                    .facets(facetsBuilder.build())
-                    .build();
-        } else {
-            // CitySalesResult schema
-            facetsBuilder.schema(
-                    ol.newSchemaDatasetFacet(
-                            java.util.List.of(
-                                    ol.newSchemaDatasetFacetFields("cityName", "STRING", null, 1L, null),
-                                    ol.newSchemaDatasetFacetFields("saleDate", "DATE", null, 2L, null),
-                                    ol.newSchemaDatasetFacetFields("totalAmount", "DECIMAL", null, 3L, null),
-                                    ol.newSchemaDatasetFacetFields("totalUnits", "LONG", null, 4L, null),
-                                    ol.newSchemaDatasetFacetFields("processedAt", "TIMESTAMP", null, 5L, null),
-                                    ol.newSchemaDatasetFacetFields("windowStart", "LONG", null, 6L, null),
-                                    ol.newSchemaDatasetFacetFields("windowEnd", "LONG", null, 7L, null)
-                            )
-                    )
-            );
-            return ol.newOutputDatasetBuilder()
-                    .namespace(jobNamespace)
-                    .name(topic)
-                    .facets(facetsBuilder.build())
-                    .build();
+        switch (type) {
+            case SALES_ENRICHED:
+                return ol.newInputDatasetBuilder()
+                        .namespace(jobNamespace)
+                        .name(topic)
+                        .facets(facetsBuilder.build())
+                        .build();
+            case TOP_SALESMAN:
+                return ol.newOutputDatasetBuilder()
+                        .namespace(jobNamespace)
+                        .name(topic)
+                        .facets(facetsBuilder.build())
+                        .build();
+            default:
+                throw new IllegalArgumentException("Unknown KafkaDatasetType: " + type);
+        }
+    }
+
+    /**
+     * Returns the schema fields for the given dataset type.
+     */
+    private java.util.List<OpenLineage.SchemaDatasetFacetFields> getSchemaFields(KafkaDatasetType type) {
+        switch (type) {
+            case SALES_ENRICHED:
+                return java.util.List.of(
+                        ol.newSchemaDatasetFacetFields("salesman_id", "INT", null, 1L, null),
+                        ol.newSchemaDatasetFacetFields("salesman_name", "STRING", null, 2L, null),
+                        ol.newSchemaDatasetFacetFields("sale_id", "INT", null, 3L, null),
+                        ol.newSchemaDatasetFacetFields("quantity", "INT", null, 4L, null),
+                        ol.newSchemaDatasetFacetFields("product_id", "INT", null, 5L, null),
+                        ol.newSchemaDatasetFacetFields("store_id", "INT", null, 6L, null),
+                        ol.newSchemaDatasetFacetFields("city_name", "STRING", null, 7L, null),
+                        ol.newSchemaDatasetFacetFields("store_name", "STRING", null, 8L, null),
+                        ol.newSchemaDatasetFacetFields("sale_date", "STRING", null, 9L, null),
+                        ol.newSchemaDatasetFacetFields("country_name", "STRING", null, 10L, null),
+                        ol.newSchemaDatasetFacetFields("amount", "DECIMAL", null, 11L, null)
+                );
+            case TOP_SALESMAN:
+                return java.util.List.of(
+                        ol.newSchemaDatasetFacetFields("salesman_id", "INT", null, 1L, null),
+                        ol.newSchemaDatasetFacetFields("salesman_name", "STRING", null, 2L, null),
+                        ol.newSchemaDatasetFacetFields("sale_date", "DATE", null, 3L, null),
+                        ol.newSchemaDatasetFacetFields("total_amount", "DECIMAL", null, 4L, null),
+                        ol.newSchemaDatasetFacetFields("total_units", "INT", null, 5L, null)
+                );
+            default:
+                throw new IllegalArgumentException("Unknown KafkaDatasetType: " + type);
         }
     }
 
