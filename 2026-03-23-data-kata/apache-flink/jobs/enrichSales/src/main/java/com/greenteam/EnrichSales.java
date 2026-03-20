@@ -1,17 +1,24 @@
 package com.greenteam;
 
 import com.greenteam.config.JobConfig;
-import com.greenteam.model.*;
-import com.greenteam.operator.EnrichSalesWithStore;
+import com.greenteam.model.ExpiredPendingSaleEvent;
+import com.greenteam.model.SaleWithSalesmanEvent;
+import com.greenteam.model.SaleWithStoreEvent;
+import com.greenteam.model.SalesEnrichedEvent;
+import com.greenteam.model.SalesEvent;
+import com.greenteam.model.SalesmanEvent;
+import com.greenteam.model.StoreEvent;
+import com.greenteam.openlineage.OpenLineageIntegration;
+import com.greenteam.operator.CheckpointNotifier;
 import com.greenteam.operator.EnrichSalesWithSalesman;
+import com.greenteam.operator.EnrichSalesWithStore;
 import com.greenteam.operator.MergeEnrichments;
-import com.greenteam.operator.JoinSalesWithSalesman;
-import com.greenteam.operator.JoinSalesWithStore;
 import com.greenteam.operator.ParseSalesEvent;
 import com.greenteam.operator.ParseSalesmanEvent;
 import com.greenteam.operator.ParseStoreEvent;
-import com.greenteam.serde.SalesEnrichedSerializer;
 import com.greenteam.serde.ExpiredPendingSaleEventSerializer;
+import com.greenteam.serde.SalesEnrichedSerializer;
+import io.openlineage.client.OpenLineage;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.base.DeliveryGuarantee;
@@ -19,12 +26,12 @@ import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.core.execution.CheckpointingMode;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.datastream.KeyedStream;
-
 import java.util.Properties;
+
+import static com.greenteam.config.JobConfig.JOB_NAME;
 
 public class EnrichSales {
 
@@ -32,7 +39,12 @@ public class EnrichSales {
         // The main method is the entry point of the Flink job. 
         // It sets up the execution environment, defines the sources and sinks for the job, and connects the operators to create the data processing pipeline.
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        final var jobExecutionId = java.util.UUID.randomUUID().toString();
+        var openLineage = new OpenLineageIntegration(jobExecutionId);
 
+        // Emit lineage event com ambos os tópicos de saída
+        openLineage.emitKafkaToKafkaEvent(OpenLineage.RunEvent.EventType.START);
+        
         // We set the parallelism for the job and configure checkpointing to ensure fault tolerance and exactly-once processing guarantees.
         env.setParallelism(JobConfig.DEFAULT_PARALLELISM);
 
@@ -150,10 +162,19 @@ public class EnrichSales {
             .build();
 
         // We connect the enriched sales stream to the Kafka sink to emit the fully enriched sale events to the output topic in Kafka.
-        enrichedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
+        enrichedStream
+                .flatMap(new CheckpointNotifier<>(jobExecutionId))
+                .name("operator: lineage checkpoint notifier")
+                .sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
         expiredSalesStream.sinkTo(expiredSalesSink).name("sink: sales-expired");
 
-        env.execute("enrich sales from topics");
+        try {
+            env.execute(JOB_NAME);
+        } catch (Exception e) {
+            openLineage.emitKafkaToKafkaEvent(OpenLineage.RunEvent.EventType.FAIL);
+        } finally {
+            openLineage.close();
+        }
     }
 }

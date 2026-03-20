@@ -167,6 +167,7 @@ cp build/libs/enrichSales-1.0-SNAPSHOT-fat.jar ../jar/
 
 ```bash
 docker exec -it flink-jobmanager flink run \
+  -Dexecution.attached=true \
   -p 1 \
   --class com.greenteam.EnrichSales \
   /opt/flink/jobs/enrichSales-1.0-SNAPSHOT-fat.jar

@@ -1,12 +1,11 @@
 package com.greenteam.operator;
 
 import com.greenteam.model.CitySalesAccumulator;
-import com.greenteam.model.SaleEvent;
+import com.greenteam.model.SaleEnriched;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Date;
 
 /**
  * AggregateFunction to compute total sales amount and total units sold for each city.
@@ -15,7 +14,7 @@ import java.util.Date;
  * The resulting CitySalesAccumulator is then processed by CitySalesWindowFormatter to produce the final CitySalesResult for each window.
  */
 public class CitySalesAggregate
-    implements AggregateFunction<SaleEvent, CitySalesAccumulator, CitySalesAccumulator> {
+    implements AggregateFunction<SaleEnriched, CitySalesAccumulator, CitySalesAccumulator> {
 
     @Override
     public CitySalesAccumulator createAccumulator() {
@@ -23,7 +22,7 @@ public class CitySalesAggregate
     }
 
     @Override
-    public CitySalesAccumulator add(SaleEvent event, CitySalesAccumulator acc) {
+    public CitySalesAccumulator add(SaleEnriched event, CitySalesAccumulator acc) {
         acc.totalAmount = acc.totalAmount.add(event.amount.multiply(BigDecimal.valueOf(event.quantity)));
         acc.totalUnits += event.quantity;
         return acc;
