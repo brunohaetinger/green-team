@@ -1,6 +1,7 @@
 plugins {
     java
     application
+    id("com.gradleup.shadow") version "9.3.2"
 }
 
 java {
@@ -19,6 +20,23 @@ dependencies {
     implementation("io.openlineage:openlineage-java:1.45.0")
 }
 
+
+group = "com.lineage"
+version = "1.0-SNAPSHOT"
+
 application {
     mainClass.set("com.lineage.Main")
+}
+
+
+tasks {
+    shadowJar {
+        archiveClassifier.set("")
+        archiveFileName.set("kafka-connect-lineage-emitter-${project.version}-fat.jar")
+        manifest {
+            attributes["Main-Class"] = "com.lineage.Main"
+        }
+    }
+
+    assemble.get().dependsOn(shadowJar)
 }

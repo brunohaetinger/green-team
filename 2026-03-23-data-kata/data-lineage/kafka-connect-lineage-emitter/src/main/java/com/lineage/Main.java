@@ -4,9 +4,8 @@ import com.lineage.connect.KafkaConnectClient;
 import com.lineage.lineage.LineageService;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
-        String connectUrl = "http://localhost:8083";
-        var client = new KafkaConnectClient(connectUrl);
+    static void main(String[] args) throws Exception {
+        var client = new KafkaConnectClient();
         var lineageService = new LineageService(client);
 
         while (true) {

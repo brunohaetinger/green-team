@@ -7,11 +7,10 @@ import java.net.http.HttpResponse;
 
 public class KafkaConnectClient {
 
-    private final String baseUrl;
+    private final String baseUrl = System.getenv("KAFKA_CONNECT_URL") != null ? System.getenv("KAFKA_CONNECT_URL") : "http://localhost:8083";
     private final HttpClient client = HttpClient.newHttpClient();
 
-    public KafkaConnectClient(String baseUrl) {
-        this.baseUrl = baseUrl;
+    public KafkaConnectClient() {
     }
 
     public String getConnectors() throws Exception {
