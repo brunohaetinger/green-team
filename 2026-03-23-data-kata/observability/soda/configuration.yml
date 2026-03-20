@@ -1,8 +1,0 @@
-data_source my_postgres:
-  type: postgres
-  host: report-api-database-postgres
-  port: 5432
-  user: user
-  password: password
-  database: sales_db
-  schema: public
