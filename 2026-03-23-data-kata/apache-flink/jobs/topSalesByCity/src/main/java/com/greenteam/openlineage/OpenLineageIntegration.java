@@ -1,6 +1,7 @@
 package com.greenteam.openlineage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.greenteam.config.JobConfig;
 import io.openlineage.client.OpenLineage;
 import io.openlineage.client.transports.HttpTransport;
 import org.slf4j.Logger;
@@ -20,31 +21,15 @@ public class OpenLineageIntegration {
     private final String jobName;
     private final String jobNamespace;
     private final String kafkaNamespace;
-    private final UUID runId;
+    private final String jobId;
 
-    public OpenLineageIntegration(String jobName, String jobNamespace, String openLineageUrl, String kafkaBootstrapServers) {
-        this.jobName = jobName;
-        this.jobNamespace = jobNamespace;
-        this.kafkaNamespace = "kafka://" + kafkaBootstrapServers;
+    public OpenLineageIntegration(String jobId) {
+        this.jobName = JobConfig.JOB_NAME;
+        this.jobNamespace = JobConfig.JOB_NAMESPACE;
+        this.kafkaNamespace = "kafka://" + JobConfig.BOOTSTRAP_SERVERS;
         this.ol = new OpenLineage(URI.create("https://github.com/OpenLineage/OpenLineage"));
-        this.transport = HttpTransport.builder().uri(URI.create(openLineageUrl)).build();
-        this.runId = UUID.randomUUID();
-    }
-
-    public void emitMinimalEvent(OpenLineage.RunEvent.EventType eventType) {
-        logger.info("Emitting minimal OpenLineage {} event for run ID: {}", eventType, runId);
-        OpenLineage.JobTypeJobFacet jobTypeFacet = ol.newJobTypeJobFacet("STREAMING", "FLINK", "CUSTOM_FLINK_JOB");
-        OpenLineage.RunEvent event = ol.newRunEventBuilder()
-                .eventTime(ZonedDateTime.now())
-                .eventType(eventType)
-                .run(ol.newRunBuilder().runId(runId).build())
-                .job(ol.newJobBuilder()
-                        .namespace(jobNamespace)
-                        .name(jobName)
-                        .facets(ol.newJobFacetsBuilder().jobType(jobTypeFacet).build())
-                        .build())
-                .build();
-        transport.emit(event);
+        this.transport = HttpTransport.builder().uri(URI.create(JobConfig.OPEN_LINEAGE_URL)).build();
+        this.jobId = jobId;
     }
 
     public void emitKafkaToKafkaEvent(
@@ -52,7 +37,7 @@ public class OpenLineageIntegration {
             String outputTopic,
             OpenLineage.RunEvent.EventType eventType
     ) {
-        logger.info("Emitting OpenLineage {} event for run ID: {}", eventType, runId);
+        logger.info("Emitting OpenLineage {} event for run ID: {}", eventType, jobId);
         OpenLineage.JobTypeJobFacet jobTypeFacet = ol.newJobTypeJobFacet("STREAMING", "FLINK", "CUSTOM_FLINK_JOB");
 
         OpenLineage.InputDataset inputDataset = (OpenLineage.InputDataset) buildKafkaDataset(inputTopic, true);
@@ -61,7 +46,7 @@ public class OpenLineageIntegration {
         OpenLineage.RunEvent event = ol.newRunEventBuilder()
                 .eventTime(ZonedDateTime.now())
                 .eventType(eventType)
-                .run(ol.newRunBuilder().runId(runId).build())
+                .run(ol.newRunBuilder().runId(UUID.fromString(jobId)).build())
                 .job(ol.newJobBuilder()
                         .namespace(jobNamespace)
                         .name(jobName)
@@ -128,9 +113,5 @@ public class OpenLineageIntegration {
 
     public void close() throws IOException {
         transport.close();
-    }
-
-    public UUID getRunId() {
-        return runId;
     }
 }

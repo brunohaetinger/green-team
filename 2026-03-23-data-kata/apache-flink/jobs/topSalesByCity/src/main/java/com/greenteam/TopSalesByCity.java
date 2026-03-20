@@ -5,6 +5,7 @@ import com.greenteam.model.CitySalesResult;
 import com.greenteam.openlineage.OpenLineageIntegration;
 import com.greenteam.operator.CitySalesAggregate;
 import com.greenteam.operator.CitySalesWindowFormatter;
+import com.greenteam.operator.CheckpointNotifier;
 import com.greenteam.operator.ParseSalesEvent;
 import com.greenteam.serde.CitySalesResultSerializer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -19,20 +20,19 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTime
 import java.time.Duration;
 import java.util.Properties;
 
+import static com.greenteam.config.JobConfig.JOB_NAME;
+
 public class TopSalesByCity {
-    private static final String JOB_NAME = "top-sales-by-city";
-    private static final String JOB_NAMESPACE = "green-team-data-kata";
 
     public static void main(String[] args) throws Exception {
 
-        OpenLineageIntegration lineage = new OpenLineageIntegration(
-            JOB_NAME,
-            JOB_NAMESPACE,
-            "http://marquez-api:4000/api/v1/lineage",
-            JobConfig.BOOTSTRAP_SERVERS
-        );
-
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        // Ativa o checkpointing do Flink a cada 60 segundos
+        env.enableCheckpointing(60000); // checkpoint a cada 60 segundos
+        String jobId = env.getStreamGraph().getJobGraph().getJobID().toString();
+
+        OpenLineageIntegration lineage = new OpenLineageIntegration(jobId);
 
         // --- Source ---
         KafkaSource<String> source = KafkaSource.<String>builder()
@@ -58,7 +58,11 @@ public class TopSalesByCity {
             .aggregate(new CitySalesAggregate(), new CitySalesWindowFormatter())
             .name("operator: aggregate total sales by city");
 
-        aggregatedStream.print("sink: stdout");
+        // Emite eventos de lineage no checkpoint, sem criar uma nova variável
+        aggregatedStream
+            .flatMap(new CheckpointNotifier<>(lineage))
+            .name("operator: lineage checkpoint notifier")
+            .print("sink: stdout");
 
         // --- Sink ---
         Properties producerConfig = new Properties();
@@ -72,14 +76,11 @@ public class TopSalesByCity {
             .setKafkaProducerConfig(producerConfig)
             .build();
 
-        aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
-
-        // Emite o evento OpenLineage de Kafka para Kafka logo antes de iniciar o job
-        lineage.emitKafkaToKafkaEvent(
-            JobConfig.INPUT_TOPIC,
-            JobConfig.OUTPUT_TOPIC,
-            io.openlineage.client.OpenLineage.RunEvent.EventType.START
-        );
+        // O mesmo stream é usado para o sink Kafka
+        aggregatedStream
+            .flatMap(new CheckpointNotifier<>(lineage))
+            .name("operator: lineage checkpoint notifier")
+            .sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
         try {
             env.execute(JOB_NAME);

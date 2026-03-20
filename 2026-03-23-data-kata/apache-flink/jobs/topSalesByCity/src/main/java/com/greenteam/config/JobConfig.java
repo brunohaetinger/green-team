@@ -8,5 +8,8 @@ public final class JobConfig {
     public static final int    WINDOW_MINUTES          = 1;
     public static final String TRANSACTIONAL_ID_PREFIX = "top-sales-";
     public static final String TRANSACTION_TIMEOUT_MS  = "600000";
+    public static final String OPEN_LINEAGE_URL = "http://marquez-api:4000/api/v1/lineage";
+    public static final String JOB_NAME = "top-sales-by-city";
+    public static final String JOB_NAMESPACE = "green-team-data-kata";
 }
 
