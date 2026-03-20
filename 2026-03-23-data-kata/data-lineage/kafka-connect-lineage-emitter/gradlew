@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+##############################################################################
+##
+##  Gradle start up script for UN*X
+##
+##############################################################################
+
+# ...existing code...
+# This is a placeholder. Please copy the official gradlew script from a working Gradle project or generate it with 'gradle wrapper'.
