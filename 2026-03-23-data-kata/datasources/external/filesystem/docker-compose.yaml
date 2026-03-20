@@ -10,6 +10,6 @@ services:
       test: ["CMD-SHELL", "ls /data"]
       interval: 10s
       timeout: 5s
-      retries: 5    
+      retries: 5
     networks:
       - data-kata-net
