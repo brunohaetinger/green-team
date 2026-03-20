@@ -7,6 +7,10 @@ public final class JobConfig {
     public static final String STORES_TOPIC = "stores";
     public static final String SALESMANS_TOPIC = "salesmans";
     public static final String OUTPUT_TOPIC = "sales-enriched";
+    public static final String EXPIRED_TOPIC = "sales-expired";
+    public static final String OPEN_LINEAGE_URL = "http://marquez-api:4000/api/v1/lineage";
+    public static final String JOB_NAME = "enrich-sales";
+    public static final String JOB_NAMESPACE = "green-team-data-kata";
 
     // consumer group IDs are used to identify the consumer group that each source operator belongs to.
     // A consumer group is a group of consumers that work together to consume messages from a topic. 

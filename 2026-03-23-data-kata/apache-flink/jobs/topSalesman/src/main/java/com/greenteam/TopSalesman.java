@@ -2,8 +2,11 @@ package com.greenteam;
 
 import com.greenteam.config.JobConfig;
 import com.greenteam.model.TopSalesmanResult;
+import com.greenteam.openlineage.OpenLineageIntegration;
+import com.greenteam.operator.CheckpointNotifier;
 import com.greenteam.operator.ParseSalesEvent;
 import com.greenteam.serde.TopSalesmanResultSerializer;
+import io.openlineage.client.OpenLineage;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.base.DeliveryGuarantee;
@@ -16,11 +19,16 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTime
 import java.time.Duration;
 import java.util.Properties;
 
+import static com.greenteam.config.JobConfig.JOB_NAME;
+
 public class TopSalesman {
-    private static final String JOB_NAME = "topSalesman: aggregate top salesman nationwide";
 
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        String jobExecutionId = java.util.UUID.randomUUID().toString();
+
+        var openLineage = new OpenLineageIntegration(jobExecutionId);
+        openLineage.emitKafkaToKafkaEvent(JobConfig.INPUT_TOPIC, JobConfig.OUTPUT_TOPIC, OpenLineage.RunEvent.EventType.START);
 
         // --- Source ---
         KafkaSource<String> source = KafkaSource.<String>builder()
@@ -60,8 +68,17 @@ public class TopSalesman {
                 .setKafkaProducerConfig(producerConfig)
                 .build();
 
-        aggregatedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
+        aggregatedStream
+                .flatMap(new CheckpointNotifier<>(jobExecutionId))
+                .name("operator: lineage checkpoint notifier")
+                .sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
-        env.execute(JOB_NAME);
+        try {
+            env.execute(JOB_NAME);
+        } catch (Exception e) {
+            openLineage.emitKafkaToKafkaEvent(JobConfig.INPUT_TOPIC, JobConfig.OUTPUT_TOPIC, OpenLineage.RunEvent.EventType.FAIL);
+        } finally {
+            openLineage.close();
+        }
     }
 }

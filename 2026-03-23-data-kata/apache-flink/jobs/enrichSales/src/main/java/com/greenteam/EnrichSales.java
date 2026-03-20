@@ -8,6 +8,8 @@ import com.greenteam.model.SalesEnrichedEvent;
 import com.greenteam.model.SalesEvent;
 import com.greenteam.model.SalesmanEvent;
 import com.greenteam.model.StoreEvent;
+import com.greenteam.openlineage.OpenLineageIntegration;
+import com.greenteam.operator.CheckpointNotifier;
 import com.greenteam.operator.EnrichSalesWithSalesman;
 import com.greenteam.operator.EnrichSalesWithStore;
 import com.greenteam.operator.MergeEnrichments;
@@ -16,6 +18,7 @@ import com.greenteam.operator.ParseSalesmanEvent;
 import com.greenteam.operator.ParseStoreEvent;
 import com.greenteam.serde.ExpiredPendingSaleEventSerializer;
 import com.greenteam.serde.SalesEnrichedSerializer;
+import io.openlineage.client.OpenLineage;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.base.DeliveryGuarantee;
@@ -28,15 +31,20 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import java.util.Properties;
 
-public class EnrichSales {
+import static com.greenteam.config.JobConfig.JOB_NAME;
 
-    private static final String JOB_NAME = "enrich sales from topics";
+public class EnrichSales {
 
     public static void main(String[] args) throws Exception {
         // The main method is the entry point of the Flink job. 
         // It sets up the execution environment, defines the sources and sinks for the job, and connects the operators to create the data processing pipeline.
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        final var jobExecutionId = java.util.UUID.randomUUID().toString();
+        var openLineage = new OpenLineageIntegration(jobExecutionId);
 
+        // Emit lineage event com ambos os tópicos de saída
+        openLineage.emitKafkaToKafkaEvent(OpenLineage.RunEvent.EventType.START);
+        
         // We set the parallelism for the job and configure checkpointing to ensure fault tolerance and exactly-once processing guarantees.
         env.setParallelism(JobConfig.DEFAULT_PARALLELISM);
 
@@ -154,10 +162,19 @@ public class EnrichSales {
             .build();
 
         // We connect the enriched sales stream to the Kafka sink to emit the fully enriched sale events to the output topic in Kafka.
-        enrichedStream.sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
+        enrichedStream
+                .flatMap(new CheckpointNotifier<>(jobExecutionId))
+                .name("operator: lineage checkpoint notifier")
+                .sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
         expiredSalesStream.sinkTo(expiredSalesSink).name("sink: sales-expired");
 
-        env.execute(JOB_NAME);
+        try {
+            env.execute(JOB_NAME);
+        } catch (Exception e) {
+            openLineage.emitKafkaToKafkaEvent(OpenLineage.RunEvent.EventType.FAIL);
+        } finally {
+            openLineage.close();
+        }
     }
 }

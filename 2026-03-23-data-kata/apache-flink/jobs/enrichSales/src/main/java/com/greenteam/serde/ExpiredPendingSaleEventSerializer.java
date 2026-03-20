@@ -2,6 +2,7 @@ package com.greenteam.serde;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.greenteam.config.JobConfig;
 import com.greenteam.model.ExpiredPendingSaleEvent;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -22,7 +23,7 @@ public class ExpiredPendingSaleEventSerializer implements KafkaRecordSerializati
     ) {
         byte[] key = Integer.toString(element.saleId).getBytes(StandardCharsets.UTF_8);
         byte[] value = buildJson(element).getBytes(StandardCharsets.UTF_8);
-        return new ProducerRecord<>("sales-expired", key, value);
+        return new ProducerRecord<>(JobConfig.EXPIRED_TOPIC, key, value);
     }
 
     private String buildJson(ExpiredPendingSaleEvent element) {

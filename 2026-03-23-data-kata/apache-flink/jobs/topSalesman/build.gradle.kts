@@ -38,6 +38,9 @@ dependencies {
     // Logging
     implementation("org.slf4j:slf4j-api:2.0.9")
     implementation("org.slf4j:slf4j-simple:2.0.9")
+
+    // OpenLineage Flink integration
+    implementation("io.openlineage:openlineage-flink:1.45.0")
 }
 
 tasks {

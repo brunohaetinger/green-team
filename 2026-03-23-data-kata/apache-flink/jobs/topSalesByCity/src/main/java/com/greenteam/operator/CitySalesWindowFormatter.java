@@ -7,9 +7,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 
 /**
  * ProcessWindowFunction to format the aggregated city sales data into a CitySalesResult.
