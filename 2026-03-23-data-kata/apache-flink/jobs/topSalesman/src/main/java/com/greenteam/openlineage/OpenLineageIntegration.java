@@ -79,54 +79,46 @@ public class OpenLineageIntegration {
                 .dataSource(ol.newDatasourceDatasetFacet("kafka", URI.create(kafkaNamespace)))
                 .schema(ol.newSchemaDatasetFacet(getSchemaFields(type)));
 
-        switch (type) {
-            case SALES_ENRICHED:
-                return ol.newInputDatasetBuilder()
-                        .namespace(jobNamespace)
-                        .name(topic)
-                        .facets(facetsBuilder.build())
-                        .build();
-            case TOP_SALESMAN:
-                return ol.newOutputDatasetBuilder()
-                        .namespace(jobNamespace)
-                        .name(topic)
-                        .facets(facetsBuilder.build())
-                        .build();
-            default:
-                throw new IllegalArgumentException("Unknown KafkaDatasetType: " + type);
-        }
+        return switch (type) {
+            case SALES_ENRICHED -> ol.newInputDatasetBuilder()
+                    .namespace(jobNamespace)
+                    .name(topic)
+                    .facets(facetsBuilder.build())
+                    .build();
+            case TOP_SALESMAN -> ol.newOutputDatasetBuilder()
+                    .namespace(jobNamespace)
+                    .name(topic)
+                    .facets(facetsBuilder.build())
+                    .build();
+        };
     }
 
     /**
      * Returns the schema fields for the given dataset type.
      */
     private java.util.List<OpenLineage.SchemaDatasetFacetFields> getSchemaFields(KafkaDatasetType type) {
-        switch (type) {
-            case SALES_ENRICHED:
-                return java.util.List.of(
-                        ol.newSchemaDatasetFacetFields("salesman_id", "INT", null, 1L, null),
-                        ol.newSchemaDatasetFacetFields("salesman_name", "STRING", null, 2L, null),
-                        ol.newSchemaDatasetFacetFields("sale_id", "INT", null, 3L, null),
-                        ol.newSchemaDatasetFacetFields("quantity", "INT", null, 4L, null),
-                        ol.newSchemaDatasetFacetFields("product_id", "INT", null, 5L, null),
-                        ol.newSchemaDatasetFacetFields("store_id", "INT", null, 6L, null),
-                        ol.newSchemaDatasetFacetFields("city_name", "STRING", null, 7L, null),
-                        ol.newSchemaDatasetFacetFields("store_name", "STRING", null, 8L, null),
-                        ol.newSchemaDatasetFacetFields("sale_date", "STRING", null, 9L, null),
-                        ol.newSchemaDatasetFacetFields("country_name", "STRING", null, 10L, null),
-                        ol.newSchemaDatasetFacetFields("amount", "DECIMAL", null, 11L, null)
-                );
-            case TOP_SALESMAN:
-                return java.util.List.of(
-                        ol.newSchemaDatasetFacetFields("salesman_id", "INT", null, 1L, null),
-                        ol.newSchemaDatasetFacetFields("salesman_name", "STRING", null, 2L, null),
-                        ol.newSchemaDatasetFacetFields("sale_date", "DATE", null, 3L, null),
-                        ol.newSchemaDatasetFacetFields("total_amount", "DECIMAL", null, 4L, null),
-                        ol.newSchemaDatasetFacetFields("total_units", "INT", null, 5L, null)
-                );
-            default:
-                throw new IllegalArgumentException("Unknown KafkaDatasetType: " + type);
-        }
+        return switch (type) {
+            case SALES_ENRICHED -> java.util.List.of(
+                    ol.newSchemaDatasetFacetFields("salesman_id", "INT", null, 1L, null),
+                    ol.newSchemaDatasetFacetFields("salesman_name", "STRING", null, 2L, null),
+                    ol.newSchemaDatasetFacetFields("sale_id", "INT", null, 3L, null),
+                    ol.newSchemaDatasetFacetFields("quantity", "INT", null, 4L, null),
+                    ol.newSchemaDatasetFacetFields("product_id", "INT", null, 5L, null),
+                    ol.newSchemaDatasetFacetFields("store_id", "INT", null, 6L, null),
+                    ol.newSchemaDatasetFacetFields("city_name", "STRING", null, 7L, null),
+                    ol.newSchemaDatasetFacetFields("store_name", "STRING", null, 8L, null),
+                    ol.newSchemaDatasetFacetFields("sale_date", "STRING", null, 9L, null),
+                    ol.newSchemaDatasetFacetFields("country_name", "STRING", null, 10L, null),
+                    ol.newSchemaDatasetFacetFields("amount", "DECIMAL", null, 11L, null)
+            );
+            case TOP_SALESMAN -> java.util.List.of(
+                    ol.newSchemaDatasetFacetFields("salesman_id", "INT", null, 1L, null),
+                    ol.newSchemaDatasetFacetFields("salesman_name", "STRING", null, 2L, null),
+                    ol.newSchemaDatasetFacetFields("sale_date", "DATE", null, 3L, null),
+                    ol.newSchemaDatasetFacetFields("total_amount", "DECIMAL", null, 4L, null),
+                    ol.newSchemaDatasetFacetFields("total_units", "INT", null, 5L, null)
+            );
+        };
     }
 
     public void close() throws IOException {

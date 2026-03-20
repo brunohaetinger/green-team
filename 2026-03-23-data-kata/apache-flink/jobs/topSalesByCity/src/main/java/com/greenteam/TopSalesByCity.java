@@ -79,8 +79,9 @@ public class TopSalesByCity {
 
         try {
             env.execute(JOB_NAME);
+        } catch (Exception e) {
+            openLineage.emitKafkaToKafkaEvent(JobConfig.INPUT_TOPIC, JobConfig.OUTPUT_TOPIC, OpenLineage.RunEvent.EventType.FAIL);
         } finally {
-            openLineage.emitKafkaToKafkaEvent(JobConfig.INPUT_TOPIC, JobConfig.OUTPUT_TOPIC, OpenLineage.RunEvent.EventType.COMPLETE);
             openLineage.close();
         }
     }
