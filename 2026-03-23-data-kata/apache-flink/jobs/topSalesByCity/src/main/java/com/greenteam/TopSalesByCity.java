@@ -8,6 +8,7 @@ import com.greenteam.operator.CitySalesWindowFormatter;
 import com.greenteam.operator.CheckpointNotifier;
 import com.greenteam.operator.ParseSalesEvent;
 import com.greenteam.serde.CitySalesResultSerializer;
+import io.openlineage.client.OpenLineage;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.base.DeliveryGuarantee;
@@ -28,11 +29,12 @@ public class TopSalesByCity {
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        // Ativa o checkpointing do Flink a cada 60 segundos
-        env.enableCheckpointing(60000); // checkpoint a cada 60 segundos
-        String jobId = env.getStreamGraph().getJobGraph().getJobID().toString();
+        env.enableCheckpointing(60000);
+        String jobExecutionId = java.util.UUID.randomUUID().toString();
 
-        OpenLineageIntegration lineage = new OpenLineageIntegration(jobId);
+        var openLineage = new OpenLineageIntegration(jobExecutionId);
+
+        openLineage.emitKafkaToKafkaEvent(JobConfig.INPUT_TOPIC, JobConfig.OUTPUT_TOPIC, OpenLineage.RunEvent.EventType.START);
 
         // --- Source ---
         KafkaSource<String> source = KafkaSource.<String>builder()
@@ -58,12 +60,6 @@ public class TopSalesByCity {
             .aggregate(new CitySalesAggregate(), new CitySalesWindowFormatter())
             .name("operator: aggregate total sales by city");
 
-        // Emite eventos de lineage no checkpoint, sem criar uma nova variável
-        aggregatedStream
-            .flatMap(new CheckpointNotifier<>(lineage))
-            .name("operator: lineage checkpoint notifier")
-            .print("sink: stdout");
-
         // --- Sink ---
         Properties producerConfig = new Properties();
         producerConfig.setProperty("transaction.timeout.ms", JobConfig.TRANSACTION_TIMEOUT_MS); // Set the transaction timeout to a value that is longer than the maximum expected processing time of a window, this ensures that transactions will not be aborted prematurely while waiting for late events or during long processing times.
@@ -76,16 +72,16 @@ public class TopSalesByCity {
             .setKafkaProducerConfig(producerConfig)
             .build();
 
-        // O mesmo stream é usado para o sink Kafka
         aggregatedStream
-            .flatMap(new CheckpointNotifier<>(lineage))
+            .flatMap(new CheckpointNotifier<>(jobExecutionId))
             .name("operator: lineage checkpoint notifier")
             .sinkTo(sink).name("sink: " + JobConfig.OUTPUT_TOPIC);
 
         try {
             env.execute(JOB_NAME);
         } finally {
-            lineage.close();
+            openLineage.emitKafkaToKafkaEvent(JobConfig.INPUT_TOPIC, JobConfig.OUTPUT_TOPIC, OpenLineage.RunEvent.EventType.COMPLETE);
+            openLineage.close();
         }
     }
 }

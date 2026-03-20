@@ -1,16 +1,24 @@
 package com.greenteam.operator;
 
+import org.apache.flink.api.common.functions.OpenContext;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.CheckpointListener;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
 import com.greenteam.openlineage.OpenLineageIntegration;
 import com.greenteam.config.JobConfig;
 
 public class CheckpointNotifier<T> extends RichFlatMapFunction<T, T> implements CheckpointListener {
-    private final OpenLineageIntegration lineage;
+    private final String jobExecutionId;
+    private transient OpenLineageIntegration lineage;
 
-    public CheckpointNotifier(OpenLineageIntegration lineage) {
-        this.lineage = lineage;
+    public CheckpointNotifier(String jobExecutionId) {
+        this.jobExecutionId = jobExecutionId;
+    }
+
+    @Override
+    public void open(OpenContext parameters) {
+        this.lineage = new OpenLineageIntegration(jobExecutionId);
     }
 
     @Override
@@ -25,5 +33,12 @@ public class CheckpointNotifier<T> extends RichFlatMapFunction<T, T> implements 
             JobConfig.OUTPUT_TOPIC,
             io.openlineage.client.OpenLineage.RunEvent.EventType.RUNNING
         );
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (lineage != null) {
+            lineage.close();
+        }
     }
 }
