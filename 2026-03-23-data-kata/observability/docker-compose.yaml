@@ -1,42 +1,8 @@
 services:
-  # Vector: Log collector and metrics exporter
-  vector:
-    image: timberio/vector:0.36.0-debian
-    container_name: vector
-    volumes:
-      - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - "9091:9090"
-    networks:
-      - data-kata-net
 
-  # Dozzle: UI for Docker logs
-  dozzle:
-    image: amir20/dozzle:latest
-    container_name: dozzle
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - "8081:8080"
-    networks:
-      - data-kata-net
-
-  # Soda: Data quality checks
-  soda:
-    image: sodadata/soda-core:latest
-    container_name: soda
-    volumes:
-      - ./soda:/etc/soda
-    command: ["scan", "-d", "my_postgres", "-c", "/etc/soda/configuration.yml", "/etc/soda/checks.yml"]
-    depends_on:
-      - report-api-database-postgres
-    networks:
-      - data-kata-net
-
-  # Prometheus: Scraping metrics from Vector
+  # Prometheus
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.51.1
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -45,9 +11,9 @@ services:
     networks:
       - data-kata-net
 
-  # Grafana: Visualizing metrics from Prometheus
+  # Grafana
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.4.2
     container_name: grafana
     ports:
       - "3001:3000"
@@ -57,5 +23,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_LOG_LEVEL=info
+      - GF_AUTH_BASIC_ENABLED=false
     networks:
       - data-kata-net
