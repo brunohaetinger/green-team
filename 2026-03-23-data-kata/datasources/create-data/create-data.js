@@ -23,8 +23,26 @@ const config = {
     connectionString: process.env.SALESMANS_DB_URL,
     table: process.env.SALESMANS_DB_TABLE || 'salesmans'
   },
-  storesCsv: '/data/stores.csv'
+  storesDataDir: '/data',
+  fileRotationIntervalMs: 90000 // 1.5 minutes
 };
+
+// Generate timestamped filename with 1.5-minute rotation buckets
+function getStoresFilePath() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  
+  const filename = `stores-${dd}-${mm}-${yy}-${hh}-${mins}.csv`;
+  return path.join(config.storesDataDir, filename);
+}
+
+function getTimeBucket() {
+  return Math.floor(Date.now() / config.fileRotationIntervalMs);
+}
 
 // --- Main logic ---
 async function main() {
@@ -34,29 +52,8 @@ async function main() {
   const salesmen = generateSalesmen(config.salesmanCount, stores);
 
   // Ensure directory exists
-  const dataDir = path.dirname(config.storesCsv);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-
-  // Write to stores.csv continuously, one line at a time
-  // If the file does not exist, write the header
-  let storeId = 1;
-  let writeHeader = !fs.existsSync(config.storesCsv);
-  const csvWriter = createCsvWriter({
-    path: config.storesCsv,
-    header: [
-      { id: 'id', title: 'id' },
-      { id: 'name', title: 'name' },
-      { id: 'city', title: 'city' },
-      { id: 'state', title: 'state' },
-      { id: 'country', title: 'country' }
-    ],
-    append: !writeHeader
-  });
-  if (writeHeader) {
-    // Write header (csv-writer does this automatically on first write)
-    console.log('Absolute path for stores.csv:', config.storesCsv);
+  if (!fs.existsSync(config.storesDataDir)) {
+    fs.mkdirSync(config.storesDataDir, { recursive: true });
   }
 
   // Open DB connections
@@ -67,13 +64,47 @@ async function main() {
 
   let saleId = 1;
   let salesmanId = 1;
+  let storeId = 1;
   const delayMs = Number(process.env.WRITE_DELAY_MS || 500); // default delay 500ms
+  
+  //File rotation
+  let currentCsvWriter = null;
+  let currentFilePath = null;
+  let currentTimeBucket = getTimeBucket();
+
+  function initializeCsvWriter(filePath) {
+    const fileExists = fs.existsSync(filePath);
+    return createCsvWriter({
+      path: filePath,
+      header: [
+        { id: 'id', title: 'id' },
+        { id: 'name', title: 'name' },
+        { id: 'city', title: 'city' },
+        { id: 'state', title: 'state' },
+        { id: 'country', title: 'country' }
+      ],
+      append: fileExists
+    });
+  }
+
+  currentFilePath = getStoresFilePath();
+  currentCsvWriter = initializeCsvWriter(currentFilePath);
+  console.log(`Created CSV writer for: ${currentFilePath}`);
 
   while (true) {
+    const newTimeBucket = getTimeBucket();
+    if (newTimeBucket !== currentTimeBucket) {
+      console.log(`Time bucket changed: ${currentTimeBucket} -> ${newTimeBucket}, rotating to new file`);
+      currentTimeBucket = newTimeBucket;
+      currentFilePath = getStoresFilePath();
+      currentCsvWriter = initializeCsvWriter(currentFilePath);
+      console.log(`Created new CSV writer for: ${currentFilePath}`);
+    }
+
     // Generate and insert a sale
     const sale = generateSale(saleId++, salesmen);
     await salesDb.query(
-      `INSERT INTO ${config.dbSales.table} (id, salesman_id, store_id, amount, sale_date, product_id, quantity) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      `INSERT INTO ${config.dbSales.table} (id, salesman_id, store_id, amount, sale_date, product_id, quantity) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`,
       [sale.id, sale.salesman_id, sale.store_id, sale.amount, sale.sale_date, sale.product_id, sale.quantity]
     );
     console.log(`Inserted sale id=${sale.id}`);
@@ -91,8 +122,8 @@ async function main() {
 
     // Generate and append a new store (circular loop)
     const store = stores[(storeId - 1) % stores.length];
-    await csvWriter.writeRecords([store]);
-    console.log(`Appended store id=${store.id} to CSV`);
+    await currentCsvWriter.writeRecords([store]);
+    console.log(`Appended store id=${store.id} to CSV: ${path.basename(currentFilePath)}`);
     storeId++;
 
     // Delay
