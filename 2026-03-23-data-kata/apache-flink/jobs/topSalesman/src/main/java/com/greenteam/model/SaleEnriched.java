@@ -2,6 +2,7 @@
 package com.greenteam.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class SaleEnriched {
     public int salesmanId;
@@ -12,12 +13,12 @@ public class SaleEnriched {
     public Integer storeId; // nullable
     public String cityName;
     public String storeName;
-    public String saleDate;
+    public LocalDate saleDate;
     public String countryName;
     public BigDecimal amount;
 
     public SaleEnriched(int salesmanId, String salesmanName, int saleId, int quantity, int productId, Integer storeId,
-                        String cityName, String storeName, String saleDate, String countryName, BigDecimal amount) {
+                        String cityName, String storeName, LocalDate saleDate, String countryName, BigDecimal amount) {
         this.salesmanId = salesmanId;
         this.salesmanName = salesmanName;
         this.saleId = saleId;
