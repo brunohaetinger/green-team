@@ -23,7 +23,7 @@ const requestListener = async function (req, res) {
 
       if (startId !== null && !isNaN(startId)) {
         result = await pool.query(
-          'SELECT id, name, store_id FROM salesmans WHERE id > $1',
+          'SELECT id, name, store_id FROM salesmans WHERE id >= $1',
           [startId]
         );
       } else {

@@ -1,0 +1,10 @@
+services:
+  webserver-data-collector:
+    build:
+      context: .
+    container_name: webserver-data-collector
+    restart: on-failure
+    ports:
+      - "9008:9008"
+    networks:
+      - data-kata-net
