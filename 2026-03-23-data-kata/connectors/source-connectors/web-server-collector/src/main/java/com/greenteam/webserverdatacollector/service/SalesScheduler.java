@@ -4,8 +4,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.util.Arrays;
-
 @Component
 public class SalesScheduler {
 
@@ -19,7 +17,7 @@ public class SalesScheduler {
     }
 
     @Scheduled(fixedRate = 10_000)
-    public void fetchSales() {
+    public void fetchSalesman() {
         try {
 
             Long startId = 0L;
