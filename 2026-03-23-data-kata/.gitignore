@@ -1,2 +1,6 @@
 # Ignore generated data files
-data/stores.csv
+data/stores*.csv
+data/erros/*
+!data/erros/just_to_create_this_folder.ignore
+data/finished/*
+!data/finished/just_to_create_this_folder.ignore
