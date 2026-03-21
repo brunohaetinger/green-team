@@ -26,7 +26,10 @@ public class TopSalesmanWindowFormatter
                 acc.salesmanName,
                 acc.saleDate,
                 acc.totalAmount.setScale(2, RoundingMode.HALF_UP),
-                acc.totalUnits
+                acc.totalUnits,
+                acc.processedAt,
+                context.window().getStart(),
+                context.window().getEnd()
             ));
         }
     }

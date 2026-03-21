@@ -5,6 +5,7 @@ import com.greenteam.model.TopSalesmanAccumulator;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 public class TopSalesmanAggregate implements AggregateFunction<SaleEnriched, TopSalesmanAccumulator, TopSalesmanAccumulator> {
     @Override
@@ -30,6 +31,7 @@ public class TopSalesmanAggregate implements AggregateFunction<SaleEnriched, Top
 
     @Override
     public TopSalesmanAccumulator getResult(TopSalesmanAccumulator acc) {
+        acc.processedAt = Instant.now();
         return acc;
     }
 

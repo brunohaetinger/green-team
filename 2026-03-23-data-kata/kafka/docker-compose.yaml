@@ -72,11 +72,13 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      source-fs:
+        condition: service_healthy
     ports:
       - "8083:8083"
       - "9404:9404"
-    volumes:
-    - ../data:/data
+    volumes_from:
+      - source-fs
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8083/connectors > /dev/null"]
       interval: 10s

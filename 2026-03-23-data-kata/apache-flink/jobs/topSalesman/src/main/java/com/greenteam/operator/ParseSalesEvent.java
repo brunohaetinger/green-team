@@ -8,6 +8,9 @@ import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.util.Collector;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 public class ParseSalesEvent implements FlatMapFunction<String, SaleEnriched> {
 
@@ -28,7 +31,7 @@ public class ParseSalesEvent implements FlatMapFunction<String, SaleEnriched> {
                 return;
             }
 
-            String saleDate = saleDateRaw.length() >= 10 ? saleDateRaw.substring(0, 10) : saleDateRaw;
+            LocalDate saleDate = Instant.parse(saleDateRaw).atZone(ZoneId.of("UTC")).toLocalDate();
 
             // TODO: Update this to use all SaleEnriched fields when parsing is updated
             out.collect(new SaleEnriched(salesmanId, salesmanName, 0, quantity, 0, null, null, null, saleDate, null, new BigDecimal(amountRaw)));
