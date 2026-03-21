@@ -10,9 +10,12 @@ import java.util.Arrays;
 public class SalesScheduler {
 
     private final RestClient restClient;
+    private final SalesmanProducer salesmanProducer;
+    private Long lastProcessedId = 1L;
 
-    public SalesScheduler(RestClient.Builder builder) {
+    public SalesScheduler(RestClient.Builder builder, SalesmanProducer salesmanProducer) {
         this.restClient = builder.baseUrl("http://localhost:8089").build();
+        this.salesmanProducer = salesmanProducer;
     }
 
     @Scheduled(fixedRate = 10_000)
@@ -20,22 +23,30 @@ public class SalesScheduler {
         try {
 
             Long startId = 0L;
-            Sale[] response = restClient.get()
+            Salesman[] response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/sales")
                             .queryParam("startId", startId)
                             .build())
                     .retrieve()
-                    .body(Sale[].class);
+                    .body(Salesman[].class);
 
             System.out.println("=== SALES RECEIVED ===");
 
-            if (response != null) {
-                Arrays.stream(response)
-                        .forEach(System.out::println);
-            } else {
-                System.out.println("No data received");
+            System.out.println("=== PUBLISHING SALES ===");
+
+            long maxId = lastProcessedId;
+
+            for (Salesman sale : response) {
+                salesmanProducer.send(sale);
+                System.out.println("Sent to Kafka: " + sale);
+
+                if (sale.id() > maxId) {
+                    maxId = sale.id();
+                }
             }
+
+            lastProcessedId = maxId + 1;
 
         } catch (Exception e) {
             System.err.println("Failed to calll the API: " + e.getMessage());
