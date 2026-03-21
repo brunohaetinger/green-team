@@ -1,0 +1,20 @@
+services:
+  audit-service:
+    build:
+      context: .
+    container_name: audit-service
+    restart: on-failure
+    ports:
+      - "8084:8084"
+    environment:
+      SERVER_PORT: 8084
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-audit-events}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-2}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_S3_ENDPOINT: ${AWS_S3_ENDPOINT:-}
+    depends_on:
+      - kafka-connect
+    networks:
+      - data-kata-net
