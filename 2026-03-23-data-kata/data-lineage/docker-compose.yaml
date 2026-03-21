@@ -1,4 +1,15 @@
 services:
+  kafka-connect-lineage-emitter:
+    build:
+      context: ./kafka-connect-lineage-emitter
+      dockerfile: Dockerfile
+    environment:
+      MARQUEZ_API_URL: http://marquez-api:4000
+      KAFKA_CONNECT_URL: http://kafka-connect:8083
+    depends_on:
+      - kafka-connect
+    networks:
+      - data-kata-net
   marquez-db:
     image: postgres:18-alpine
     container_name: marquez-db
