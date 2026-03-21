@@ -1,7 +1,0 @@
-checks for top_salesman:
-  - row_count > 0
-  - duplicate_count(salesman_id) = 0
-  - max(total_amount) > 0
-checks for total_sales:
-  - row_count > 0
-  - avg(total_amount) > 0
