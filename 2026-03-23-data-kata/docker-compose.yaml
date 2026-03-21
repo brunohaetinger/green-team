@@ -1,10 +1,10 @@
 include:
   # Data sources
-  # - ./datasources/external/database/docker-compose.yaml
-  # - ./datasources/external/filesystem/docker-compose.yaml
-  # - ./datasources/external/web-server/docker-compose.yaml
-  # - ./datasources/internal/report-api/docker-compose.yaml
-  # - ./datasources/create-data/docker-compose.yaml
+  - ./datasources/external/database/docker-compose.yaml
+  - ./datasources/external/filesystem/docker-compose.yaml
+  - ./datasources/external/web-server/docker-compose.yaml
+  - ./datasources/internal/report-api/docker-compose.yaml
+  - ./datasources/create-data/docker-compose.yaml
   # Connectors
   - ./connectors/docker-compose.yaml
   # Flink
@@ -14,9 +14,9 @@ include:
   # Data Lineage
   - ./data-lineage/docker-compose.yaml
   # Report API
-  # - ./api/docker-compose.yaml
+  - ./api/docker-compose.yaml
   # Observability
-  # - ./observability/docker-compose.yaml
+  - ./observability/docker-compose.yaml
 
 # Docker setup
 networks:
