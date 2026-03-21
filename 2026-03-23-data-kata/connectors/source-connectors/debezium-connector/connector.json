@@ -1,5 +1,5 @@
 {
-  "name": "debezium-connector-to-external-db",
+  "name": "cdc-external-db-source",
   "config": {
     "name": "debezium-connector-to-external-db",
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
