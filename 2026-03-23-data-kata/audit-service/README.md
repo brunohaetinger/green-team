@@ -30,7 +30,7 @@ Start Kafka and related services from the project root:
 
 ```bash
 # Start Kafka broker and Kafka Connect
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 3. Data Generation

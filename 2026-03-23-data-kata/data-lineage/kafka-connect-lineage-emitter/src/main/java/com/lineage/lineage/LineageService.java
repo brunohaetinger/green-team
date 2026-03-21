@@ -105,7 +105,7 @@ public class LineageService {
         return openLineage.newDatasetFacetsBuilder().build();
     }
 
-    private void emit(LineageData data, Map<String, Object> config) {
+    private void emit(LineageData data) {
         try {
             // For each input/output, try to get the schema by topic and connector type
             List<OpenLineage.InputDataset> inputDatasets = Arrays.stream(data.input.split(","))
@@ -164,7 +164,7 @@ public class LineageService {
             Map<String, Object> config = mapper.readValue(configJson, Map.class);
 
             var lineage = mapToLineage(name, config);
-            emit(lineage, config);
+            emit(lineage);
         }
     }
 }

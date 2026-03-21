@@ -17,6 +17,8 @@ include:
   - ./api/docker-compose.yaml
   # Observability
   - ./observability/docker-compose.yaml
+  # Audit Service
+  - ./audit-service/docker-compose.yaml
 
 # Docker setup
 networks:
