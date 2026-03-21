@@ -29,6 +29,17 @@ const mockSalesData: SalesData[] = [
 ]
 
 function App() {
+  const [salesData, setSalesData] = useState([]);
+
+  useEffect(() => {
+    const getSalesByCity = async () => {
+      const res = await fetch("http://report-api:8080/api/v1/sales/rankings/top-sales-by-city")
+      const resJson = res.json();
+      setSalesData(resJson);
+    }
+    getSalesByCity();
+  }, [])
+
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -74,7 +85,7 @@ function App() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockSalesData.map((data, index) => (
+                  {salesData.map((data, index) => (
                     <TableRow
                       key={index}
                       className="hover:bg-muted/20 transition-colors border-border"
@@ -108,3 +119,9 @@ function App() {
 }
 
 export default App
+function useState(arg0: never[]): [any, any] {
+  throw new Error("Function not implemented.")
+}
+function useEffect(arg0: () => void, arg1: never[]) {
+  throw new Error("Function not implemented.")
+}
