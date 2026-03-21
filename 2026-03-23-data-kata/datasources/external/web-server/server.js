@@ -18,13 +18,17 @@ const requestListener = async function (req, res) {
   if (pathname === '/sales' && req.method === 'GET') {
     try {
       const startId = query.startId ? parseInt(query.startId, 10) : null;
+      const items = query.items ? parseInt(query.items, 10) : null;
 
       let result;
 
       if (startId !== null && !isNaN(startId)) {
+
+        const limit = items == null ? 10 : items;
+
         result = await pool.query(
-          'SELECT id, name, store_id FROM salesmans WHERE id >= $1',
-          [startId]
+          'SELECT id, name, store_id FROM salesmans WHERE id >= $1 LIMIT $2',
+          [startId, limit]
         );
       } else {
         result = await pool.query(
