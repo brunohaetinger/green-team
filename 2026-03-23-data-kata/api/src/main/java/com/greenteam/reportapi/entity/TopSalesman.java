@@ -9,7 +9,6 @@ import jakarta.persistence.Transient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "top_salesman")
@@ -32,9 +31,6 @@ public class TopSalesman {
 
 	@Column(name = "total_units")
 	private Long totalUnits;
-
-	@Column(name = "updated_at")
-	private OffsetDateTime updatedAt;
 
 	// TODO: remove @Transient once the DB columns are added
 	@Transient
@@ -61,10 +57,6 @@ public class TopSalesman {
 
 	public Long getTotalUnits() {
 		return totalUnits;
-	}
-
-	public OffsetDateTime getUpdatedAt() {
-		return updatedAt;
 	}
 
 	public String getCityName() {
