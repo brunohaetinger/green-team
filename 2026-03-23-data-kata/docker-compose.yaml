@@ -4,6 +4,7 @@ include:
   - ./datasources/external/filesystem/docker-compose.yaml
   - ./datasources/external/web-server/docker-compose.yaml
   - ./datasources/internal/report-api/docker-compose.yaml
+  - ./datasources/internal/webserver-data-collector/docker-compose.yaml
   - ./datasources/create-data/docker-compose.yaml
   # Connectors
   - ./connectors/docker-compose.yaml

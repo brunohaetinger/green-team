@@ -6,5 +6,9 @@ services:
     restart: on-failure
     ports:
       - "9008:9008"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://webserver-data-collector-postgres:5439/data-collector-db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
     networks:
       - data-kata-net
