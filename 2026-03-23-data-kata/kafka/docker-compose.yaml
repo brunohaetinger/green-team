@@ -77,6 +77,8 @@ services:
     ports:
       - "8083:8083"
       - "9404:9404"
+    volumes:
+      - ../data:/data
     volumes_from:
       - source-fs
     healthcheck:
