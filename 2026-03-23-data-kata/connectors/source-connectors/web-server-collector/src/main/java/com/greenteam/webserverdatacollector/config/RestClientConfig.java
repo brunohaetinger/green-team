@@ -1,4 +1,4 @@
-package com.greenteam.webserverdatacollector.service;
+package com.greenteam.webserverdatacollector.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

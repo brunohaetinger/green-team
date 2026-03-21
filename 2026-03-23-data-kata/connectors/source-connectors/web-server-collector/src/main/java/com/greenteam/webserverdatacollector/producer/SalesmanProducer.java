@@ -1,5 +1,6 @@
-package com.greenteam.webserverdatacollector.service;
+package com.greenteam.webserverdatacollector.producer;
 
+import com.greenteam.webserverdatacollector.dto.Salesman;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;

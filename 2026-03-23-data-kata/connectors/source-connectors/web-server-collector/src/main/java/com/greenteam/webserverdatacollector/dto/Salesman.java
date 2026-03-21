@@ -1,4 +1,4 @@
-package com.greenteam.webserverdatacollector.service;
+package com.greenteam.webserverdatacollector.dto;
 
 public record Salesman(
         Long id,
