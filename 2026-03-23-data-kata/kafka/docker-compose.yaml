@@ -77,6 +77,8 @@ services:
     ports:
       - "8083:8083"
       - "9404:9404"
+    volumes:
+      - ../data:/data
     volumes_from:
       - source-fs
     healthcheck:
@@ -101,7 +103,7 @@ services:
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
       CONNECT_PLUGIN_PATH: "/usr/share/confluent-hub-components"
-      KAFKA_OPTS: "-javaagent:/opt/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter-config.yml"
+      KAFKA_OPTS: "-javaagent:/usr/share/java/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter-config.yml"
     networks:
       - data-kata-net
 
