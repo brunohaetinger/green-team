@@ -114,7 +114,6 @@ function App() {
         <Card className="shadow-sm border-border/60 bg-card">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg text-foreground">Top Salesman</CardTitle>
-
             <CardDescription>
               Ranked by total revenue amount
             </CardDescription>
