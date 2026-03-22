@@ -9,7 +9,7 @@ include:
   # Connectors
   - ./connectors/docker-compose.yaml
 
-  # WebServer Data Collector (Custom Connector)
+  # WebServer Data Collector
   - ./connectors/source-connectors/web-server-collector/docker-compose.yaml
 
   # Flink
