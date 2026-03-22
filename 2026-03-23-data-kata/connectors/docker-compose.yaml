@@ -5,8 +5,8 @@ services:
     depends_on:
       kafka-connect:
         condition: service_healthy
-      report-api-database-postgres:
-        condition: service_healthy
+      # report-api-database-postgres:
+      #   condition: service_healthy
       external-db-postgres:
         condition: service_healthy
       source-fs:

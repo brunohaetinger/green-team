@@ -1,0 +1,66 @@
+services:
+  kafka-connect-lineage-emitter:
+    build:
+      context: ./kafka-connect-lineage-emitter
+      dockerfile: Dockerfile
+    environment:
+      MARQUEZ_API_URL: http://marquez-api:4000
+      KAFKA_CONNECT_URL: http://kafka-connect:8083
+    depends_on:
+      - kafka-connect
+    networks:
+      - data-kata-net
+  audit-service:
+    build:
+      context: ./audit-service
+      dockerfile: Dockerfile
+    container_name: audit-service
+    restart: on-failure
+    ports:
+      - "8084:8084"
+    environment:
+      SERVER_PORT: 8084
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-audit-events}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-2}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_S3_ENDPOINT: ${AWS_S3_ENDPOINT:-}
+    depends_on:
+      - kafka-connect
+    networks:
+      - data-kata-net
+  webserver-data-collector:
+    build:
+      context: ./web-server-collector
+      dockerfile: Dockerfile
+    container_name: webserver-data-collector
+    restart: on-failure
+    ports:
+      - "9008:9008"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://webserver-data-collector-postgres:5432/data-collector-db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SALESMAN_API_URL: http://web-server:8080
+      KAFKA_HOST: kafka:29092
+      OPENLINEAGE_API_URL: http://marquez-api:4000
+    networks:
+      - data-kata-net
+  report-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: report-api
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://report-api-database-postgres:5432/sales_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+    depends_on:
+      report-api-database-postgres:
+        condition: service_healthy
+    networks:
+      - data-kata-net
