@@ -14,7 +14,7 @@
     b. Red-Shift
     c. Hadoop
 
-## Archicture
+## Architecture
 
 ![](docs/Kata%20-%20Data%20Architecture.png)
 
@@ -22,16 +22,15 @@
 ## How to run
 
 ```
-docker compose up
+docker compose up --build -d
 ```
 
-```
-cd scripts/connector
-```
+Before running the project, you may want to adjust the `WRITE_DELAY_MS` environment variable in the `datasources/create-data/docker-compose.yml` file to control the delay between each sale event produced by the `create-data` service. This can help you simulate different data ingestion rates and prevent your development envrironment from being overwhelmed with data. Default is set to `250ms`.
 
-```
-./setup.sh
-```
+Also, some problems can be fixed by deleting the container and its volumes. Try it first if you face any issue starting the project.
+
+
+
 
 ## Glossary
 
