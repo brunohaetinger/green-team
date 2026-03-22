@@ -18,6 +18,6 @@ public class SalesmanProducer {
 
     public void send(Salesman salesman) {
         String message = objectMapper.writeValueAsString(salesman);
-        kafkaTemplate.send("salesman", String.valueOf(salesman.id()), message);
+        kafkaTemplate.send("salesmans", String.valueOf(salesman.id()), message);
     }
 }
