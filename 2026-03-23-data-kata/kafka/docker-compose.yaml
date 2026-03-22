@@ -8,8 +8,10 @@ services:
       - data-kata-net
     ports:
       - "9092:9092"
+      - "9405:9404"
     volumes:
       - kafka-data-kata:/var/lib/kafka/data
+      - ./jmx-exporter-config.yml:/opt/jmx-exporter-config.yml:ro
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -24,6 +26,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_OPTS: "-javaagent:/usr/share/java/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter-config.yml"
     healthcheck:
       test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 10s
