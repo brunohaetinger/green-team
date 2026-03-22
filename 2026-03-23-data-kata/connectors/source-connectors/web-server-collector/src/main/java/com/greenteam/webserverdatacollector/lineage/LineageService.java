@@ -56,7 +56,7 @@ public class LineageService {
 
         var output = openLineage.newOutputDatasetBuilder()
                 .namespace("kafka")
-                .name("salesman-topic")
+                .name("salesmans")
                 .facets(openLineage.newDatasetFacetsBuilder()
                     .schema(openLineage.newSchemaDatasetFacetBuilder()
                             .fields(List.of(
@@ -85,7 +85,7 @@ public class LineageService {
 
         var job = openLineage.newJobBuilder()
                 .namespace("green-team-data-kata")
-                .name("salesman-ingestion-job")
+                .name("web-server-collector")
                 .build();
 
         var event = openLineage.newRunEventBuilder()
