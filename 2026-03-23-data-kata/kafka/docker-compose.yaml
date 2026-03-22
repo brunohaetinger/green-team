@@ -29,9 +29,9 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-      KAFKA_OPTS: "-javaagent:/usr/share/java/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter-config.yml"
+      EXTRA_ARGS: "-javaagent:/usr/share/java/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter-config.yml"
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      test: ["CMD-SHELL", "KAFKA_OPTS='' kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -83,6 +83,7 @@ services:
       - "9404:9404"
     volumes:
       - ../data:/data
+      - ./jmx-exporter-config.yml:/opt/jmx-exporter-config.yml:ro
     volumes_from:
       - source-fs
     healthcheck:

@@ -11,14 +11,14 @@ rules:
   
   # Kafka Connect Connector metrics
   - pattern: 'kafka.connect<type=connector-metrics, connector=(.+)><>(.+):'
-    name: kafka_connect_connector_metrics_$2
+    name: connect_connector_$2
     labels:
       connector: "$1"
     attrNameSnakeCase: true
 
   # Kafka Connect Task metrics
   - pattern: 'kafka.connect<type=task-metrics, connector=(.+), task=(.+)><>(.+):'
-    name: kafka_connect_task_metrics_$3
+    name: connect_task_$3
     labels:
       connector: "$1"
       task: "$2"
@@ -26,7 +26,7 @@ rules:
 
   # Kafka Connect Source Task metrics
   - pattern: 'kafka.connect<type=source-task-metrics, connector=(.+), task=(.+)><>(.+):'
-    name: kafka_connect_source_task_metrics_$3
+    name: connect_source_task_$3
     labels:
       connector: "$1"
       task: "$2"
@@ -34,7 +34,7 @@ rules:
 
   # Kafka Connect Sink Task metrics
   - pattern: 'kafka.connect<type=sink-task-metrics, connector=(.+), task=(.+)><>(.+):'
-    name: kafka_connect_sink_task_metrics_$3
+    name: connect_sink_task_$3
     labels:
       connector: "$1"
       task: "$2"
@@ -42,21 +42,21 @@ rules:
 
   # Kafka Connect Connector Error metrics
   - pattern: 'kafka.connect<type=connector-error-metrics, connector=(.+)><>(.+):'
-    name: kafka_connect_connector_error_metrics_$2
+    name: connect_error_$2
     labels:
       connector: "$1"
     attrNameSnakeCase: true
 
   # Fallback for other Kafka Connect metrics
   - pattern: 'kafka.connect<type=(.+), connector=(.+), task=(.+)><>(.+):'
-    name: kafka_connect_$1_$4
+    name: connect_$1_$4
     labels:
       connector: "$2"
       task: "$3"
     attrNameSnakeCase: true
 
   - pattern: 'kafka.connect<type=(.+), connector=(.+)><>(.+):'
-    name: kafka_connect_$1_$3
+    name: connect_$1_$3
     labels:
       connector: "$2"
     attrNameSnakeCase: true

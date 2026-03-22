@@ -162,7 +162,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum by (connector) (kafka_connect_source_task_metrics_source_record_write_rate)",
+          "expr": "sum by (connector) (connect_source_task_source_record_write_rate)",
           "legendFormat": "Source: {{connector}} (records/sec)",
           "range": true,
           "refId": "A"
@@ -173,7 +173,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum by (connector) (kafka_connect_sink_task_metrics_sink_record_put_rate)",
+          "expr": "sum by (connector) (connect_sink_task_sink_record_put_rate)",
           "legendFormat": "Sink: {{connector}} (records/sec)",
           "range": true,
           "refId": "B"
@@ -218,7 +218,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum by (connector) (kafka_connect_connector_error_metrics_error_count_total)",
+          "expr": "sum by (connector) (connect_error_error_count_total)",
           "legendFormat": "Errors: {{connector}}",
           "range": true,
           "refId": "A"
