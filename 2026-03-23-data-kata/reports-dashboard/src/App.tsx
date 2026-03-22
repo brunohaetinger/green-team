@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import {
   Table,
   TableBody,
@@ -15,29 +16,37 @@ import {
 } from "./components/ui/card"
 
 interface SalesData {
-  city: string
-  country: string
-  amount: number
-  units: number
-  orders: number
+  cityName: string
+  countryName: string
+  totalAmount: number
+  totalUnits: number
 }
 
-const mockSalesData: SalesData[] = [
-  { city: "New York", country: "USA", amount: 125000, units: 450, orders: 120 },
-  { city: "London", country: "UK", amount: 98500, units: 320, orders: 95 },
-  { city: "Tokyo", country: "Japan", amount: 87200, units: 280, orders: 78 },
-]
+interface SalesmanData {
+  salesmanName: string
+  cityName: string
+  countryName: string
+  totalAmount: number
+  totalUnits: number
+}
 
 function App() {
-  const [salesData, setSalesData] = useState([]);
+  const [salesData, setSalesData] = useState<SalesData[]>([]);
+  const [salesmanData, setSalesmanData] = useState<SalesmanData[]>([]);
 
   useEffect(() => {
     const getSalesByCity = async () => {
-      const res = await fetch("http://report-api:8080/api/v1/sales/rankings/top-sales-by-city")
-      const resJson = res.json();
-      setSalesData(resJson);
+      const res = await fetch("http://localhost:8080/api/v1/sales/rankings/top-sales-by-city")
+      const resJson = await res.json();
+      setSalesData(resJson.content);
+    }
+    const getTopSalesman = async () => {
+      const res = await fetch("http://localhost:8080/api/v1/sales/rankings/top-salesman")
+      const resJson = await res.json();
+      setSalesmanData(resJson.content);
     }
     getSalesByCity();
+    getTopSalesman();
   }, [])
 
   return (
@@ -79,9 +88,6 @@ function App() {
                     <TableHead className="text-right font-medium text-muted-foreground">
                       Units
                     </TableHead>
-                    <TableHead className="text-right font-medium text-muted-foreground">
-                      Orders
-                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -93,18 +99,55 @@ function App() {
                       <TableCell className="font-medium text-primary">
                         #{index + 1}
                       </TableCell>
-                      <TableCell className="font-medium text-foreground">{data.city}</TableCell>
+                      <TableCell className="font-medium text-foreground">{data.cityName}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {data.country}
+                        {data.countryName}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-emerald-400">
-                        ${data.amount.toLocaleString()}
+                        ${data.totalAmount.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
-                        {data.units.toLocaleString()}
+                        {data.totalUnits.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm border-border/60 bg-card">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg text-foreground">Top Salesman</CardTitle>
+            <CardDescription>
+              Ranked by total revenue amount
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border border-border overflow-hidden bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40 hover:bg-muted/40 border-border">
+                    <TableHead className="w-16 font-medium text-muted-foreground">Rank</TableHead>
+                    <TableHead className="font-medium text-muted-foreground">Name</TableHead>
+                    <TableHead className="font-medium text-muted-foreground">City</TableHead>
+                    <TableHead className="font-medium text-muted-foreground">Country</TableHead>
+                    <TableHead className="text-right font-medium text-muted-foreground">Amount</TableHead>
+                    <TableHead className="text-right font-medium text-muted-foreground">Units</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salesmanData.map((data, index) => (
+                    <TableRow key={index} className="hover:bg-muted/20 transition-colors border-border">
+                      <TableCell className="font-medium text-primary">#{index + 1}</TableCell>
+                      <TableCell className="font-medium text-foreground">{data.salesmanName}</TableCell>
+                      <TableCell className="text-muted-foreground">{data.cityName}</TableCell>
+                      <TableCell className="text-muted-foreground">{data.countryName}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums text-emerald-400">
+                        ${data.totalAmount.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
-                        {data.orders.toLocaleString()}
+                        {data.totalUnits.toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -119,9 +162,3 @@ function App() {
 }
 
 export default App
-function useState(arg0: never[]): [any, any] {
-  throw new Error("Function not implemented.")
-}
-function useEffect(arg0: () => void, arg1: never[]) {
-  throw new Error("Function not implemented.")
-}

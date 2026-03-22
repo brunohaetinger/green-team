@@ -5,10 +5,7 @@ services:
     container_name: reports-dashboard
     restart: on-failure
     ports:
-      - "3000:80"
+      - "3002:80"
     networks:
       - data-kata-net
 
-networks:
-  data-kata-net:
-    external: true
