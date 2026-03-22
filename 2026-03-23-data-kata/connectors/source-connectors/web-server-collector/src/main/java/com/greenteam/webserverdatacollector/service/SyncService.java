@@ -2,12 +2,16 @@ package com.greenteam.webserverdatacollector.service;
 
 import com.greenteam.webserverdatacollector.dto.Salesman;
 import com.greenteam.webserverdatacollector.producer.SalesmanProducer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Service
 public class SyncService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SyncService.class);
 
     private final RestClient restClient;
     private final SalesmanProducer salesmanProducer;
@@ -23,8 +27,8 @@ public class SyncService {
     }
 
     public void startSync() {
+        logger.info("Starting sync");
         try {
-
             Long latestOffset = offsetService.getOffset("webserver-api");
 
             Long startId = latestOffset + 1; // move to the next item
@@ -37,17 +41,22 @@ public class SyncService {
                     .retrieve()
                     .body(Salesman[].class);
 
-            System.out.println("=== Salesman Received ===");
+            if(response == null) {
+                // skip by design, nothing to process
+                return;
+            }
+
+            logger.info("Fetched {} items", response.length);
 
             Long currentOffset = startId;
             for (Salesman sale : response) {
                 salesmanProducer.send(sale);
                 offsetService.updateOffset("webserver-api", currentOffset);
                 currentOffset++;
-                System.out.println("Sent to Kafka: " + sale);
+                logger.info("Salesman (id={}) event published", sale.id());
             }
         } catch (Exception e) {
-            System.err.println("Failed to calll the API: " + e.getMessage());
+            logger.error("Failed to process the scheduler", e);
         }
     }
 }
