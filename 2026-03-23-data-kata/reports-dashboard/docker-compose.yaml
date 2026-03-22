@@ -1,0 +1,11 @@
+services:
+  reports-dashboard:
+    build:
+      context: .
+    container_name: reports-dashboard
+    restart: on-failure
+    ports:
+      - "3002:80"
+    networks:
+      - data-kata-net
+

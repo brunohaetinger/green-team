@@ -21,6 +21,8 @@ include:
   - ./data-lineage/docker-compose.yaml
   # Observability
   - ./observability/docker-compose.yaml
+  # Reports Dashboard
+  - ./reports-dashboard/docker-compose.yaml
 
 # Docker setup
 networks:
