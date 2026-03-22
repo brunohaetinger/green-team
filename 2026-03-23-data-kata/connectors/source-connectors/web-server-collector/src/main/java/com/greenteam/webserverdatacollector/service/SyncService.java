@@ -20,8 +20,11 @@ public class SyncService {
     @Value("${scheduler.batch-size}")
     private Long batchSize;
 
-    public SyncService(RestClient.Builder builder, SalesmanProducer salesmanProducer, OffsetService offsetService) {
-        this.restClient = builder.baseUrl("http://localhost:8089").build();
+    public SyncService(RestClient.Builder builder, SalesmanProducer salesmanProducer, OffsetService offsetService,
+                       @Value("${salesman.url}") String salesmanApiUrl) {
+
+        logger.info("Connecting to Salesman API {}", salesmanApiUrl);
+        this.restClient = builder.baseUrl(salesmanApiUrl).build();
         this.salesmanProducer = salesmanProducer;
         this.offsetService = offsetService;
     }
