@@ -5,7 +5,10 @@ scheduler:
   batch-size: 5
 
 kafka:
-  bootstrap-servers: localhost:9092
+  bootstrap-servers: ${KAFKA_HOST:localhost:9092}
+
+salesman:
+  url: ${SALESMAN_API_URL:http://localhost:8089}
 
 spring:
   datasource:

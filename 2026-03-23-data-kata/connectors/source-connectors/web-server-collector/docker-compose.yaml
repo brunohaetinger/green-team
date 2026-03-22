@@ -7,8 +7,10 @@ services:
     ports:
       - "9008:9008"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://webserver-data-collector-postgres:5439/data-collector-db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://webserver-data-collector-postgres:5432/data-collector-db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
+      SALESMAN_API_URL: http://web-server:8080
+      KAFKA_HOST: kafka:29092
     networks:
       - data-kata-net
