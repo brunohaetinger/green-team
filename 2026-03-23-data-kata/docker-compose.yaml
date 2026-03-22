@@ -4,8 +4,14 @@ include:
   - ./datasources/external/filesystem/docker-compose.yaml
   - ./datasources/external/web-server/docker-compose.yaml
   - ./datasources/internal/report-api/docker-compose.yaml
+  - ./datasources/internal/webserver-data-collector/docker-compose.yaml
+  - ./datasources/create-data/docker-compose.yaml
   # Connectors
   - ./connectors/docker-compose.yaml
+
+  # WebServer Data Collector
+  - ./connectors/source-connectors/web-server-collector/docker-compose.yaml
+
   # Flink
   - ./apache-flink/docker-compose.yaml
   # Kafka
@@ -14,6 +20,10 @@ include:
   - ./data-lineage/docker-compose.yaml
   # Report API
   - ./api/docker-compose.yaml
+  # Observability
+  - ./observability/docker-compose.yaml
+  # Audit Service
+  - ./audit-service/docker-compose.yaml
 
 # Docker setup
 networks:

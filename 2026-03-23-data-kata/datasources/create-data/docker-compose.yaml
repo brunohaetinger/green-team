@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  create-data:
+    image: node:20-alpine
+    container_name: create-data
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ../../data:/data
+    command: sh -c "chmod +x ./wait-for-postgres.sh && ./wait-for-postgres.sh external-db-postgres 5432 ./wait-for-postgres.sh source-db-webserver-postgres 5432 npm install && npm start"
+    environment:
+      SALES_DB_URL: postgres://user:password@external-db-postgres:5432/external_db
+      SALESMANS_DB_URL: postgres://user:password@source-db-webserver-postgres:5432/webserver_db
+      WRITE_DELAY_MS: 250
+    depends_on:
+      - external-db-postgres
+      - source-db-webserver-postgres
+    networks:
+      - data-kata-net

@@ -6,13 +6,13 @@ import java.util.Objects;
 
 public class TotalSalesByCityId implements Serializable {
 
-    private Integer storeId;
+    private String cityName;
     private LocalDate saleDate;
 
     public TotalSalesByCityId() {}
 
-    public TotalSalesByCityId(Integer storeId, LocalDate saleDate) {
-        this.storeId = storeId;
+    public TotalSalesByCityId(String cityName, LocalDate saleDate) {
+        this.cityName = cityName;
         this.saleDate = saleDate;
     }
 
@@ -20,11 +20,11 @@ public class TotalSalesByCityId implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof TotalSalesByCityId that)) return false;
-        return Objects.equals(storeId, that.storeId) && Objects.equals(saleDate, that.saleDate);
+        return Objects.equals(cityName, that.cityName) && Objects.equals(saleDate, that.saleDate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(storeId, saleDate);
+        return Objects.hash(cityName, saleDate);
     }
 }
