@@ -25,8 +25,10 @@ public class SyncService {
     private Long batchSize;
 
     public SyncService(RestClient.Builder builder, SalesmanProducer salesmanProducer, OffsetService offsetService,
-                       LineageService lineageService) {
-        this.restClient = builder.baseUrl("http://localhost:8089").build();
+                       LineageService lineageService,  @Value("${salesman.url}") String salesmanApiUrl) {
+        
+        logger.info("Connecting to Salesman API {}", salesmanApiUrl);
+        this.restClient = builder.baseUrl(salesmanApiUrl).build();
         this.salesmanProducer = salesmanProducer;
         this.offsetService = offsetService;
         this.lineageService = lineageService;
