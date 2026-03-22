@@ -1,6 +1,9 @@
 server:
   port: 9008
 
+scheduler:
+  batch-size: 5
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5439/data-collector-db}

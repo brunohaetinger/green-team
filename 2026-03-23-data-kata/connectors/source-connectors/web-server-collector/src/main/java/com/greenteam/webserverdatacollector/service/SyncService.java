@@ -2,6 +2,7 @@ package com.greenteam.webserverdatacollector.service;
 
 import com.greenteam.webserverdatacollector.dto.Salesman;
 import com.greenteam.webserverdatacollector.producer.SalesmanProducer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -11,6 +12,9 @@ public class SyncService {
     private final RestClient restClient;
     private final SalesmanProducer salesmanProducer;
     private final OffsetService offsetService;
+
+    @Value("${scheduler.batch-size}")
+    private Long batchSize;
 
     public SyncService(RestClient.Builder builder, SalesmanProducer salesmanProducer, OffsetService offsetService) {
         this.restClient = builder.baseUrl("http://localhost:8089").build();
@@ -28,7 +32,7 @@ public class SyncService {
                     .uri(uriBuilder -> uriBuilder
                             .path("/sales")
                             .queryParam("startId", startId)
-                            .queryParam("items", 2L)
+                            .queryParam("items", batchSize)
                             .build())
                     .retrieve()
                     .body(Salesman[].class);

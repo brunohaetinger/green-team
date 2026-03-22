@@ -8,6 +8,10 @@ include:
   - ./datasources/create-data/docker-compose.yaml
   # Connectors
   - ./connectors/docker-compose.yaml
+
+  # WebServer Data Collector (Custom Connector)
+  - ./connectors/source-connectors/web-server-collector/docker-compose.yaml
+
   # Flink
   - ./apache-flink/docker-compose.yaml
   # Kafka
