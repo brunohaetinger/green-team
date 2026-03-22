@@ -4,6 +4,7 @@ import io.openlineage.client.OpenLineage;
 import io.openlineage.client.OpenLineageClient;
 import io.openlineage.client.transports.HttpTransport;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -14,13 +15,16 @@ import java.util.UUID;
 @Service
 public class LineageService {
 
+    public static final String OPEN_LINEAGE_NAMESPACE = "green-team-data-kata";
+    public static final String JOB_NAME = "web-server-collector";
+
     private final OpenLineage openLineage = new OpenLineage(URI.create("https://github.com/OpenLineage/OpenLineage"));
     private final OpenLineageClient client;
 
-    public LineageService() {
+    public LineageService(@Value("${openlineage.url}") String openlineageApi) {
         this.client = new OpenLineageClient(
                 HttpTransport.builder()
-                        .uri("http://localhost:4000/api/v1/lineage")
+                        .uri(openlineageApi + "/api/v1/lineage")
                         .build()
         );
     }
@@ -30,8 +34,8 @@ public class LineageService {
         UUID runId = UUID.randomUUID();
 
         var job = openLineage.newJobBuilder()
-                .namespace("green-team-data-kata")
-                .name("salesman-ingestion-job")
+                .namespace(OPEN_LINEAGE_NAMESPACE)
+                .name(JOB_NAME)
                 .build();
 
 
@@ -39,12 +43,6 @@ public class LineageService {
                 .namespace("api")
                 .name("salesman-webserver")
                 .facets(openLineage.newDatasetFacetsBuilder()
-                    .dataSource(
-                        openLineage.newDatasourceDatasetFacet(
-                        "api",
-                            URI.create("http://localhost:8089/sales")
-                        )
-                    )
                     .schema(openLineage.newSchemaDatasetFacetBuilder()
                         .fields(List.of(
                             openLineage.newSchemaDatasetFacetFields("id", "LONG", null, null, null),
@@ -84,8 +82,8 @@ public class LineageService {
     public void completeRun(UUID runId) {
 
         var job = openLineage.newJobBuilder()
-                .namespace("green-team-data-kata")
-                .name("web-server-collector")
+                .namespace(OPEN_LINEAGE_NAMESPACE)
+                .name(JOB_NAME)
                 .build();
 
         var event = openLineage.newRunEventBuilder()

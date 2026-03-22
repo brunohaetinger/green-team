@@ -12,5 +12,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       SALESMAN_API_URL: http://web-server:8080
       KAFKA_HOST: kafka:29092
+      OPENLINEAGE_API_URL: http://marquez-api:4000
     networks:
       - data-kata-net

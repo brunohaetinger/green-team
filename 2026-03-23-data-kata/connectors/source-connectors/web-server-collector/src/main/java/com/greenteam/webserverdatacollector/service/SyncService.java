@@ -26,7 +26,7 @@ public class SyncService {
 
     public SyncService(RestClient.Builder builder, SalesmanProducer salesmanProducer, OffsetService offsetService,
                        LineageService lineageService,  @Value("${salesman.url}") String salesmanApiUrl) {
-        
+
         logger.info("Connecting to Salesman API {}", salesmanApiUrl);
         this.restClient = builder.baseUrl(salesmanApiUrl).build();
         this.salesmanProducer = salesmanProducer;

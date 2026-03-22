@@ -10,6 +10,9 @@ kafka:
 salesman:
   url: ${SALESMAN_API_URL:http://localhost:8089}
 
+openlineage:
+  url: ${OPENLINEAGE_API_URL:http://localhost:4000}
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5439/data-collector-db}
