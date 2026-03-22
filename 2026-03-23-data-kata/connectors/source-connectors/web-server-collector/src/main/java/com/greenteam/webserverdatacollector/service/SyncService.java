@@ -10,40 +10,38 @@ public class SyncService {
 
     private final RestClient restClient;
     private final SalesmanProducer salesmanProducer;
-    private Long lastProcessedId = 1L;
+    private final OffsetService offsetService;
 
-    public SyncService(RestClient.Builder builder, SalesmanProducer salesmanProducer) {
+    public SyncService(RestClient.Builder builder, SalesmanProducer salesmanProducer, OffsetService offsetService) {
         this.restClient = builder.baseUrl("http://localhost:8089").build();
         this.salesmanProducer = salesmanProducer;
+        this.offsetService = offsetService;
     }
 
     public void startSync() {
         try {
-            Long startId = 0L;
+
+            Long latestOffset = offsetService.getOffset("webserver-api");
+
+            Long startId = latestOffset + 1; // move to the next item
             Salesman[] response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/sales")
                             .queryParam("startId", startId)
+                            .queryParam("items", 2L)
                             .build())
                     .retrieve()
                     .body(Salesman[].class);
 
-            System.out.println("=== SALES RECEIVED ===");
+            System.out.println("=== Salesman Received ===");
 
-            System.out.println("=== PUBLISHING SALES ===");
-
-            long maxId = lastProcessedId;
-
+            Long currentOffset = startId;
             for (Salesman sale : response) {
                 salesmanProducer.send(sale);
+                offsetService.updateOffset("webserver-api", currentOffset);
+                currentOffset++;
                 System.out.println("Sent to Kafka: " + sale);
-
-                if (sale.id() > maxId) {
-                    maxId = sale.id();
-                }
             }
-
-            lastProcessedId = maxId + 1;
         } catch (Exception e) {
             System.err.println("Failed to calll the API: " + e.getMessage());
         }
