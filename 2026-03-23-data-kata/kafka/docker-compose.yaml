@@ -1,7 +1,10 @@
 # Kafka setup
 services: 
   kafka:
-    image: confluentinc/cp-kafka:7.8.7
+    build:
+      context: .
+      dockerfile: kafka.Dockerfile
+    image: greenteam/kafka-broker:7.8.7
     container_name: kafka
     hostname: kafka
     networks:
@@ -30,20 +33,19 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
   kafka-init-topics:
     image: confluentinc/cp-kafka:7.8.7
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     networks:
       - data-kata-net
     entrypoint: [ "/bin/sh", "-c" ]
     command: |
-      "
       echo 'Waiting for Kafka...'
-      sleep 10
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic sales --partitions 1 --replication-factor 1
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic stores --partitions 1 --replication-factor 1
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic salesmans --partitions 1 --replication-factor 1
@@ -51,7 +53,6 @@ services:
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic top-sales --partitions 1 --replication-factor 1
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic top-salesman --partitions 1 --replication-factor 1
       kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --topic sales-expired --partitions 1 --replication-factor 1
-      "
   # kafka-ui:
   #   image: provectuslabs/kafka-ui:latest
   #   container_name: kafka-ui
