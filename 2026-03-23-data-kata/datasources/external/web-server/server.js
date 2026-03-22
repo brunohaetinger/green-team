@@ -1,5 +1,6 @@
 const http = require('http');
 const { Pool } = require('pg');
+const url = require('url');
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -10,11 +11,34 @@ const pool = new Pool({
 });
 
 const requestListener = async function (req, res) {
-  if (req.url === '/sales' && req.method === 'GET') {
+  const parsedUrl = url.parse(req.url, true); // true = parse query params
+  const pathname = parsedUrl.pathname;
+  const query = parsedUrl.query;
+
+  if (pathname === '/sales' && req.method === 'GET') {
     try {
-      const result = await pool.query('SELECT id, name, store_id FROM salesmans');
+      const startId = query.startId ? parseInt(query.startId, 10) : null;
+      const items = query.items ? parseInt(query.items, 10) : null;
+
+      let result;
+
+      if (startId !== null && !isNaN(startId)) {
+
+        const limit = items == null ? 10 : items;
+
+        result = await pool.query(
+          'SELECT id, name, store_id FROM salesmans WHERE id >= $1 LIMIT $2',
+          [startId, limit]
+        );
+      } else {
+        result = await pool.query(
+          'SELECT id, name, store_id FROM salesmans'
+        );
+      }
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result.rows));
+
     } catch (err) {
       console.error(err);
       res.writeHead(500);
@@ -24,9 +48,9 @@ const requestListener = async function (req, res) {
     res.writeHead(404);
     res.end('Not Found');
   }
-}
+};
 
 const server = http.createServer(requestListener);
 server.listen(8080, () => {
-    console.log('Server is running on port 8080');
+  console.log('Server is running on port 8080');
 });
