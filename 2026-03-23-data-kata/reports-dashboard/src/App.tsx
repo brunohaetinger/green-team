@@ -51,7 +51,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background py-12 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Top Sales Rankings
@@ -61,6 +61,7 @@ function App() {
           </p>
         </header>
 
+        <div className="grid grid-cols-2 gap-6">
         <Card className="shadow-sm border-border/60 bg-card">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg text-foreground">Sales by City</CardTitle>
@@ -79,13 +80,10 @@ function App() {
                     <TableHead className="font-medium text-muted-foreground">
                       City
                     </TableHead>
-                    <TableHead className="font-medium text-muted-foreground">
-                      Country
-                    </TableHead>
-                    <TableHead className="text-right font-medium text-muted-foreground">
+                    <TableHead className="text-left font-medium text-muted-foreground">
                       Amount
                     </TableHead>
-                    <TableHead className="text-right font-medium text-muted-foreground">
+                    <TableHead className="text-left font-medium text-muted-foreground">
                       Units
                     </TableHead>
                   </TableRow>
@@ -100,13 +98,10 @@ function App() {
                         #{index + 1}
                       </TableCell>
                       <TableCell className="font-medium text-foreground">{data.cityName}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {data.countryName}
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-emerald-400">
+                      <TableCell className="text-left font-mono tabular-nums text-emerald-400">
                         ${data.totalAmount.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                      <TableCell className="text-left font-mono tabular-nums text-muted-foreground">
                         {data.totalUnits.toLocaleString()}
                       </TableCell>
                     </TableRow>
@@ -119,6 +114,7 @@ function App() {
         <Card className="shadow-sm border-border/60 bg-card">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg text-foreground">Top Salesman</CardTitle>
+
             <CardDescription>
               Ranked by total revenue amount
             </CardDescription>
@@ -130,10 +126,8 @@ function App() {
                   <TableRow className="bg-muted/40 hover:bg-muted/40 border-border">
                     <TableHead className="w-16 font-medium text-muted-foreground">Rank</TableHead>
                     <TableHead className="font-medium text-muted-foreground">Name</TableHead>
-                    <TableHead className="font-medium text-muted-foreground">City</TableHead>
-                    <TableHead className="font-medium text-muted-foreground">Country</TableHead>
-                    <TableHead className="text-right font-medium text-muted-foreground">Amount</TableHead>
-                    <TableHead className="text-right font-medium text-muted-foreground">Units</TableHead>
+                    <TableHead className="text-left font-medium text-muted-foreground">Amount</TableHead>
+                    <TableHead className="text-left font-medium text-muted-foreground">Units</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -141,12 +135,10 @@ function App() {
                     <TableRow key={index} className="hover:bg-muted/20 transition-colors border-border">
                       <TableCell className="font-medium text-primary">#{index + 1}</TableCell>
                       <TableCell className="font-medium text-foreground">{data.salesmanName}</TableCell>
-                      <TableCell className="text-muted-foreground">{data.cityName}</TableCell>
-                      <TableCell className="text-muted-foreground">{data.countryName}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-emerald-400">
+                      <TableCell className="text-left font-mono tabular-nums text-emerald-400">
                         ${data.totalAmount.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                      <TableCell className="text-left font-mono tabular-nums text-muted-foreground">
                         {data.totalUnits.toLocaleString()}
                       </TableCell>
                     </TableRow>
@@ -156,6 +148,7 @@ function App() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   )
