@@ -90,3 +90,24 @@ class FenwickTree(private val size: Int) {
     return query(r) - query(l - 1)
   }
 }
+
+fun buildFT(arr: IntArray): FenwickTree {
+  val ft = FenwickTree(arr.size)
+  for(i in arr.indices) {
+    ft.update(i+1, arr[i])
+  }
+  return ft
+}
+
+fun main(){
+  var array = arrayOf(2, 3, -1, 0, 6)
+
+  // sum of 1 ... 3 should be 4:
+
+  // 1. generate T from array
+  val ft = buildFT(array)
+
+  // 2. query(3)
+  println(ft.query(3))
+
+}
