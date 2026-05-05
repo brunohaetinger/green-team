@@ -11,7 +11,7 @@ fenwick array: T
 T stores values from A if the index last binary index number is 1.
 e.g.: element on index 3 => 00011 => right most bit is 1 => then store its value on T
 
-if second most bit is 1, then sum(A[i]} + A[i-1]) 
+if second most bit is 1, then sum(A[i] + A[i-1]) 
 e.g.: index 2 => 00010 => T[2] = A[2] + A[1]
 
 
@@ -60,3 +60,20 @@ i & -i =>
 
 
 */
+
+
+class FenwickTree(private val size: Int) {
+  private val tree = LongArray(size + 1) // 1-based indexing
+
+  // Add 'delta' to index 'i'
+  fun update(i: Int, delta: Long){
+    var index = i
+    while (index <= size){
+      tree[index] = += delta
+      index += index and -index
+    }
+  }
+
+  fun query
+  fun rangeQuery
+}
