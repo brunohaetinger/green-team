@@ -70,10 +70,23 @@ class FenwickTree(private val size: Int) {
     var index = i
     while (index <= size){
       tree[index] = += delta
-      index += index and -index
+      index += index and -index // bitwise AND operator for integer, equivalent of `&` in C/C++/Java
     }
   }
 
-  fun query
-  fun rangeQuery
+  // Get prefix sum from 1 to i
+  fun query(i: Int): Long {
+    var index = i
+    var sum = 0L
+    while(index > 0) {
+      sum += tree[index]
+      index -= index and -index
+    }
+    return sum
+  }
+
+  // Range sum[l, r]
+  fun rangeQuery(l: Int, r: Int): Long{
+    return query(r) - query(l - 1)
+  }
 }
