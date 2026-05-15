@@ -9,3 +9,5 @@ node_modules/
 .idea
 
 fenwick.jar
+demo.jar
+tests.jar
