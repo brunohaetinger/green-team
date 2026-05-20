@@ -8,21 +8,21 @@ class FenwickTree(size: Int) {
             tree[i + 1] = values[i]
         }
         for (i in 1..size) {
-            val parent = i + lowestSetBit(i)
+            val parent = i + getLeastSignificantBit(i)
             if (parent <= size) {
                 tree[parent] += tree[i]
             }
         }
     }
 
-    private fun lowestSetBit(i: Int): Int = i and -i
+    private fun getLeastSignificantBit(i: Int): Int = i and -i
 
     fun update(index: Int, delta: Long) {
         require(index in 1..size) { "index $index out of range [1..$size]" }
         var i = index
         while (i <= size) {
             tree[i] += delta
-            i += lowestSetBit(i)
+            i += getLeastSignificantBit(i)
         }
     }
 
@@ -32,7 +32,7 @@ class FenwickTree(size: Int) {
         var sum = 0L
         while (i > 0) {
             sum += tree[i]
-            i -= lowestSetBit(i)
+            i -= getLeastSignificantBit(i)
         }
         return sum
     }
