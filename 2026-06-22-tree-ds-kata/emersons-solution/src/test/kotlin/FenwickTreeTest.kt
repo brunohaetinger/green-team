@@ -18,7 +18,6 @@ class FenwickTreeTest {
         assertEquals(15L, fenwickTree.prefixSum(5))
     }
 
-
     @Test
     fun `should update value and recalculate sums correctly`() {
         val values = longArrayOf(1, 2, 3, 4, 5)
@@ -31,6 +30,16 @@ class FenwickTreeTest {
         assertEquals(8L, fenwickTree.prefixSum(3))
         assertEquals(12L, fenwickTree.prefixSum(4))
         assertEquals(17L, fenwickTree.prefixSum(5))
+    }
+
+    @Test
+    fun `should calculate range sum correctly`() {
+        val values = longArrayOf(1, 2, 3, 4, 5)
+        val fenwickTree = FenwickTree(values)
+
+        assertEquals(9L, fenwickTree.rangeSum(2, 4))
+        assertEquals(12L, fenwickTree.rangeSum(3, 5))
+        assertEquals(15L, fenwickTree.rangeSum(1, 5))
     }
 
     @Test
@@ -56,6 +65,23 @@ class FenwickTreeTest {
 
         assertFailsWith<IllegalArgumentException> {
             fenwickTree.prefixSum(6)
+        }
+    }
+
+    @Test
+    fun `should throw exception for invalid range sum`() {
+        val fenwickTree = FenwickTree(5)
+
+        assertFailsWith<IllegalArgumentException> {
+            fenwickTree.rangeSum(0, 3)
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            fenwickTree.rangeSum(4, 2)
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            fenwickTree.rangeSum(1, 6)
         }
     }
 }
