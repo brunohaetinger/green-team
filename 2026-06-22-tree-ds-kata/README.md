@@ -44,17 +44,17 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 
 ## 4. References
 
-https://medium.com/@kanishks772/the-hidden-architecture-of-the-internet-20-algorithms-that-power-everything-9e0d139a9bd0
-https://arxiv.org/html/2304.02356v3
-https://medium.com/@francescofranco_39234/fenwick-trees-4310799f68e2
-https://cp-algorithms.com/data_structures/fenwick.html
-https://stackoverflow.com/questions/77217104/simpler-alternatives-to-fenwick-trees
-https://www.shadecoder.com/de/topics/what-is-fenwick-tree-bit-a-practical-guide-for-2025
-https://www.investopedia.com/terms/b/binomialoptionpricing.asp#toc-applying-the-binomial-option-pricing-model-in-real-trading
-https://github.com/Crypto-toolbox/HFT-Orderbook
-https://quant.stackexchange.com/questions/63140/red-black-trees-for-limit-order-book
-https://stackoverflow.com/questions/21995930/dynamic-i-e-variable-size-fenwick-tree
-https://medium.com/@0xape/binary-indexed-trees-a-beginner-friendly-visual-guide-15fc1d77cad1
-https://ethresear.ch/t/fenwick-bitmap-constant-time-matching-for-on-chain-order-books/22313
-https://reports.chainsecurity.com/Pendle/ChainSecurity_Pendle_BorosMarkets_Audit.pdf
-https://quant.stackexchange.com/questions/80117/efficiently-tracking-order-queue-position-in-a-limit-order-book-implementation
+- https://medium.com/@kanishks772/the-hidden-architecture-of-the-internet-20-algorithms-that-power-everything-9e0d139a9bd0
+- https://arxiv.org/html/2304.02356v3
+- https://medium.com/@francescofranco_39234/fenwick-trees-4310799f68e2
+- https://cp-algorithms.com/data_structures/fenwick.html
+- https://stackoverflow.com/questions/77217104/simpler-alternatives-to-fenwick-trees
+- https://www.shadecoder.com/de/topics/what-is-fenwick-tree-bit-a-practical-guide-for-2025
+- https://www.investopedia.com/terms/b/binomialoptionpricing.asp#toc-applying-the-binomial-option-pricing-model-in-real-trading
+- https://github.com/Crypto-toolbox/HFT-Orderbook
+- https://quant.stackexchange.com/questions/63140/red-black-trees-for-limit-order-book
+- https://stackoverflow.com/questions/21995930/dynamic-i-e-variable-size-fenwick-tree
+- https://medium.com/@0xape/binary-indexed-trees-a-beginner-friendly-visual-guide-15fc1d77cad1
+- https://ethresear.ch/t/fenwick-bitmap-constant-time-matching-for-on-chain-order-books/22313
+- https://reports.chainsecurity.com/Pendle/ChainSecurity_Pendle_BorosMarkets_Audit.pdf
+- https://quant.stackexchange.com/questions/80117/efficiently-tracking-order-queue-position-in-a-limit-order-book-implementation
