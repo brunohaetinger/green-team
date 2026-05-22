@@ -42,7 +42,7 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 
 ## 3. Pros and Cons
 
-## References
+## 4. References
 
 https://medium.com/@kanishks772/the-hidden-architecture-of-the-internet-20-algorithms-that-power-everything-9e0d139a9bd0
 https://arxiv.org/html/2304.02356v3
