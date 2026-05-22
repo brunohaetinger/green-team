@@ -1,10 +1,13 @@
 # Tree-based data structures: Fenwick Tree
 
-## 1. What is a Fenwick Tree?
+## 1. Problem definition
+
+## 2. Fenwick essencial information
+
+### What is a Fenwick Tree?
 A Fenwick Tree, also called a Binary Indexed Tree, is useful when we have an array of numeric values that changes often and we need fast cumulative sums. It stores partial sums in a compact array. Each position is responsible for a range whose size is based on the lowest set bit of the index. Because of that structure, both updating one value and asking for a prefix sum take `O(log n)` time. A Fenwick Tree keeps both operations fast enough for streaming data. It's a great choice when we have a fixed number of buckets and we want to track totals that change frequently, such as volume, notional value, fees, or counts.
 
-
-## 2. Use Cases
+## 3. Use Cases
 
 ### Stock prices
 
@@ -40,9 +43,21 @@ This is why Fenwick Trees appear in trading infrastructure discussions. A limit 
 
 It is best used for totals over time ranges or price ranges: volume, notional value, fees, imbalance, or liquidity depth. It is not a forecasting model and it is not a replacement for statistical analysis.
 
-## 3. Pros and Cons
+## 4. Fenwick tree deep dive
 
-## 4. References
+## 5. Implementation code
+```python
+while i <= n:
+    fenw[i] += delta
+    i += i & (-i)
+```
+
+## 6. Benchmark
+
+### 1. Comparison with some other data structure
+### 2. Pros and Cons
+
+## 7. References
 
 - https://medium.com/@kanishks772/the-hidden-architecture-of-the-internet-20-algorithms-that-power-everything-9e0d139a9bd0
 - https://arxiv.org/html/2304.02356v3
