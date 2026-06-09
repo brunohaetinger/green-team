@@ -46,11 +46,8 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 # 4. Fenwick tree deep dive
 
 # 5. Implementation code
-```python
-while i <= n:
-    fenw[i] += delta
-    i += i & (-i)
-```
+
+Check [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
 
 # 6. Benchmark
 
