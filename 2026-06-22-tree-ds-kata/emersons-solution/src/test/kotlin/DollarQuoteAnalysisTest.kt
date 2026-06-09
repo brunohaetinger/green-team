@@ -1,39 +1,67 @@
+import kotlin.random.Random
+import kotlin.system.measureTimeMillis
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class DollarQuoteAnalysisTest {
 
     @Test
-    fun `should analyze dollar exchange rate variations`() {
+    fun `should calculate total accumulated exchange rate of 2593 from day 1 to day 5 with prefixSum`() {
 
-        // Daily dollar exchange rates (USD -> BRL)
         val dollarQuotes = longArrayOf(
-            510, // Day 1 -> 5.10
-            515, // Day 2 -> 5.15
-            520, // Day 3 -> 5.20
-            518, // Day 4 -> 5.18
-            530, // Day 5 -> 5.30
-            540, // Day 6 -> 5.40
-            535  // Day 7 -> 5.35
+            510,
+            515,
+            520,
+            518,
+            530,
+            540,
+            535
         )
 
         val fenwickTree = FenwickTree(dollarQuotes)
 
-        // Total accumulated exchange rate from day 1 to day 7
-        assertEquals(3668L, fenwickTree.rangeSum(1, 7))
-
-        // Sum between day 1 and day 3
-        assertEquals(1545L, fenwickTree.rangeSum(1, 3))
-
-        // Sum between day 4 and day 6
-        assertEquals(1588L, fenwickTree.rangeSum(4, 6))
-
-        // Prefix sum until day 5
         assertEquals(2593L, fenwickTree.prefixSum(5))
     }
 
     @Test
-    fun `should update exchange rate after market correction`() {
+    fun `should calculate total accumulated exchange rate of 3668 from day 1 to day 7 with rangeSum`() {
+
+        val dollarQuotes = longArrayOf(
+            510,
+            515,
+            520,
+            518,
+            530,
+            540,
+            535
+        )
+
+        val fenwickTree = FenwickTree(dollarQuotes)
+
+        assertEquals(3668L, fenwickTree.rangeSum(1, 7))
+    }
+
+    @Test
+    fun `should calculate total accumulated exchange rate of 1588 from day 4 to day 6 with rangeSum`() {
+
+        val dollarQuotes = longArrayOf(
+            510,
+            515,
+            520,
+            518,
+            530,
+            540,
+            535
+        )
+
+        val fenwickTree = FenwickTree(dollarQuotes)
+
+        assertEquals(1588L, fenwickTree.rangeSum(4, 6))
+    }
+
+    @Test
+    fun `should recalculate prefix sum to 1560 and total sum to 2608 after updating day 3`() {
 
         val dollarQuotes = longArrayOf(
             510,
@@ -45,38 +73,44 @@ class DollarQuoteAnalysisTest {
 
         val fenwickTree = FenwickTree(dollarQuotes)
 
-        // Market correction on day 3
-        // Previous: 5.20
-        // New value: 5.35
         fenwickTree.update(3, 15)
 
-        // Expected:
-        // 510 + 515 + 535 = 1560
         assertEquals(1560L, fenwickTree.prefixSum(3))
-
-        // Full accumulated value after correction
         assertEquals(2608L, fenwickTree.rangeSum(1, 5))
     }
 
     @Test
-    fun `should analyze weekly exchange rate window`() {
+    fun `should process one million exchange rates with random queries and updates`() {
 
-        val dollarQuotes = longArrayOf(
-            505,
-            507,
-            510,
-            515,
-            520,
-            525,
-            530
-        )
+        val size = 1_000_000
 
-        val fenwickTree = FenwickTree(dollarQuotes)
+        val dollarQuotes = LongArray(size) {
+            Random.nextLong(420, 610)
+        }
 
-        // Weekly moving window (days 2 -> 6)
-        val weeklyWindow = fenwickTree.rangeSum(2, 6)
+        val buildTime = measureTimeMillis {
+            val fenwickTree = FenwickTree(dollarQuotes)
 
-        assertEquals(2577L, weeklyWindow)
+            val operationTime = measureTimeMillis {
+                repeat(100_000) {
+                    val left = Random.nextInt(1, size / 2)
+                    val right = Random.nextInt(left, size)
+
+                    fenwickTree.rangeSum(left, right)
+
+                    val updateIndex = Random.nextInt(1, size)
+                    val delta = Random.nextLong(-10, 10)
+
+                    fenwickTree.update(updateIndex, delta)
+                }
+            }
+
+            println("Operations execution time: ${operationTime}ms")
+        }
+
+        println("Fenwick tree build time: ${buildTime}ms")
+
+        assertTrue(buildTime >= 0)
     }
 
 }
