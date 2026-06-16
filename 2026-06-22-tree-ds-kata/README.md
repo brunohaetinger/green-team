@@ -50,6 +50,11 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 
 # 4. Fenwick tree deep dive
 
+## Lowest set bit
+
+- The lowest set bit is the rightmost `1` in a binary number.
+- Example: `12` is `1100` in binary, so its lowest set bit is `4` (`0100` in binary).
+
 # 5. Implementation code
 
 Check [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
