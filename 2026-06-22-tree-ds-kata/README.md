@@ -59,6 +59,19 @@ Check [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
 ## 1. Comparison with some other data structure
 ## 2. Pros and Cons
 
+### Pros  
+1. O(log n) time complexity for query
+2. Simple to implement
+3. No lazy propagation needed
+
+### Cons  
+1. Fixed size: the size of the Fenwick Tree must be defined at initialization and cannot be changed dynamically.
+2. Designed to prefix sums
+3. Mandatory 1-based indexing
+4. Range update not natively supported
+5. O(log n) time complexity for updates  
+
+
 # 7. References
 
 - https://medium.com/@kanishks772/the-hidden-architecture-of-the-internet-20-algorithms-that-power-everything-9e0d139a9bd0
