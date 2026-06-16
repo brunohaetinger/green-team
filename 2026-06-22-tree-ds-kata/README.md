@@ -5,9 +5,13 @@
 # 2. Fenwick essencial information
 
 ## What is a Fenwick Tree?
-A Fenwick Tree, also called a Binary Indexed Tree, is useful when we have an array of numeric values that changes often and we need fast cumulative sums. It stores partial sums in a compact array. Each position is responsible for a range whose size is based on the lowest set bit of the index. Because of that structure, both updating one value and asking for a prefix sum take `O(log n)` time. A Fenwick Tree keeps both operations fast enough for streaming data. It's a great choice when we have a fixed number of buckets and we want to track totals that change frequently, such as volume, notional value, fees, or counts.
+- A Fenwick Tree, also called a Binary Indexed Tree, is a data structure for arrays that change often.
+- It stores partial sums in a compact way, so we do not need to recalculate totals from scratch.
+- Each node is responsible for a range of values, and that range is determined by the lowest set bit of the index.
+- Both updates and prefix-sum queries run in `O(log n)` time.
+- It is a strong fit for streaming data with a fixed number of buckets.
 
-# 3. Use Cases
+# 3. Use Case
 
 ## Stock prices
 
@@ -45,14 +49,40 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 
 # 4. Fenwick tree deep dive
 
+## Lowest set bit
+
+- The lowest set bit is the rightmost `1` in a binary number.
+- Example: `12` is `1100` in binary, so its lowest set bit is `4` (`0100` in binary).
+
+## Query
+
+- To compute the sum up to an index:
+  - Accumulate the range sum stored at the current node
+  - Move to the previous range by subtracting the lowest set bit
+  - Repeat until the index becomes zero
+- This produces a prefix sum in `O(log n)` time.
+
 # 5. Implementation code
 
-Check [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
+Check how we implemented [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
 
 # 6. Benchmark
 
 ## 1. Comparison with some other data structure
 ## 2. Pros and Cons
+
+### Pros  
+1. O(log n) time complexity for query
+2. Simple to implement
+3. No lazy propagation needed
+
+### Cons  
+1. Fixed size: the size of the Fenwick Tree must be defined at initialization and cannot be changed dynamically.
+2. Designed to prefix sums
+3. Mandatory 1-based indexing
+4. Range update not natively supported
+5. O(log n) time complexity for updates  
+
 
 # 7. References
 
