@@ -5,9 +5,32 @@ Cargo.lock
 
 package-lock.json
 node_modules/
-*.DS_Store
-.idea
 
 fenwick.jar
 demo.jar
 tests.jar
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# Gradle
+.gradle/
+build/
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Generated files
+bin/
+
+# Local environment
+local.properties
