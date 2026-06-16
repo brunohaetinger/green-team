@@ -55,6 +55,14 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 - The lowest set bit is the rightmost `1` in a binary number.
 - Example: `12` is `1100` in binary, so its lowest set bit is `4` (`0100` in binary).
 
+## Query
+
+- To compute the sum up to an index:
+  - Accumulate the range sum stored at the current node
+  - Move to the previous range by subtracting the lowest set bit
+  - Repeat until the index becomes zero
+- This produces a prefix sum in `O(log n)` time.
+
 # 5. Implementation code
 
 Check [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
