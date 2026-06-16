@@ -5,7 +5,12 @@
 # 2. Fenwick essencial information
 
 ## What is a Fenwick Tree?
-A Fenwick Tree, also called a Binary Indexed Tree, is useful when we have an array of numeric values that changes often and we need fast cumulative sums. It stores partial sums in a compact array. Each position is responsible for a range whose size is based on the lowest set bit of the index. Because of that structure, both updating one value and asking for a prefix sum take `O(log n)` time. A Fenwick Tree keeps both operations fast enough for streaming data. It's a great choice when we have a fixed number of buckets and we want to track totals that change frequently, such as volume, notional value, fees, or counts.
+- A Fenwick Tree, also called a Binary Indexed Tree, is used for arrays of numeric values that change often.  
+- It stores partial sums in a compact array instead of recalculating totals from scratch.  
+- Each position covers a range whose size is based on the lowest set bit of the index.
+- Updating one value and asking for a prefix sum both take `O(log n)` time.
+- It is a good fit for streaming data with a fixed number of buckets.
+- Common examples include tracking volume, notional value, fees, or counts.
 
 # 3. Use Cases
 
