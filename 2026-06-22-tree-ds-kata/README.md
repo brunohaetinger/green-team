@@ -9,10 +9,9 @@
 - It stores partial sums in a compact way, so we do not need to recalculate totals from scratch.
 - Each node is responsible for a range of values, and that range is determined by the lowest set bit of the index.
 - Both updates and prefix-sum queries run in `O(log n)` time.
-- It is a good fit for streaming data with a fixed number of buckets.
-- Common examples include tracking volume, notional value, fees, or counts.
+- It is a strong fit for streaming data with a fixed number of buckets.
 
-# 3. Use Cases
+# 3. Use Case
 
 ## Stock prices
 
@@ -65,7 +64,7 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 
 # 5. Implementation code
 
-Check [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
+Check how we implemented [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
 
 # 6. Benchmark
 
