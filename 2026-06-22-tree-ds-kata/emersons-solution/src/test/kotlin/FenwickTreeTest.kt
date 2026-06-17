@@ -19,16 +19,16 @@ class FenwickTreeTest {
 
     @Test
     fun `should update value and recalculate sums correctly`() {
-        val values = longArrayOf(7, 12, 5, 9, 14)
+        val values = longArrayOf(1, 2, 3, 4, 5)
         val fenwickTree = FenwickTree(values)
 
-        fenwickTree.update(3, 2)
+        fenwickTree.update(3, 5)
 
-        assertEquals(7L, fenwickTree.prefixSum(1))
-        assertEquals(19L, fenwickTree.prefixSum(2))
-        assertEquals(26L, fenwickTree.prefixSum(3))
-        assertEquals(35L, fenwickTree.prefixSum(4))
-        assertEquals(49L, fenwickTree.prefixSum(5))
+        assertEquals(1L, fenwickTree.prefixSum(1))
+        assertEquals(3L, fenwickTree.prefixSum(2))
+        assertEquals(11L, fenwickTree.prefixSum(3))
+        assertEquals(15L, fenwickTree.prefixSum(4))
+        assertEquals(20L, fenwickTree.prefixSum(5))
     }
 
     @Test
