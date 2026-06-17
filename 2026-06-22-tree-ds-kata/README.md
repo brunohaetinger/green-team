@@ -69,7 +69,7 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 
 ## 4. Implementation code
 
-Check how we implemented [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
+Check how we implemented [FenwickTree in Kotlin](emersons-solution/src/main/kotlin/FenwickTree.kt)
 
 ## 5. Benchmark
 
