@@ -1,11 +1,35 @@
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class FenwickTreeTest {
 
     @Test
-    fun `should build fenwick tree from initial values`() {
+    fun `should verify internal tree structure layout after construction`() {
+        val values = longArrayOf(1, 2, 3, 4, 5)
+
+        val fenwickTree = FenwickTree(values)
+
+        val expectedTreeStructure = longArrayOf(0, 1, 3, 3, 10, 5)
+
+        assertContentEquals(expectedTreeStructure, fenwickTree.getTree())
+    }
+
+    @Test
+    fun `should verify internal tree structure layout after point update`() {
+        val values = longArrayOf(1, 2, 3, 4, 5)
+        val fenwickTree = FenwickTree(values)
+
+        fenwickTree.update(3, 5)
+
+        val expectedTreeStructureAfterUpdate = longArrayOf(0, 1, 3, 8, 15, 5)
+
+        assertContentEquals(expectedTreeStructureAfterUpdate, fenwickTree.getTree())
+    }
+
+    @Test
+    fun `should calculate correct prefix sums after construction with initial values`() {
         val values = longArrayOf(1, 2, 3, 4, 5)
 
         val fenwickTree = FenwickTree(values)
@@ -18,7 +42,7 @@ class FenwickTreeTest {
     }
 
     @Test
-    fun `should update value and recalculate sums correctly`() {
+    fun `should propagate delta correctly to subsequent prefix sums after point update`() {
         val values = longArrayOf(1, 2, 3, 4, 5)
         val fenwickTree = FenwickTree(values)
 

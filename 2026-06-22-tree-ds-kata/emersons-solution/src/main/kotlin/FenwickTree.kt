@@ -17,6 +17,10 @@ class FenwickTree(size: Int) {
 
     private fun getLeastSignificantBit(i: Int): Int = i and -i
 
+    fun getTree(): LongArray {
+        return tree
+    }
+
     fun update(index: Int, delta: Long) {
         require(index in 1..size) { "index $index out of range [1..$size]" }
         var i = index
