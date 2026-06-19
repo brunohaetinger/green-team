@@ -1,19 +1,17 @@
 # Tree-based data structures: Fenwick Tree
 
-# 1. Problem definition
+## 1. Fenwick essencial information
 
-# 2. Fenwick essencial information
-
-## What is a Fenwick Tree?
+### What is a Fenwick Tree?
 - A Fenwick Tree, also called a Binary Indexed Tree, is a data structure for arrays that change often.
 - It stores partial sums in a compact way, so we do not need to recalculate totals from scratch.
 - Each node is responsible for a range of values, and that range is determined by the lowest set bit of the index.
 - Both updates and prefix-sum queries run in `O(log n)` time.
 - It is a strong fit for streaming data with a fixed number of buckets.
 
-# 3. Use Case
+## 2. Use Case
 
-## Stock prices
+### Stock prices
 
 A Fenwick Tree helps market software answer questions about data that is constantly changing.
 
@@ -47,14 +45,14 @@ This is why Fenwick Trees appear in trading infrastructure discussions. A limit 
 
 It is best used for totals over time ranges or price ranges: volume, notional value, fees, imbalance, or liquidity depth. It is not a forecasting model and it is not a replacement for statistical analysis.
 
-# 4. Fenwick tree deep dive
+## 3. Fenwick tree deep dive
 
-## Lowest set bit
+### Lowest set bit
 
 - The lowest set bit is the rightmost `1` in a binary number.
 - Example: `12` is `1100` in binary, so its lowest set bit is `4` (`0100` in binary).
 
-## Query
+### Query
 
 - To compute the sum up to an index:
   - Accumulate the range sum stored at the current node
@@ -62,21 +60,28 @@ It is best used for totals over time ranges or price ranges: volume, notional va
   - Repeat until the index becomes zero
 - This produces a prefix sum in `O(log n)` time.
 
-# 5. Implementation code
+### Update
 
-Check how we implemented [FenwickTree in Kotlin](emersons-solution/src/FenwickTree.kt)
+- To update one element, we add the delta to the current position.
+- Then we move to the next affected ranges by adding the lowest set bit.
+- Every node that covers that element gets updated.
+- This also runs in `O(log n)` time.
 
-# 6. Benchmark
+## 4. Implementation code
 
-## 1. Comparison with some other data structure
-## 2. Pros and Cons
+Check how we implemented [FenwickTree in Kotlin](emersons-solution/src/main/kotlin/FenwickTree.kt)
 
-### Pros  
+## 5. Benchmark
+
+### 1. Comparison with some other data structure
+### 2. Pros and Cons
+
+#### Pros  
 1. O(log n) time complexity for query
 2. Simple to implement
 3. No lazy propagation needed
 
-### Cons  
+#### Cons  
 1. Fixed size: the size of the Fenwick Tree must be defined at initialization and cannot be changed dynamically.
 2. Designed to prefix sums
 3. Mandatory 1-based indexing
@@ -84,7 +89,7 @@ Check how we implemented [FenwickTree in Kotlin](emersons-solution/src/FenwickTr
 5. O(log n) time complexity for updates  
 
 
-# 7. References
+# 6. References
 
 - https://medium.com/@kanishks772/the-hidden-architecture-of-the-internet-20-algorithms-that-power-everything-9e0d139a9bd0
 - https://arxiv.org/html/2304.02356v3
