@@ -41,6 +41,8 @@ volumeBetween10h00And10h05 =
   volumeTree.sum(bucket10h05) - volumeTree.sum(bucket10h00 - 1)
 ```
 
+<a href="fenwick_table_1.png"><img src="fenwick_table_1.png" alt="Fenwick Tree Table" style="max-width: 500px; cursor: pointer;"></a>
+
 This is why Fenwick Trees appear in trading infrastructure discussions. A limit order book has to process add, cancel, and execute operations quickly, while also answering questions such as how much volume exists between two prices. Some on-chain order book designs also use Fenwick Trees inside a price level to track live order sizes and queue position efficiently.
 
 It is best used for totals over time ranges or price ranges: volume, notional value, fees, imbalance, or liquidity depth. It is not a forecasting model and it is not a replacement for statistical analysis.
@@ -50,7 +52,9 @@ It is best used for totals over time ranges or price ranges: volume, notional va
 ### Lowest set bit
 
 - The lowest set bit is the rightmost `1` in a binary number.
+- Formula is `x & -x` where `-x` is the tricky to invert all bits and add 1 to the end
 - Example: `12` is `1100` in binary, so its lowest set bit is `4` (`0100` in binary).
+- Breakdown: 12 is `1100` , -12 is invert 12 as `0011` + `1` = `0100`
 
 ### Query
 
