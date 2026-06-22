@@ -41,7 +41,7 @@ volumeBetween10h00And10h05 =
   volumeTree.sum(bucket10h05) - volumeTree.sum(bucket10h00 - 1)
 ```
 
-<a href="fenwick_table_1.png"><img src="fenwick_table_1.png" alt="Fenwick Tree Table" style="max-width: 500px; cursor: pointer;"></a>
+<a href="fenwick_tree.png"><img src="fenwick_tree.png" alt="Fenwick Tree Table" style="max-width: 500px; cursor: pointer;"></a>
 
 This is why Fenwick Trees appear in trading infrastructure discussions. A limit order book has to process add, cancel, and execute operations quickly, while also answering questions such as how much volume exists between two prices. Some on-chain order book designs also use Fenwick Trees inside a price level to track live order sizes and queue position efficiently.
 
